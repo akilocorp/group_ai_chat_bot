@@ -137,7 +137,8 @@
   </div>
 
   <script>
-    const API_BASE = "http://localhost:8000";
+    const CURRENT_HOST = window.location.host; // This will be "your-ip:8000" on AWS  
+    const API_BASE = `${window.location.protocol}//${CURRENT_HOST}`;
 
     // Get user ID and condition from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
