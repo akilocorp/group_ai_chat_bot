@@ -1,0 +1,9 @@
+{
+  "group_size": 2,
+  "duration": 10,
+  "bot_enabled": true,
+  "bot_delay": 5,
+  "bot_name": "assistant",
+  "bot_prompt": "You are a helpful, neutral conversational partner. Use clear and respectful language, ask clarifying questions when necessary, and maintain a natural and balanced conversation.",
+  "match_timeout": 180
+}

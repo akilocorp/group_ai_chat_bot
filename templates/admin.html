@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h2 {
+            color: #555;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-reset {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-reset:hover {
+            background: #eee;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            display: none;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .bot-config {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .bot-config.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .default-prompt {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+            display: none;
+        }
+
+        .default-prompt.show {
+            display: block;
+        }
+
+        .default-prompt-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+
+        .default-prompt-content {
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Admin Configuration Panel</h1>
+
+        <form id="configForm">
+            <!-- Room Configuration -->
+            <div class="section">
+                <h2>📋 Room Configuration</h2>
+                <div class="row">
+                    <div class="form-group">
+                        <label for="groupSize">Group Size (users per room)</label>
+                        <input type="number" id="groupSize" name="group_size" min="1" max="10" required>
+                        <div class="info-text">Number of users required to form a chat room</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Chat Duration (minutes)</label>
+                        <input type="number" id="duration" name="duration" min="1" max="180" required>
+                        <div class="info-text">Duration of each chat session</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bot Configuration -->
+            <div class="section">
+                <h2>🤖 Bot Configuration</h2>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="botEnabled" name="bot_enabled">
+                        <label for="botEnabled" style="margin-bottom: 0; font-weight: 400;">Enable Bot in Chat Rooms</label>
+                    </div>
+                    <div class="info-text">If unchecked, no bot will join or respond in rooms</div>
+                </div>
+
+                <!-- Bot Settings Container (隐藏/显示基于botEnabled) -->
+                <div id="botConfigContainer" class="bot-config">
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="botName">Bot Display Name</label>
+                            <input type="text" id="botName" name="bot_name" maxlength="50" required>
+                            <div class="info-text">Name shown in chat (e.g., Assistant, Helper)</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="botDelay">Bot Response Delay (seconds)</label>
+                            <input type="number" id="botDelay" name="bot_delay" min="0" max="60" required>
+                            <div class="info-text">Delay before bot sends a reply</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="botPrompt">Bot System Prompt</label>
+                        <textarea id="botPrompt" name="bot_prompt" placeholder="You are a friendly and engaging conversational partner..."></textarea>
+                        <div class="info-text">Defines the bot's personality, tone, and behavior. Leave blank for default neutral behavior.</div>
+
+                        <!-- 默认 Prompt 显示区域 -->
+                        <div id="defaultPromptInfo" class="default-prompt">
+                            <div class="default-prompt-title">📝 Default System Prompt (used when left blank):</div>
+                            <div class="default-prompt-content" id="defaultPromptContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="button-group">
+                <button type="submit" class="btn-save">💾 Save Configuration</button>
+                <button type="reset" class="btn-reset" onclick="loadConfig()">🔄 Reload Current Config</button>
+            </div>
+
+            <div id="statusMessage" class="status-message"></div>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('configForm');
+        const statusMessage = document.getElementById('statusMessage');
+        const botEnabledCheckbox = document.getElementById('botEnabled');
+        const botConfigContainer = document.getElementById('botConfigContainer');
+        const defaultPromptInfo = document.getElementById('defaultPromptInfo');
+        const defaultPromptContent = document.getElementById('defaultPromptContent');
+
+        // 默认系统提示
+        const DEFAULT_SYSTEM_PROMPT = "You are a helpful, neutral conversational partner. Use clear and respectful language, ask clarifying questions when needed, and keep the conversation natural and balanced.";
+
+        // 初始化时显示默认提示
+        defaultPromptContent.textContent = DEFAULT_SYSTEM_PROMPT;
+
+        // 根据 botEnabled 状态更新 UI
+        function updateBotConfigVisibility() {
+            const isBotEnabled = botEnabledCheckbox.checked;
+
+            if (isBotEnabled) {
+                botConfigContainer.classList.remove('disabled');
+                // 如果 prompt 为空，显示默认提示
+                const botPrompt = document.getElementById('botPrompt');
+                if (!botPrompt.value || botPrompt.value.trim() === '') {
+                    defaultPromptInfo.classList.add('show');
+                } else {
+                    defaultPromptInfo.classList.remove('show');
+                }
+            } else {
+                botConfigContainer.classList.add('disabled');
+                defaultPromptInfo.classList.remove('show');
+            }
+        }
+
+        // 监听 botEnabled 复选框变化
+        botEnabledCheckbox.addEventListener('change', updateBotConfigVisibility);
+
+        // 监听 prompt 输入变化
+        document.getElementById('botPrompt').addEventListener('input', function() {
+            if (botEnabledCheckbox.checked) {
+                if (!this.value || this.value.trim() === '') {
+                    defaultPromptInfo.classList.add('show');
+                } else {
+                    defaultPromptInfo.classList.remove('show');
+                }
+            }
+        });
+
+        // Load current configuration from server
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/admin/config');
+                if (!res.ok) throw new Error('Failed to fetch config');
+                const config = await res.json();
+
+                document.getElementById('groupSize').value = config.group_size;
+                document.getElementById('duration').value = config.duration;
+                document.getElementById('botEnabled').checked = config.bot_enabled;
+                document.getElementById('botName').value = config.bot_name;
+                document.getElementById('botDelay').value = config.bot_delay;
+                document.getElementById('botPrompt').value = config.bot_prompt || '';
+
+                // 更新 UI 状态
+                updateBotConfigVisibility();
+
+                console.log('✅ Config loaded:', config);
+            } catch (err) {
+                showStatus('⚠️ Could not load config: ' + err.message, 'error');
+                console.error(err);
+            }
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            // Important: Only include bot_enabled if checkbox is checked
+            // FastAPI treats missing field as False when default is provided
+            if (!botEnabledCheckbox.checked) {
+                formData.delete('bot_enabled');
+                // 当 bot 禁用时，不需要发送 bot 相关配置
+                formData.delete('bot_name');
+                formData.delete('bot_delay');
+                formData.delete('bot_prompt');
+            }
+
+            try {
+                const response = await fetch('/api/admin/config', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    await loadConfig(); // Refresh displayed values
+                    showStatus('✅ Configuration saved successfully!', 'success');
+                } else {
+                    const errorText = await response.text();
+                    showStatus('❌ Save failed: ' + errorText, 'error');
+                }
+            } catch (error) {
+                showStatus('❌ Network error: ' + error.message, 'error');
+                console.error(error);
+            }
+        });
+
+        // Show temporary status message
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message show ${type}`;
+            setTimeout(() => {
+                statusMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        // 初始加载配置并更新 UI
+        loadConfig();
+    </script>
+</body>
+</html>

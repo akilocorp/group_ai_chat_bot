@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waiting for Match - Participant Matching System</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+    }
+    h1 { color: #333; margin-bottom: 20px; }
+    .info {
+      background: #f0f0f0;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    .info p { margin: 10px 0; font-size: 16px; }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .status-text {
+      font-size: 18px;
+      color: #667eea;
+      margin: 20px 0;
+      font-weight: 600;
+    }
+    .console {
+      background: #1e1e1e;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 10px;
+      height: 150px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      text-align: left;
+      margin: 20px 0;
+      border: 1px solid #333;
+    }
+    .console-line {
+      margin: 4px 0;
+      word-break: break-all;
+    }
+    .btn {
+      padding: 12px 30px;
+      margin: 10px;
+      border: none;
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #5568d3, #6a3f91);
+      transform: translateY(-2px);
+    }
+    .btn-danger {
+      background: #f44336;
+      color: white;
+    }
+    .btn-danger:hover {
+      background: #da190b;
+      transform: translateY(-2px);
+    }
+    .alert {
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 10px;
+      display: none;
+    }
+    .alert-danger {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ef5350;
+    }
+    .alert-success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #66bb6a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 Matching...</h1>
+
+    <div class="info">
+      <p><strong>Your ID:</strong></p>
+      <p style="font-size: 20px; color: #667eea; font-family: monospace;" id="uid-display">Loading...</p>
+      <p style="font-size: 12px; color: #999;" id="cond-display"></p>
+    </div>
+
+    <div class="spinner" id="spinner"></div>
+    <div class="status-text" id="status-text">Finding a match partner...</div>
+
+    <div class="console" id="console"></div>
+
+    <div class="alert alert-danger" id="alert-error"></div>
+    <div class="alert alert-success" id="alert-success"></div>
+
+    <div>
+      <button class="btn btn-primary" onclick="manualRetry()">🔄 Retry</button>
+      <button class="btn btn-danger" onclick="leaveQueue()">👋 Leave Queue</button>
+      <button class="btn btn-primary" onclick="checkStats()">📊 View Stats</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:8000";
+
+    // Get user ID and condition from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const uid = urlParams.get('uid') || 'user_' + Math.random().toString(36).substr(2, 9);
+    const cond = urlParams.get('cond') || 'default';
+
+    // Display user info
+    document.getElementById('uid-display').textContent = uid;
+    document.getElementById('cond-display').textContent = `Condition: ${cond}`;
+
+    let isMatched = false;
+    let checkCount = 0;
+    let pollInterval = null;
+
+    const consoleEl = document.getElementById('console');
+    const statusEl = document.getElementById('status-text');
+    const alertEl = document.getElementById('alert-error');
+    const alertSuccess = document.getElementById('alert-success');
+
+    function log(msg, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const prefix = {
+        'info': '✓',
+        'warn': '⚠',
+        'error': '✗',
+        'success': '✅'
+      }[type] || '•';
+
+      const line = document.createElement('div');
+      line.className = 'console-line';
+      line.textContent = `[${timestamp}] ${prefix} ${msg}`;
+      consoleEl.appendChild(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+
+      // Keep max 50 lines
+      while (consoleEl.children.length > 50) {
+        consoleEl.removeChild(consoleEl.firstChild);
+      }
+
+      console.log(`[${timestamp}] ${prefix} ${msg}`);
+    }
+
+    async function checkMatch() {
+      // Stop if already matched
+      if (isMatched) {
+        log('✋ Already matched, stopping polling', 'success');
+        return;
+      }
+
+      checkCount++;
+
+      try {
+        const res = await fetch(`${API_BASE}/match?uid=${encodeURIComponent(uid)}&cond=${encodeURIComponent(cond)}`);
+
+        if (!res.ok) {
+          log(`❌ HTTP Error: ${res.status}`, 'error');
+          return;
+        }
+
+        const data = await res.json();
+        log(`[Check #${checkCount}] Status: ${data.status}`, 'info');
+
+        if (data.status === "matched") {
+          isMatched = true;  // Lock to stop polling
+          clearInterval(pollInterval);
+
+          const partnerId = data.partner_id;
+          const roomId = data.room_id;
+
+          // Validate
+          if (!roomId) {
+            log('❌ Server did not return room_id!', 'error');
+            isMatched = false;
+            return;
+          }
+
+          if (partnerId === uid) {
+            log('❌ Self-match error (should not happen)', 'error');
+            isMatched = false;
+            return;
+          }
+
+          log(`🎉 Match successful!`, 'success');
+          log(`👥 Partner: ${partnerId}`, 'success');
+          log(`🏠 Room: ${roomId}`, 'success');
+
+          statusEl.textContent = `✅ Match found! Partner: ${partnerId}`;
+          alertSuccess.style.display = 'block';
+          alertSuccess.textContent = `Entering room: ${roomId}`;
+
+          // Delay 1.5 seconds before redirect so user sees success message
+          setTimeout(() => {
+            const chatUrl = `/chat?uid=${encodeURIComponent(uid)}&room=${encodeURIComponent(roomId)}`;
+            log(`📍 Redirecting to: ${chatUrl}`, 'success');
+            window.location.href = chatUrl;
+          }, 1500);
+
+          return;
+        }
+
+        // Still waiting, update status
+        if (checkCount % 5 === 1) {
+          statusEl.textContent = `Waiting... (${checkCount} checks)`;
+        }
+
+      } catch (error) {
+        log(`❌ Network Error: ${error.message}`, 'error');
+        alertEl.style.display = 'block';
+        alertEl.textContent = `Network Error: ${error.message}`;
+      }
+    }
+
+    async function startPolling() {
+      log(`🚀 Starting polling (interval: 500ms)`, 'info');
+      log(`UID: ${uid} | Condition: ${cond}`, 'info');
+
+      // Poll every 500ms for fast response
+      pollInterval = setInterval(checkMatch, 500);
+
+      // Check immediately
+      await checkMatch();
+    }
+
+    async function leaveQueue() {
+      isMatched = true;  // Stop polling
+      clearInterval(pollInterval);
+
+      log('👋 Leaving queue...', 'warn');
+
+      try {
+        await fetch(`${API_BASE}/leave?uid=${encodeURIComponent(uid)}&cond=${encodeURIComponent(cond)}`);
+        log('✅ Left queue', 'success');
+        statusEl.textContent = 'Left queue';
+        document.getElementById('spinner').style.display = 'none';
+        alert('You have left the matching queue');
+      } catch (err) {
+        log(`❌ Failed to leave: ${err.message}`, 'error');
+      }
+    }
+
+    async function manualRetry() {
+      log('🔄 Manual retry...', 'warn');
+      isMatched = false;
+      checkCount = 0;
+      clearInterval(pollInterval);
+
+      try {
+        await fetch(`${API_BASE}/leave?uid=${encodeURIComponent(uid)}&cond=${encodeURIComponent(cond)}`);
+        log('✅ Left old queue', 'info');
+
+        // Delay 500ms before restarting polling
+        setTimeout(() => {
+          alertEl.style.display = 'none';
+          alertSuccess.style.display = 'none';
+          document.getElementById('spinner').style.display = 'block';
+          statusEl.textContent = 'Finding a match partner...';
+          startPolling();
+        }, 500);
+      } catch (err) {
+        log(`❌ Retry failed: ${err.message}`, 'error');
+      }
+    }
+
+    async function checkStats() {
+      try {
+        const res = await fetch(`${API_BASE}/stats`);
+        const stats = await res.json();
+        log(`📊 ${JSON.stringify(stats)}`, 'info');
+        alert(`Active Rooms: ${stats.active_rooms}\nWaiting Users: ${stats.queued_users}\nTotal Sessions: ${stats.total_sessions}`);
+      } catch (err) {
+        log(`❌ Failed to get stats: ${err.message}`, 'error');
+      }
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', async () => {
+      if (!isMatched) {
+        clearInterval(pollInterval);
+        try {
+          await fetch(`${API_BASE}/leave?uid=${encodeURIComponent(uid)}&cond=${encodeURIComponent(cond)}`, {
+            method: 'GET',
+            keepalive: true
+          });
+        } catch (err) {
+          console.log('Failed to leave queue:', err);
+        }
+      }
+    });
+
+    // Start matching
+    log(`Page loaded`, 'info');
+    startPolling();
+
+    // 60-second timeout warning
+    setTimeout(() => {
+      if (!isMatched) {
+        log('⚠️ Waiting over 60 seconds, may be no other users', 'warn');
+        alertEl.style.display = 'block';
+        alertEl.textContent = 'Waiting over 60 seconds. Click "Retry" to try again.';
+      }
+    }, 60000);
+  </script>
+</body>
+</html>

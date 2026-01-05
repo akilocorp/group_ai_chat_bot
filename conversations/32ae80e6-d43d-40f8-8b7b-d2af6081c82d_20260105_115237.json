@@ -1,0 +1,160 @@
+{
+  "room_id": "32ae80e6-d43d-40f8-8b7b-d2af6081c82d",
+  "created_at": "2026-01-05T11:48:12.528659",
+  "last_activity": "2026-01-05T11:48:56.868342",
+  "messages": [
+    {
+      "sender": "userA",
+      "text": "hi",
+      "timestamp": "2026-01-05T11:48:12.528685",
+      "turn": 1
+    },
+    {
+      "sender": "userB",
+      "text": "hello",
+      "timestamp": "2026-01-05T11:48:17.718116",
+      "turn": 2
+    },
+    {
+      "sender": "assistant",
+      "text": "Hello! How are you doing today?",
+      "timestamp": "2026-01-05T11:48:19.243168",
+      "turn": 3
+    },
+    {
+      "sender": "userB",
+      "text": "great",
+      "timestamp": "2026-01-05T11:48:22.676060",
+      "turn": 4
+    },
+    {
+      "sender": "assistant",
+      "text": "Hello userB! How are you today?",
+      "timestamp": "2026-01-05T11:48:24.864083",
+      "turn": 5
+    },
+    {
+      "sender": "assistant",
+      "text": "That's great to hear! Anything exciting happening today?",
+      "timestamp": "2026-01-05T11:48:28.296504",
+      "turn": 6
+    },
+    {
+      "sender": "userB",
+      "text": "great",
+      "timestamp": "2026-01-05T11:48:30.046898",
+      "turn": 7
+    },
+    {
+      "sender": "assistant",
+      "text": "I'm glad to hear that! Is there anything in particular that's making your day great?",
+      "timestamp": "2026-01-05T11:48:36.377341",
+      "turn": 8
+    },
+    {
+      "sender": "userB",
+      "text": "not now",
+      "timestamp": "2026-01-05T11:48:49.906022",
+      "turn": 9
+    },
+    {
+      "sender": "assistant",
+      "text": "That's totally fine! Feel free to share if there's anything you'd like to talk about or if you have any questions. I'm here to help!",
+      "timestamp": "2026-01-05T11:48:56.868319",
+      "turn": 10
+    }
+  ],
+  "user_profiles": {
+    "userA": {
+      "message_count": 1,
+      "first_message": "2026-01-05T11:48:12.528685",
+      "last_message": "2026-01-05T11:48:12.528685",
+      "keywords": [],
+      "interaction_style": "neutral",
+      "avg_message_length": 2.0,
+      "total_chars": 2
+    },
+    "userB": {
+      "message_count": 4,
+      "first_message": "2026-01-05T11:48:17.718116",
+      "last_message": "2026-01-05T11:48:49.906022",
+      "keywords": [
+        "hello",
+        "great",
+        "great",
+        "not",
+        "now"
+      ],
+      "interaction_style": "neutral",
+      "avg_message_length": 5.5,
+      "total_chars": 22
+    },
+    "assistant": {
+      "message_count": 5,
+      "first_message": "2026-01-05T11:48:19.243168",
+      "last_message": "2026-01-05T11:48:56.868319",
+      "keywords": [
+        "today?",
+        "doing",
+        "hello!",
+        "today?",
+        "hello",
+        "userb!",
+        "great",
+        "hear!",
+        "today?",
+        "exciting",
+        "that's",
+        "anything",
+        "happening",
+        "making",
+        "i'm",
+        "great?",
+        "particular",
+        "hear",
+        "that!",
+        "that's",
+        "day",
+        "glad",
+        "anything",
+        "totally",
+        "i'm",
+        "questions.",
+        "share",
+        "like",
+        "feel",
+        "fine!",
+        "you'd",
+        "any",
+        "about",
+        "there's",
+        "help!",
+        "free",
+        "that's",
+        "anything",
+        "talk"
+      ],
+      "interaction_style": "neutral",
+      "avg_message_length": 66.8,
+      "total_chars": 334
+    }
+  },
+  "total_turns": 10,
+  "active_participants": 3,
+  "summary": {
+    "room_id": "32ae80e6-d43d-40f8-8b7b-d2af6081c82d",
+    "total_messages": 10,
+    "total_participants": 3,
+    "total_characters": 358,
+    "average_message_length": 35.8,
+    "participant_messages": {
+      "userA": 1,
+      "userB": 4,
+      "assistant": 5
+    },
+    "duration": "44s",
+    "created_at": "2026-01-05T11:48:12.528659",
+    "last_activity": "2026-01-05T11:48:56.868342",
+    "is_active": true
+  }
+}
