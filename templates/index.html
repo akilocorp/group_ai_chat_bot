@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Lobby | AI Matching System</title>
+    <title>Chat Lobby | Active Rooms</title>
     <style>
         :root {
             --primary: #667eea;
@@ -32,31 +32,6 @@
         h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
         p { color: #666; margin-bottom: 25px; font-size: 14px; }
 
-        /* Create Room Section */
-        .create-room-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-        input[type="text"] {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        input[type="text"]:focus { border-color: var(--primary); }
-        .btn-create {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
         /* Room List Section */
         .room-list-header {
             text-align: left;
@@ -67,64 +42,81 @@
             padding-bottom: 5px;
         }
         #room-list {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
             margin-bottom: 20px;
+            padding-right: 5px;
         }
+        
+        /* Custom Scrollbar */
+        #room-list::-webkit-scrollbar { width: 6px; }
+        #room-list::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
+
         .room-card {
             background: #fdfdfd;
             border: 1px solid #eee;
             padding: 15px;
             border-radius: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.2s ease;
             cursor: pointer;
+            text-align: left;
         }
         .room-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             border-color: var(--primary);
+            background: #fff;
         }
-        .room-info h4 { color: #333; margin-bottom: 4px; }
+        .room-info h4 { color: #333; margin-bottom: 4px; font-size: 16px; }
         .room-info span { font-size: 12px; color: #888; }
+        
         .join-badge {
             background: #eef2ff;
             color: var(--primary);
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 8px;
             font-size: 13px;
             font-weight: bold;
+            transition: background 0.2s;
+        }
+        .room-card:hover .join-badge {
+            background: var(--primary);
+            color: white;
         }
 
         .user-tag {
             font-size: 12px;
             color: #999;
-            margin-top: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
         }
         #suggested-id { font-weight: bold; color: var(--secondary); }
+        
+        .empty-state {
+            padding: 40px 20px;
+            color: #999;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🌍 Global Chat Lobby</h1>
-    <p>Join an existing room or create your own topic.</p>
+    <h1>🌍 Active Chat Rooms</h1>
+    <p>Select a live room below to join the conversation.</p>
 
-    <div class="create-room-box">
-        <input type="text" id="roomInput" placeholder="Enter room name...">
-        <button class="btn-create" onclick="createNewRoom()">Create</button>
-    </div>
-
-    <div class="room-list-header">Available Rooms</div>
+    <div class="room-list-header">Live Channels</div>
     <div id="room-list">
-        <p style="color: #999; padding: 20px;">Scanning for active rooms...</p>
+        <div class="empty-state">Searching for available rooms...</div>
     </div>
 
     <div class="user-tag">
-        Your Session ID: <span id="suggested-id">{{next_uid}}</span>
+        Logged in as: <span id="suggested-id">{{next_uid}}</span>
     </div>
 </div>
 
@@ -136,12 +128,16 @@
             const data = await response.json();
             const listElement = document.getElementById('room-list');
             
-            listElement.innerHTML = ''; // Clear loading message
-
             if (!data.rooms || data.rooms.length === 0) {
-                listElement.innerHTML = '<p style="color:#999; margin-top:20px;">No rooms found. Be the first to create one!</p>';
+                listElement.innerHTML = '<div class="empty-state">No active rooms found. Please wait for an admin to create one.</div>';
                 return;
             }
+
+            // Simple update: only rewrite if count changed to prevent flicker
+            const currentCount = listElement.querySelectorAll('.room-card').length;
+            if (data.rooms.length === currentCount && currentCount !== 0) return;
+
+            listElement.innerHTML = ''; 
 
             data.rooms.forEach(room => {
                 const card = document.createElement('div');
@@ -151,58 +147,29 @@
                 card.innerHTML = `
                     <div class="room-info">
                         <h4>${room.room_id}</h4>
-                        <span>${room.user_count} users active</span>
+                        <span>${room.user_count} participants online</span>
                     </div>
-                    <div class="join-badge">Join →</div>
+                    <div class="join-badge">Enter Room</div>
                 `;
                 listElement.appendChild(card);
             });
         } catch (error) {
             console.error("Error loading rooms:", error);
-            document.getElementById('room-list').innerHTML = '<p style="color:red;">Failed to connect to server.</p>';
+            document.getElementById('room-list').innerHTML = '<p style="color:red; padding: 20px;">Connection lost. Retrying...</p>';
         }
     }
 
-    // 2. Create a new room
-    async function createNewRoom() {
-        const roomName = document.getElementById('roomInput').value.trim();
-        if (!roomName) {
-            alert("Please enter a room name.");
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('room_id', roomName);
-
-        try {
-            const response = await fetch('/api/rooms/create', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (response.ok) {
-                // Refresh list or just join the room immediately
-                joinRoom(roomName);
-            } else {
-                alert("Could not create room. It might already exist.");
-            }
-        } catch (error) {
-            console.error("Error creating room:", error);
-        }
-    }
-
-    // 3. Navigate to the chat page
+    // 2. Navigate to the chat page
     function joinRoom(roomId) {
         const uid = document.getElementById('suggested-id').textContent;
-        // Redirecting to the chat route defined in main.py
         window.location.href = `/chat?uid=${encodeURIComponent(uid)}&room=${encodeURIComponent(roomId)}`;
     }
 
     // Initialize
     window.onload = loadRooms;
     
-    // Poll for room updates every 10 seconds
-    setInterval(loadRooms, 10000);
+    // Poll for room updates every 5 seconds for a "live" feel
+    setInterval(loadRooms, 5000);
 </script>
 
 </body>

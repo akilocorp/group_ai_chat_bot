@@ -106,11 +106,30 @@ async def list_rooms():
 @app.post("/api/rooms/create")
 async def create_new_room(room_id: str = Form(...)):
     """API to create a new persistent room."""
+    # 1. Save to MongoDB
     await create_room_in_db(room_id)
+    
+    # 2. Initialize in MatchManager memory for live WebSockets
     if room_id not in match_manager.active_rooms:
         match_manager.create_room(room_id)
+    
+    print(f"🏠 Admin created new room: {room_id}")
     return {"status": "success", "room_id": room_id}
-
+@app.post("/api/rooms/delete/{room_id}")
+async def delete_existing_room(room_id: str):
+    """Removes room from memory. (Note: MongoDB records stay unless manually deleted)"""
+    if room_id in match_manager.active_rooms:
+        # Close all active connections in that room first
+        connections = match_manager.active_rooms[room_id].get("ws_connections", [])
+        for ws in connections:
+            await ws.close(code=1000, reason="Room deleted by admin")
+        
+        # Remove from memory
+        del match_manager.active_rooms[room_id]
+        print(f"🗑️ Admin deleted room: {room_id}")
+        return {"status": "success"}
+    
+    raise HTTPException(status_code=404, detail="Room not found in active memory")
 @app.get("/api/rooms/{room_id}/history")
 async def room_history(room_id: str):
     """Fetches message history for a specific room from MongoDB."""

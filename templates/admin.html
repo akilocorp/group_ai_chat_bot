@@ -3,421 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Configuration</title>
+    <title>Admin Config | AI System</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg: #f8fafc;
+            --white: #ffffff;
         }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: #1e293b;
+            padding: 40px 20px;
         }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { margin-bottom: 30px; text-align: center; }
+        .header h1 { font-size: 2rem; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
+        .card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
         }
+        .card h2 { font-size: 1.25rem; margin-bottom: 20px; color: #475569; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
 
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 28px;
-            text-align: center;
-        }
-
-        .section {
-            margin-bottom: 30px;
-            padding-bottom: 30px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .section:last-child {
-            border-bottom: none;
-        }
-
-        .section h2 {
-            color: #555;
-            font-size: 18px;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            color: #666;
-            font-weight: 500;
-            margin-bottom: 6px;
-            font-size: 14px;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        textarea,
-        select {
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+        input, textarea {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus,
-        input[type="number"]:focus,
-        textarea:focus,
-        select:focus {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
+        input:focus { border-color: var(--primary); ring: 2px var(--primary); }
 
-        textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-
-        button {
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
             padding: 12px 24px;
             border: none;
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
-            flex: 1;
+            transition: transform 0.2s;
         }
+        .btn:hover { transform: translateY(-1px); opacity: 0.9; }
 
-        .btn-save {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-reset {
-            background: #f5f5f5;
-            color: #333;
-        }
-
-        .btn-reset:hover {
-            background: #eee;
-        }
-
-        .status-message {
-            margin-top: 20px;
-            padding: 12px 16px;
-            border-radius: 6px;
-            display: none;
-            font-size: 14px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .status-message.show {
-            display: block;
-        }
-
-        .status-message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .info-text {
-            font-size: 12px;
-            color: #999;
-            margin-top: 4px;
-        }
-
-        .bot-config {
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        .bot-config.disabled {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        .default-prompt {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 12px;
-            margin-top: 10px;
-            font-size: 13px;
-            color: #666;
-            display: none;
-        }
-
-        .default-prompt.show {
-            display: block;
-        }
-
-        .default-prompt-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #495057;
-        }
-
-        .default-prompt-content {
-            font-family: monospace;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 600px) {
-            .row {
-                grid-template-columns: 1fr;
-            }
-            .container {
-                padding: 20px;
-            }
-        }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; color: #64748b; font-size: 0.8rem; text-transform: uppercase; padding: 12px; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .badge { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>⚙️ Admin Configuration Panel</h1>
 
-        <form id="configForm">
-            <!-- Room Configuration -->
-            <div class="section">
-                <h2>📋 Room Configuration</h2>
-                <div class="row">
-                    <div class="form-group">
-                        <label for="groupSize">Group Size (users per room)</label>
-                        <input type="number" id="groupSize" name="group_size" min="1" max="10" required>
-                        <div class="info-text">Number of users required to form a chat room</div>
-                    </div>
-                    <div class="form-group">
-                        <label for="duration">Chat Duration (minutes)</label>
-                        <input type="number" id="duration" name="duration" min="1" max="180" required>
-                        <div class="info-text">Duration of each chat session</div>
-                    </div>
-                </div>
+<div class="container">
+    <div class="header">
+        <h1>⚙️ System Administration</h1>
+        <p>Manage bot behavior and monitor live activity</p>
+    </div>
+
+    <div class="card">
+        <h2>🤖 Bot Intelligence & Persona</h2>
+        <form id="botConfigForm">
+            <div class="form-group">
+                <label>Assistant Name</label>
+                <input type="text" id="botName" name="bot_name">
             </div>
-
-            <!-- Bot Configuration -->
-            <div class="section">
-                <h2>🤖 Bot Configuration</h2>
-
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div class="form-group">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="botEnabled" name="bot_enabled">
-                        <label for="botEnabled" style="margin-bottom: 0; font-weight: 400;">Enable Bot in Chat Rooms</label>
-                    </div>
-                    <div class="info-text">If unchecked, no bot will join or respond in rooms</div>
+                    <label>Response Delay (Seconds)</label>
+                    <input type="number" id="botDelay" name="bot_delay">
                 </div>
-
-                <!-- Bot Settings Container (隐藏/显示基于botEnabled) -->
-                <div id="botConfigContainer" class="bot-config">
-                    <div class="row">
-                        <div class="form-group">
-                            <label for="botName">Bot Display Name</label>
-                            <input type="text" id="botName" name="bot_name" maxlength="50" required>
-                            <div class="info-text">Name shown in chat (e.g., Assistant, Helper)</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="botDelay">Bot Response Delay (seconds)</label>
-                            <input type="number" id="botDelay" name="bot_delay" min="0" max="60" required>
-                            <div class="info-text">Delay before bot sends a reply</div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="botPrompt">Bot System Prompt</label>
-                        <textarea id="botPrompt" name="bot_prompt" placeholder="You are a friendly and engaging conversational partner..."></textarea>
-                        <div class="info-text">Defines the bot's personality, tone, and behavior. Leave blank for default neutral behavior.</div>
-
-                        <!-- 默认 Prompt 显示区域 -->
-                        <div id="defaultPromptInfo" class="default-prompt">
-                            <div class="default-prompt-title">📝 Default System Prompt (used when left blank):</div>
-                            <div class="default-prompt-content" id="defaultPromptContent"></div>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label>Group Size (Min Users)</label>
+                    <input type="number" id="groupSize" name="group_size">
                 </div>
             </div>
-
-            <!-- Action Buttons -->
-            <div class="button-group">
-                <button type="submit" class="btn-save">💾 Save Configuration</button>
-                <button type="reset" class="btn-reset" onclick="loadConfig()">🔄 Reload Current Config</button>
+            <div class="form-group">
+                <label>System Instructions (Prompt)</label>
+                <textarea id="botPrompt" name="bot_prompt" rows="4" placeholder="You are a helpful assistant..."></textarea>
             </div>
-
-            <div id="statusMessage" class="status-message"></div>
+            <button type="submit" class="btn">Update Configuration</button>
         </form>
     </div>
 
-    <script>
+    <div class="card">
+        <h2>📡 Live Room Status</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Room Name</th>
+                    <th>Users</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="roomListBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function loadSettings() {
+        const res = await fetch('/api/admin/config');
+        const config = await res.json();
+        document.getElementById('botName').value = config.bot_name;
+        document.getElementById('botDelay').value = config.bot_delay;
+        document.getElementById('groupSize').value = config.group_size;
+        document.getElementById('botPrompt').value = config.bot_prompt;
+    }
+
+    async function refreshRooms() {
+        const res = await fetch('/api/rooms');
+        const data = await res.json();
+        const tbody = document.getElementById('roomListBody');
+        tbody.innerHTML = '';
+        data.rooms.forEach(room => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${room.room_id}</strong></td>
+                    <td>${room.user_count} Online</td>
+                    <td><span class="badge">Active</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById('botConfigForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        fd.append('bot_enabled', true);
+        fd.append('duration', 60); // Default duration
         
-        const form = document.getElementById('configForm');
-        const statusMessage = document.getElementById('statusMessage');
-        const botEnabledCheckbox = document.getElementById('botEnabled');
-        const botConfigContainer = document.getElementById('botConfigContainer');
-        const defaultPromptInfo = document.getElementById('defaultPromptInfo');
-        const defaultPromptContent = document.getElementById('defaultPromptContent');
+        const res = await fetch('/api/admin/config', { method: 'POST', body: fd });
+        if(res.ok) alert("Settings successfully pushed to server!");
+    };
 
-        // 默认系统提示
-        const DEFAULT_SYSTEM_PROMPT = "You are a helpful, neutral conversational partner. Use clear and respectful language, ask clarifying questions when needed, and keep the conversation natural and balanced.";
+    loadSettings();
+    refreshRooms();
+    setInterval(refreshRooms, 5000);
+</script>
 
-        // 初始化时显示默认提示
-        defaultPromptContent.textContent = DEFAULT_SYSTEM_PROMPT;
-
-        // 根据 botEnabled 状态更新 UI
-        function updateBotConfigVisibility() {
-            const isBotEnabled = botEnabledCheckbox.checked;
-
-            if (isBotEnabled) {
-                botConfigContainer.classList.remove('disabled');
-                // 如果 prompt 为空，显示默认提示
-                const botPrompt = document.getElementById('botPrompt');
-                if (!botPrompt.value || botPrompt.value.trim() === '') {
-                    defaultPromptInfo.classList.add('show');
-                } else {
-                    defaultPromptInfo.classList.remove('show');
-                }
-            } else {
-                botConfigContainer.classList.add('disabled');
-                defaultPromptInfo.classList.remove('show');
-            }
-        }
-
-        // 监听 botEnabled 复选框变化
-        botEnabledCheckbox.addEventListener('change', updateBotConfigVisibility);
-
-        // 监听 prompt 输入变化
-        document.getElementById('botPrompt').addEventListener('input', function() {
-            if (botEnabledCheckbox.checked) {
-                if (!this.value || this.value.trim() === '') {
-                    defaultPromptInfo.classList.add('show');
-                } else {
-                    defaultPromptInfo.classList.remove('show');
-                }
-            }
-        });
-
-        // Load current configuration from server
-        async function loadConfig() {
-            try {
-                const res = await fetch('/api/admin/config');
-                if (!res.ok) throw new Error('Failed to fetch config');
-                const config = await res.json();
-
-                document.getElementById('groupSize').value = config.group_size;
-                document.getElementById('duration').value = config.duration;
-                document.getElementById('botEnabled').checked = config.bot_enabled;
-                document.getElementById('botName').value = config.bot_name;
-                document.getElementById('botDelay').value = config.bot_delay;
-                document.getElementById('botPrompt').value = config.bot_prompt || '';
-
-                // 更新 UI 状态
-                updateBotConfigVisibility();
-
-                console.log('✅ Config loaded:', config);
-            } catch (err) {
-                showStatus('⚠️ Could not load config: ' + err.message, 'error');
-                console.error(err);
-            }
-        }
-
-        // Handle form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(form);
-
-            // Important: Only include bot_enabled if checkbox is checked
-            // FastAPI treats missing field as False when default is provided
-            if (!botEnabledCheckbox.checked) {
-                formData.delete('bot_enabled');
-                // 当 bot 禁用时，不需要发送 bot 相关配置
-                formData.delete('bot_name');
-                formData.delete('bot_delay');
-                formData.delete('bot_prompt');
-            }
-
-            try {
-                const response = await fetch('/api/admin/config', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    await loadConfig(); // Refresh displayed values
-                    showStatus('✅ Configuration saved successfully!', 'success');
-                } else {
-                    const errorText = await response.text();
-                    showStatus('❌ Save failed: ' + errorText, 'error');
-                }
-            } catch (error) {
-                showStatus('❌ Network error: ' + error.message, 'error');
-                console.error(error);
-            }
-        });
-
-        // Show temporary status message
-        function showStatus(message, type) {
-            statusMessage.textContent = message;
-            statusMessage.className = `status-message show ${type}`;
-            setTimeout(() => {
-                statusMessage.classList.remove('show');
-            }, 5000);
-        }
-
-        // 初始加载配置并更新 UI
-        loadConfig();
-    </script>
 </body>
 </html>

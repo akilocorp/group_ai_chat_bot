@@ -1,6 +1,6 @@
 {
   "group_size": 4,
-  "duration": 10,
+  "duration": 60,
   "bot_enabled": true,
   "bot_delay": 5,
   "bot_name": "assistant",
