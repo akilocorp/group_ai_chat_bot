@@ -2,280 +2,331 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Chat - Lobby System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Live Chat - Participant System</title>
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-color: #f0f2f5;
+            --own-msg: #667eea;
+            --other-msg: #ffffff;
+            --header-height: 70px;
+            --input-height: 80px;
+        }
+
+        /* 1. LOCK THE SCREEN HEIGHT */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevents the whole page from scrolling */
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        .header h2 { margin-bottom: 10px; }
-
-        .info {
-            display: flex;
-            gap: 20px;
-            font-size: 14px;
-            opacity: 0.9;
-            flex-wrap: wrap;
-        }
-
-        .chat-container {
-            flex: 1;
+        /* 2. THE APP WRAPPER (Flex Column) */
+        .app-wrapper {
             display: flex;
             flex-direction: column;
+            height: 100vh; /* Exactly the height of the viewport */
+            width: 100%;
+        }
+
+        /* FIXED TOP HEADER */
+        .header {
+            height: var(--header-height);
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            flex-shrink: 0; /* Prevents header from collapsing */
+            z-index: 10;
+        }
+
+        .header h2 { font-size: 1.1rem; margin-bottom: 2px; }
+        .info { font-size: 0.8rem; opacity: 0.8; }
+
+        /* 3. THE SCROLLABLE CHAT AREA */
+        .chat-container {
+            flex: 1; /* Takes up all remaining space between header and input */
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            width: 100%;
             max-width: 800px;
             margin: 0 auto;
-            width: 100%;
+            position: relative;
         }
 
         #chat-box {
             flex: 1;
-            overflow-y: auto;
-            background: white;
-            margin: 20px;
+            overflow-y: auto; /* THIS IS THE ONLY SCROLLING PART */
             padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
+            gap: 12px;
+            -webkit-overflow-scrolling: touch; /* Smooth scroll for iOS */
         }
 
-        /* Message Styles */
+        /* MESSAGE BUBBLES */
         .message-group {
-            margin: 12px 0;
             display: flex;
             align-items: flex-end;
             gap: 8px;
+            max-width: 85%;
+            animation: fadeIn 0.2s ease-out;
         }
 
-        .message-group.own { flex-direction: row-reverse; }
-
-        .message-content {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            max-width: 70%;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
+        .message-group.own { align-self: flex-end; flex-direction: row-reverse; }
+        .message-group.other { align-self: flex-start; }
+
+        .message-content { display: flex; flex-direction: column; }
         .message-group.own .message-content { align-items: flex-end; }
 
-        .message-sender {
-            font-size: 11px;
-            font-weight: 600;
-            color: #666;
+        .message-sender { 
+            font-size: 0.7rem; 
+            color: #666; 
+            font-weight: bold; 
+            margin-bottom: 2px; 
+            padding: 0 4px; 
         }
-
         .sender-bot { color: #9c27b0; font-weight: 800; }
 
         .message {
-            padding: 12px 16px;
+            padding: 10px 14px;
             border-radius: 18px;
-            word-wrap: break-word;
+            font-size: 0.95rem;
             line-height: 1.4;
-            font-size: 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        .message.own {
-            background: #667eea;
-            color: white;
-            border-bottom-right-radius: 4px;
+        .message.own { 
+            background: var(--own-msg); 
+            color: white; 
+            border-bottom-right-radius: 4px; 
+        }
+        .message.other { 
+            background: var(--other-msg); 
+            color: #333; 
+            border-bottom-left-radius: 4px; 
         }
 
-        .message.other {
-            background: #e9ecef;
-            color: #333;
-            border-bottom-left-radius: 4px;
-        }
-
+        /* 4. FIXED BOTTOM INPUT AREA */
         .input-area {
-            padding: 20px;
+            height: var(--input-height);
             background: white;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-            border-radius: 16px 16px 0 0;
+            padding: 10px 20px;
+            border-top: 1px solid #ddd;
+            flex-shrink: 0; /* Prevents input from collapsing */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 10;
         }
 
-        .input-row { display: flex; gap: 12px; }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            align-items: center;
+        }
 
         #msg-input {
             flex: 1;
-            padding: 14px 20px;
-            border: 2px solid #e9ecef;
+            padding: 12px 18px;
+            border: 1px solid #e0e0e0;
             border-radius: 25px;
-            font-size: 16px;
+            font-size: 1rem;
             outline: none;
+            background: #f8f9fa;
+            transition: all 0.2s;
         }
 
-        #msg-input:focus { border-color: #667eea; }
+        #msg-input:focus { border-color: #667eea; background: white; box-shadow: 0 0 5px rgba(102, 126, 234, 0.2); }
 
         button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: var(--primary-gradient);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
             cursor: pointer;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+            transition: transform 0.1s;
         }
 
-        .status {
-            text-align: center;
-            padding-top: 10px;
-            font-size: 12px;
-            color: #888;
+        button:active { transform: scale(0.9); }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            background: #ccc;
         }
     </style>
 </head>
 <body>
 
+<div class="app-wrapper">
     <div class="header">
-        <h2 id="room-title">Room: Loading...</h2>
+        <h2 id="room-title">Room</h2>
         <div class="info">
-            <span>User: <strong id="display-uid">...</strong></span>
-            <span id="participants-info">Participants: Detecting...</span>
+            User: <strong id="display-uid">...</strong> | <span id="participants-info">Active: 1</span>
         </div>
     </div>
 
     <div class="chat-container">
-        <div id="chat-box"></div>
-        
-        <div class="input-area">
-            <div class="input-row">
-                <input id="msg-input" type="text" placeholder="Type your message..." autocomplete="off">
-                <button onclick="sendMessage()">Send</button>
+        <div id="chat-box">
             </div>
-            <div class="status">Status: <span id="ws-status">Connecting...</span></div>
-        </div>
     </div>
 
-    <script>
-        // --- Configuration ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const uid = urlParams.get('uid') || 'Anonymous';
-        const roomId = urlParams.get('room') || 'General';
-        
-        let botName = "Assistant"; 
-        let roomParticipants = [uid];
+    <div class="input-area">
+        <div class="input-row">
+            <input id="msg-input" type="text" placeholder="Message..." autocomplete="off">
+            <button onclick="sendMessage()">➤</button>
+        </div>
+        <div style="text-align:center; font-size:0.6rem; color:#aaa; margin-top:5px;">
+            <span id="status-dot" class="status-dot"></span> <span id="ws-status">Connecting...</span>
+        </div>
+    </div>
+</div>
 
-        document.getElementById('display-uid').textContent = uid;
-        document.getElementById('room-title').textContent = `Room: ${roomId}`;
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const uid = urlParams.get('uid') || 'Anonymous';
+    const roomId = urlParams.get('room') || 'General';
+    
+    let botName = "Assistant"; 
+    let roomParticipants = [uid];
 
-        const chatBox = document.getElementById('chat-box');
-        const msgInput = document.getElementById('msg-input');
-        const wsStatus = document.getElementById('ws-status');
-        const participantsDisplay = document.getElementById('participants-info');
+    document.getElementById('display-uid').textContent = uid;
+    document.getElementById('room-title').textContent = roomId;
 
-        // --- Core Rendering Logic ---
-        function renderMessage(rawData) {
-            // Expected format "SenderName: Message Text"
-            const separatorIndex = rawData.indexOf(':');
-            if (separatorIndex === -1) return;
+    const chatBox = document.getElementById('chat-box');
+    const msgInput = document.getElementById('msg-input');
+    const wsStatus = document.getElementById('ws-status');
+    const statusDot = document.getElementById('status-dot');
+    const participantsDisplay = document.getElementById('participants-info');
 
-            const sender = rawData.substring(0, separatorIndex).trim();
-            const text = rawData.substring(separatorIndex + 1).trim();
+    // SCROLL TO LATEST MESSAGE
+    function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-            if (!roomParticipants.includes(sender)) {
-                roomParticipants.push(sender);
-                updateParticipants();
+    // RENDER MESSAGE BUBBLES
+    function renderMessage(rawData) {
+        const separatorIndex = rawData.indexOf(':');
+        if (separatorIndex === -1) return;
+
+        const sender = rawData.substring(0, separatorIndex).trim();
+        const text = rawData.substring(separatorIndex + 1).trim();
+
+        if (!roomParticipants.includes(sender)) {
+            roomParticipants.push(sender);
+            updateParticipants();
+        }
+
+        const isOwn = (sender === uid);
+        const isBot = (sender === botName);
+
+        const group = document.createElement('div');
+        group.className = `message-group ${isOwn ? 'own' : 'other'}`;
+
+        const content = document.createElement('div');
+        content.className = 'message-content';
+
+        const senderName = document.createElement('div');
+        senderName.className = `message-sender ${isBot ? 'sender-bot' : ''}`;
+        senderName.textContent = isOwn ? "You" : sender;
+
+        const bubble = document.createElement('div');
+        bubble.className = `message ${isOwn ? 'own' : 'other'}`;
+        bubble.textContent = text;
+
+        content.appendChild(senderName);
+        content.appendChild(bubble);
+        group.appendChild(content);
+        chatBox.appendChild(group);
+
+        scrollToBottom();
+    }
+
+    // LOAD HISTORY FROM MONGODB
+    async function loadHistory() {
+        try {
+            const res = await fetch(`/api/rooms/${roomId}/history`);
+            const data = await res.json();
+            chatBox.innerHTML = ''; 
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(m => renderMessage(`${m.sender}: ${m.text}`));
             }
+            // Ensure scroll happens after all messages are rendered
+            setTimeout(scrollToBottom, 200); 
+        } catch (err) { console.error("History failed:", err); }
+    }
 
-            const isOwn = (sender === uid);
-            const isBot = (sender === botName);
+    async function loadConfig() {
+        try {
+            const res = await fetch('/api/admin/config');
+            const config = await res.json();
+            botName = config.bot_name || "Assistant";
+        } catch (e) { }
+    }
 
-            const group = document.createElement('div');
-            group.className = `message-group ${isOwn ? 'own' : ''}`;
+    function updateParticipants() {
+        participantsDisplay.textContent = `Active: ${roomParticipants.length}`;
+    }
 
-            const content = document.createElement('div');
-            content.className = 'message-content';
+    // WEBSOCKET LOGIC
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomId}/${uid}`);
 
-            const senderName = document.createElement('div');
-            senderName.className = `message-sender ${isBot ? 'sender-bot' : ''}`;
-            senderName.textContent = isOwn ? "You" : sender;
+    ws.onopen = async () => {
+        wsStatus.textContent = 'Online';
+        statusDot.style.background = '#27ae60';
+        await loadConfig();
+        await loadHistory();
+    };
 
-            const bubble = document.createElement('div');
-            bubble.className = `message ${isOwn ? 'own' : 'other'}`;
-            bubble.textContent = text;
+    ws.onmessage = (event) => renderMessage(event.data);
+    
+    ws.onclose = () => {
+        wsStatus.textContent = 'Disconnected';
+        statusDot.style.background = '#e74c3c';
+    };
 
-            content.appendChild(senderName);
-            content.appendChild(bubble);
-            group.appendChild(content);
-            chatBox.appendChild(group);
-
-            chatBox.scrollTop = chatBox.scrollHeight;
+    function sendMessage() {
+        const val = msgInput.value.trim();
+        if (val && ws.readyState === WebSocket.OPEN) {
+            ws.send(val);
+            msgInput.value = '';
+            msgInput.focus();
         }
+    }
 
-        // --- Data Loading ---
-        async function loadHistory() {
-            try {
-                const res = await fetch(`/api/rooms/${roomId}/history`);
-                const data = await res.json();
-                
-                chatBox.innerHTML = ''; // Clear existing
-                
-                if (data.messages) {
-                    data.messages.forEach(m => renderMessage(`${m.sender}: ${m.text}`));
-                }
-            } catch (err) {
-                console.error("History failed:", err);
-            }
-        }
+    msgInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
 
-        async function loadConfig() {
-            try {
-                const res = await fetch('/api/admin/config');
-                const config = await res.json();
-                botName = config.bot_name || "Assistant";
-            } catch (e) { console.log("Config fetch failed"); }
-        }
-
-        function updateParticipants() {
-            participantsDisplay.textContent = `Participants: ${roomParticipants.join(' • ')}`;
-        }
-
-        // --- WebSocket ---
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const ws = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomId}/${uid}`);
-
-        ws.onopen = async () => {
-            wsStatus.textContent = 'Connected ✅';
-            wsStatus.style.color = 'green';
-            await loadConfig();
-            await loadHistory();
-        };
-
-        ws.onmessage = (event) => renderMessage(event.data);
-        
-        ws.onclose = () => {
-            wsStatus.textContent = 'Disconnected ❌';
-            wsStatus.style.color = 'red';
-        };
-
-        // --- Interaction ---
-        function sendMessage() {
-            const val = msgInput.value.trim();
-            if (val && ws.readyState === WebSocket.OPEN) {
-                ws.send(val);
-                msgInput.value = '';
-            }
-        }
-
-        msgInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        // Start
-        updateParticipants();
-    </script>
+    updateParticipants();
+</script>
 </body>
 </html>
