@@ -189,43 +189,19 @@ class MatchManager:
 
         return partner_id
 
-    def create_room(self, members: List[str]) -> str:
-        """
-        Create a room for matched participants
-
-        Parameters:
-        - members: List of user IDs
-
-        Return: room_id (UUID)
-        """
-        import uuid
-
-        room_id = str(uuid.uuid4())
-
-        # Determine if bot should be enabled for this room
-        bot_enabled = False
-        if self.admin_config:
-            bot_enabled = self.admin_config.bot_enabled
-
+    def create_room(self, room_id, members=None):
+    # If no members are provided, initialize as an empty list
+     if members is None:
+        members = []
+    
+    # Now we can safely copy the list
         self.active_rooms[room_id] = {
-            "members": members.copy(),
-            "created_at": datetime.now(),
-            "ws_connections": [],
-            "bot_enabled": bot_enabled,
-            "room_id": room_id
+        "members": members.copy() if isinstance(members, list) else [members],
+        "ws_connections": [],
+        "created_at": datetime.now(),
+        "bot_enabled": getattr(self.admin_config, 'bot_enabled', False)
         }
-
-        # Map users to room
-        for uid in members:
-            self.user_to_room[uid] = room_id
-
-        self.total_sessions += 1
-
-        print(f"🏠 Room {room_id} created with {len(members)} users: {', '.join(members)}")
-        print(f"   🤖 Bot enabled: {bot_enabled}")
-
         return room_id
-
     def leave_queue(self, uid: str, condition: str = "default"):
         """
         Leave queue

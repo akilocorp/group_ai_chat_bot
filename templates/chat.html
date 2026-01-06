@@ -1,387 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Chat - Participant Matching System</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat - Lobby System</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+        }
 
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
 
-    .header h2 {
-      margin-bottom: 10px;
-    }
+        .header h2 { margin-bottom: 10px; }
 
-    .info {
-      display: flex;
-      gap: 20px;
-      font-size: 14px;
-      opacity: 0.9;
-      flex-wrap: wrap;
-    }
+        .info {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            opacity: 0.9;
+            flex-wrap: wrap;
+        }
 
-    .info span {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
 
-    .chat-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      max-width: 800px;
-      margin: 0 auto;
-      width: 100%;
-    }
+        #chat-box {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
 
-    #chat-box {
-      flex: 1;
-      overflow-y: auto;
-      background: white;
-      margin: 20px;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
+        /* Message Styles */
+        .message-group {
+            margin: 12px 0;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
 
-    /* Message styles */
-    .message-group {
-      margin: 12px 0;
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-    }
+        .message-group.own { flex-direction: row-reverse; }
 
-    .message-group.own {
-      flex-direction: row-reverse;
-    }
+        .message-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 70%;
+        }
 
-    .message-sender {
-      font-size: 11px;
-      margin-bottom: 4px;
-      font-weight: 600;
-      min-width: 60px;
-      text-align: left;
-    }
+        .message-group.own .message-content { align-items: flex-end; }
 
-    .message-group.own .message-sender {
-      text-align: right;
-    }
+        .message-sender {
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+        }
 
-    .message-content {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      max-width: 60%;
-    }
+        .sender-bot { color: #9c27b0; font-weight: 800; }
 
-    .message-group.own .message-content {
-      align-items: flex-end;
-    }
+        .message {
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.4;
+            font-size: 15px;
+        }
 
-    .message {
-      padding: 12px 16px;
-      border-radius: 20px;
-      word-wrap: break-word;
-      line-height: 1.4;
-    }
+        .message.own {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
 
-    .message.own {
-      background: #667eea;
-      color: white;
-    }
+        .message.other {
+            background: #e9ecef;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
 
-    .message.other {
-      background: #e9ecef;
-      color: #333;
-    }
+        .input-area {
+            padding: 20px;
+            background: white;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            border-radius: 16px 16px 0 0;
+        }
 
-    /* Sender color coding */
-    .sender-a { color: #0066cc; }
-    .sender-b { color: #ff6600; }
-    .sender-c { color: #00aa00; }
-    .sender-other { color: #666; }
-    .sender-bot { color: #9c27b0; font-weight: 700; }
+        .input-row { display: flex; gap: 12px; }
 
-    .input-area {
-      padding: 20px;
-      background: white;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-      border-radius: 16px 16px 0 0;
-    }
+        #msg-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
 
-    .input-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
+        #msg-input:focus { border-color: #667eea; }
 
-    #msg-input {
-      flex: 1;
-      padding: 14px 20px;
-      border: 2px solid #e9ecef;
-      border-radius: 25px;
-      font-size: 16px;
-      outline: none;
-      transition: border-color 0.3s;
-    }
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+        }
 
-    #msg-input:focus {
-      border-color: #667eea;
-    }
-
-    button {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      padding: 14px 28px;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
-      transition: transform 0.2s;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    .status {
-      text-align: center;
-      padding: 10px;
-      font-size: 12px;
-      color: #666;
-    }
-
-    /* System messages */
-    .system-message {
-      background: #f0f0f0;
-      color: #666;
-      text-align: center;
-      padding: 10px;
-      margin: 15px 0;
-      border-radius: 10px;
-      font-size: 13px;
-    }
-
-    @media (max-width: 600px) {
-      .message-content {
-        max-width: 80%;
-      }
-      .info {
-        flex-direction: column;
-        gap: 5px;
-      }
-    }
-  </style>
+        .status {
+            text-align: center;
+            padding-top: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
 </head>
 <body>
-  <div class="header">
-    <h2>💬 Live Chat</h2>
-    <div class="info">
-      <span>You: <strong style="color: #fff;" id="user-id">Loading...</strong></span>
-      <span id="participants-info" style="color: rgba(255,255,255,0.9);">Loading...</span>
+
+    <div class="header">
+        <h2 id="room-title">Room: Loading...</h2>
+        <div class="info">
+            <span>User: <strong id="display-uid">...</strong></span>
+            <span id="participants-info">Participants: Detecting...</span>
+        </div>
     </div>
-  </div>
 
-  <div class="chat-container">
-    <div id="chat-box"></div>
-    <div class="input-area">
-      <div class="input-row">
-        <input id="msg-input" type="text" placeholder="Type a message and press Enter... " autocomplete="off">
-        <button onclick="sendMessage()">Send →</button>
-      </div>
-      <div class="status">Connection Status: <span id="ws-status" style="color: #ffc107;">Connecting...</span></div>
+    <div class="chat-container">
+        <div id="chat-box"></div>
+        
+        <div class="input-area">
+            <div class="input-row">
+                <input id="msg-input" type="text" placeholder="Type your message..." autocomplete="off">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+            <div class="status">Status: <span id="ws-status">Connecting...</span></div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    const CURRENT_HOST = window.location.host;
-    const API_BASE = `${window.location.protocol}//${CURRENT_HOST}`;
+    <script>
+        // --- Configuration ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const uid = urlParams.get('uid') || 'Anonymous';
+        const roomId = urlParams.get('room') || 'General';
+        
+        let botName = "Assistant"; 
+        let roomParticipants = [uid];
 
-    // Get user ID and room ID from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const uid = urlParams.get('uid') || 'user_' + Math.random().toString(36).substr(2, 9);
-    const roomId = urlParams.get('room') || 'room_' + Math.random().toString(36).substr(2, 9);
+        document.getElementById('display-uid').textContent = uid;
+        document.getElementById('room-title').textContent = `Room: ${roomId}`;
 
-    // 🔥 Dynamic bot name
-    let botName = "Bot";
+        const chatBox = document.getElementById('chat-box');
+        const msgInput = document.getElementById('msg-input');
+        const wsStatus = document.getElementById('ws-status');
+        const participantsDisplay = document.getElementById('participants-info');
 
-    document.getElementById('user-id').textContent = uid;
+        // --- Core Rendering Logic ---
+        function renderMessage(rawData) {
+            // Expected format "SenderName: Message Text"
+            const separatorIndex = rawData.indexOf(':');
+            if (separatorIndex === -1) return;
 
-    const chatBox = document.getElementById('chat-box');
-    const msgInput = document.getElementById('msg-input');
-    const wsStatus = document.getElementById('ws-status');
-    const participantsInfo = document.getElementById('participants-info');
+            const sender = rawData.substring(0, separatorIndex).trim();
+            const text = rawData.substring(separatorIndex + 1).trim();
 
-    // Track all participants in the room
-    let roomParticipants = [uid];
+            if (!roomParticipants.includes(sender)) {
+                roomParticipants.push(sender);
+                updateParticipants();
+            }
 
-    // Assign different colors to different senders
-    function getSenderColorClass(sender) {
-      if (sender === 'bot') return 'sender-bot';
-      if (sender === uid) return 'own';
-      const otherUsers = roomParticipants.filter(u => u !== uid && u !== 'bot').sort();
-      const index = otherUsers.indexOf(sender);
-      return ['sender-a', 'sender-b', 'sender-c'][index] || 'sender-other';
-    }
+            const isOwn = (sender === uid);
+            const isBot = (sender === botName);
 
-    // 🔥 Load bot configuration
-    async function loadBotConfig() {
-      try {
-        const res = await fetch(`${API_BASE}/api/admin/config`);
-        const config = await res.json();
-        botName = config.botname || 'Bot';
-        console.log(`✅ Bot name loaded: ${botName}`);
-      } catch (err) {
-        console.log(`⚠️ Failed to load bot config: ${err.message}`);
-        botName = 'Bot';
-      }
-    }
+            const group = document.createElement('div');
+            group.className = `message-group ${isOwn ? 'own' : ''}`;
 
-    // WebSocket connection
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/chat/${roomId}/${uid}`);
+            const content = document.createElement('div');
+            content.className = 'message-content';
 
-    // WebSocket events
-    ws.onopen = () => {
-      wsStatus.textContent = '✅ Connected';
-      wsStatus.style.color = '#28a745';
-      console.log(`✅ WebSocket connected (uid=${uid}, room=${roomId})`);
-      // 🔥 Load bot configuration when connected
-      loadBotConfig();
-    };
+            const senderName = document.createElement('div');
+            senderName.className = `message-sender ${isBot ? 'sender-bot' : ''}`;
+            senderName.textContent = isOwn ? "You" : sender;
 
-    ws.onmessage = (event) => {
-      const data = event.data;
-      console.log('📨 Message received:', data);
+            const bubble = document.createElement('div');
+            bubble.className = `message ${isOwn ? 'own' : 'other'}`;
+            bubble.textContent = text;
 
-      // Parse message format: "sender: message"
-      const match = data.match(/^(.+?):\s*(.*)$/);
+            content.appendChild(senderName);
+            content.appendChild(bubble);
+            group.appendChild(content);
+            chatBox.appendChild(group);
 
-      if (match) {
-        const sender = match[1];
-        const messageText = match[2];
-
-        // Update participant list (new speakers automatically added)
-        if (!roomParticipants.includes(sender)) {
-          roomParticipants.push(sender);
-          updateParticipantsDisplay();
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Create message group
-        const messageGroup = document.createElement('div');
-        const colorClass = getSenderColorClass(sender);
-        const isOwn = sender === uid;
-
-        messageGroup.className = `message-group ${isOwn ? 'own' : ''}`;
-
-        // Sender name
-        const senderEl = document.createElement('div');
-        let displayName = sender;
-
-        if (sender === "bot") {
-          displayName = botName;
-          senderEl.className = `message-sender sender-bot`;
-        } else if (sender === uid) {
-          displayName = "You";
-          senderEl.className = `message-sender`;
-        } else {
-          senderEl.className = `message-sender ${colorClass}`;
+        // --- Data Loading ---
+        async function loadHistory() {
+            try {
+                const res = await fetch(`/api/rooms/${roomId}/history`);
+                const data = await res.json();
+                
+                chatBox.innerHTML = ''; // Clear existing
+                
+                if (data.messages) {
+                    data.messages.forEach(m => renderMessage(`${m.sender}: ${m.text}`));
+                }
+            } catch (err) {
+                console.error("History failed:", err);
+            }
         }
 
-        senderEl.textContent = displayName;
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/admin/config');
+                const config = await res.json();
+                botName = config.bot_name || "Assistant";
+            } catch (e) { console.log("Config fetch failed"); }
+        }
 
-        // Message content wrapper
-        const contentEl = document.createElement('div');
-        contentEl.className = 'message-content';
+        function updateParticipants() {
+            participantsDisplay.textContent = `Participants: ${roomParticipants.join(' • ')}`;
+        }
 
-        // Message text
-        const msgEl = document.createElement('div');
-        msgEl.className = `message ${isOwn ? 'own' : 'other'}`;
-        msgEl.textContent = messageText;
+        // --- WebSocket ---
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomId}/${uid}`);
 
-        contentEl.appendChild(senderEl);
-        contentEl.appendChild(msgEl);
-        messageGroup.appendChild(contentEl);
+        ws.onopen = async () => {
+            wsStatus.textContent = 'Connected ✅';
+            wsStatus.style.color = 'green';
+            await loadConfig();
+            await loadHistory();
+        };
 
-        chatBox.appendChild(messageGroup);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      } else {
-        // System message or other format
-        const div = document.createElement('div');
-        div.className = 'system-message';
-        div.textContent = data;
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
-    };
+        ws.onmessage = (event) => renderMessage(event.data);
+        
+        ws.onclose = () => {
+            wsStatus.textContent = 'Disconnected ❌';
+            wsStatus.style.color = 'red';
+        };
 
-    ws.onclose = () => {
-      wsStatus.textContent = '❌ Disconnected';
-      wsStatus.style.color = '#dc3545';
-      console.log('❌ WebSocket disconnected');
-    };
+        // --- Interaction ---
+        function sendMessage() {
+            const val = msgInput.value.trim();
+            if (val && ws.readyState === WebSocket.OPEN) {
+                ws.send(val);
+                msgInput.value = '';
+            }
+        }
 
-    ws.onerror = (error) => {
-      wsStatus.textContent = '⚠️ Connection Error';
-      wsStatus.style.color = '#ffc107';
-      console.error('❌ WebSocket error:', error);
-    };
+        msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
 
-    // Update participant display (without room ID)
-    function updateParticipantsDisplay() {
-      const sorted = roomParticipants.sort();
-      const participants = sorted
-        .map(p => {
-          if (p === 'bot') return botName;
-          if (p === uid) return `${p} (You)`;
-          return p;
-        })
-        .join(' • ');
-      participantsInfo.textContent = `Participants: ${participants}`;
-    }
-
-    // Initialize participant display
-    updateParticipantsDisplay();
-
-    // Send message
-    function sendMessage() {
-      const text = msgInput.value.trim();
-      if (text && ws.readyState === WebSocket.OPEN) {
-        ws.send(text);
-        msgInput.value = '';
-        msgInput.focus();
-      } else if (!text) {
-        msgInput.focus();
-      } else {
-        alert('Connection lost. Please refresh and try again.');
-      }
-    }
-
-    // Keyboard shortcuts
-    msgInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    // Auto focus + paste handling
-    msgInput.focus();
-    msgInput.addEventListener('paste', () => setTimeout(() => msgInput.focus(), 0));
-  </script>
+        // Start
+        updateParticipants();
+    </script>
 </body>
 </html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Lobby | AI Matching System</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg: #f4f7f6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            padding: 30px;
+            text-align: center;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        p { color: #666; margin-bottom: 25px; font-size: 14px; }
+
+        /* Create Room Section */
+        .create-room-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--primary); }
+        .btn-create {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Room List Section */
+        .room-list-header {
+            text-align: left;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 5px;
+        }
+        #room-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .room-card {
+            background: #fdfdfd;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-color: var(--primary);
+        }
+        .room-info h4 { color: #333; margin-bottom: 4px; }
+        .room-info span { font-size: 12px; color: #888; }
+        .join-badge {
+            background: #eef2ff;
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .user-tag {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+        }
+        #suggested-id { font-weight: bold; color: var(--secondary); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌍 Global Chat Lobby</h1>
+    <p>Join an existing room or create your own topic.</p>
+
+    <div class="create-room-box">
+        <input type="text" id="roomInput" placeholder="Enter room name...">
+        <button class="btn-create" onclick="createNewRoom()">Create</button>
+    </div>
+
+    <div class="room-list-header">Available Rooms</div>
+    <div id="room-list">
+        <p style="color: #999; padding: 20px;">Scanning for active rooms...</p>
+    </div>
+
+    <div class="user-tag">
+        Your Session ID: <span id="suggested-id">{{next_uid}}</span>
+    </div>
+</div>
+
+<script>
+    // 1. Fetch rooms from the server on load
+    async function loadRooms() {
+        try {
+            const response = await fetch('/api/rooms');
+            const data = await response.json();
+            const listElement = document.getElementById('room-list');
+            
+            listElement.innerHTML = ''; // Clear loading message
+
+            if (!data.rooms || data.rooms.length === 0) {
+                listElement.innerHTML = '<p style="color:#999; margin-top:20px;">No rooms found. Be the first to create one!</p>';
+                return;
+            }
+
+            data.rooms.forEach(room => {
+                const card = document.createElement('div');
+                card.className = 'room-card';
+                card.onclick = () => joinRoom(room.room_id);
+                
+                card.innerHTML = `
+                    <div class="room-info">
+                        <h4>${room.room_id}</h4>
+                        <span>${room.user_count} users active</span>
+                    </div>
+                    <div class="join-badge">Join →</div>
+                `;
+                listElement.appendChild(card);
+            });
+        } catch (error) {
+            console.error("Error loading rooms:", error);
+            document.getElementById('room-list').innerHTML = '<p style="color:red;">Failed to connect to server.</p>';
+        }
+    }
+
+    // 2. Create a new room
+    async function createNewRoom() {
+        const roomName = document.getElementById('roomInput').value.trim();
+        if (!roomName) {
+            alert("Please enter a room name.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('room_id', roomName);
+
+        try {
+            const response = await fetch('/api/rooms/create', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                // Refresh list or just join the room immediately
+                joinRoom(roomName);
+            } else {
+                alert("Could not create room. It might already exist.");
+            }
+        } catch (error) {
+            console.error("Error creating room:", error);
+        }
+    }
+
+    // 3. Navigate to the chat page
+    function joinRoom(roomId) {
+        const uid = document.getElementById('suggested-id').textContent;
+        // Redirecting to the chat route defined in main.py
+        window.location.href = `/chat?uid=${encodeURIComponent(uid)}&room=${encodeURIComponent(roomId)}`;
+    }
+
+    // Initialize
+    window.onload = loadRooms;
+    
+    // Poll for room updates every 10 seconds
+    setInterval(loadRooms, 10000);
+</script>
+
+</body>
+</html>
