@@ -3,153 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Config | AI System</title>
+    <title>Master Admin Dashboard</title>
     <style>
         :root {
             --primary: #667eea;
             --secondary: #764ba2;
-            --bg: #f8fafc;
+            --dark: #2d3436;
+            --bg: #f0f2f5;
             --white: #ffffff;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         body {
-            font-family: 'Inter', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg);
-            color: #1e293b;
-            padding: 40px 20px;
+            color: var(--dark);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        .container { max-width: 900px; margin: 0 auto; }
-        .header { margin-bottom: 30px; text-align: center; }
-        .header h1 { font-size: 2rem; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* --- SHARED NAVIGATION HEADER --- */
+        .nav-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-logo {
+            font-weight: 800;
+            font-size: 1.4rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links { display: flex; gap: 20px; }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .nav-links a:hover { color: var(--primary); }
+        .nav-links a.active { color: var(--primary); border-bottom: 2px solid var(--primary); border-radius: 0; }
+
+        /* --- PAGE CONTENT --- */
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            width: 100%;
+        }
+
+        @media (min-width: 900px) {
+            .container { grid-template-columns: 1fr 1fr; }
+        }
 
         .card {
-            background: var(--white);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 25px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
-        .card h2 { font-size: 1.25rem; margin-bottom: 20px; color: #475569; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
 
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; color: #555; }
+        
         input, textarea {
             width: 100%;
             padding: 12px;
-            border: 1px solid #e2e8f0;
+            border: 2px solid #eee;
             border-radius: 8px;
             font-size: 1rem;
-            outline: none;
         }
-        input:focus { border-color: var(--primary); ring: 2px var(--primary); }
 
         .btn {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 12px 24px;
+            padding: 12px 20px;
             border: none;
             border-radius: 8px;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s;
         }
-        .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+
+        .btn-save { background: var(--primary); color: white; width: 100%; }
+        .btn-danger { background: #fff; color: #e74c3c; border: 1px solid #e74c3c; padding: 5px 10px; font-size: 0.8rem; }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+        }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; color: #64748b; font-size: 0.8rem; text-transform: uppercase; padding: 12px; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
-        .badge { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+        th { text-align: left; padding: 12px; color: #999; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #f9f9f9; font-size: 0.9rem; }
+
+        .notify {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            display: none;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>⚙️ System Administration</h1>
-        <p>Manage bot behavior and monitor live activity</p>
-    </div>
+    <header class="nav-header">
+    <a href="/" class="nav-logo">🚀 ACTR</a>
+    <nav class="nav-links">
+        <a href="/" id="nav-lobby">Lobby</a>
+        <a href="javascript:void(0)" onclick="goToWait()" id="nav-wait">Wait Room</a>
+        <a href="/dashboard" id="nav-dash">Dashboard</a>
+        <a href="/admin" id="nav-admin">Admin</a>
+    </nav>
+</header>
 
-    <div class="card">
-        <h2>🤖 Bot Intelligence & Persona</h2>
-        <form id="botConfigForm">
-            <div class="form-group">
-                <label>Assistant Name</label>
-                <input type="text" id="botName" name="bot_name">
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div id="notification" class="notify"></div>
+
+    <div class="container">
+        <div class="card">
+            <h2>🤖 Matching & AI Config</h2>
+            <form id="configForm">
                 <div class="form-group">
-                    <label>Response Delay (Seconds)</label>
-                    <input type="number" id="botDelay" name="bot_delay">
+                    <label>Group Size</label>
+                    <input type="number" id="groupSize" name="group_size" min="1">
                 </div>
                 <div class="form-group">
-                    <label>Group Size (Min Users)</label>
-                    <input type="number" id="groupSize" name="group_size">
+                    <div class="toggle-group">
+                        <input type="checkbox" id="botEnabled" name="bot_enabled" style="width:20px; height:20px;">
+                        <label style="margin:0;">Enable AI Bot</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>AI Name</label>
+                    <input type="text" id="botName" name="bot_name">
+                </div>
+                <div class="form-group">
+                    <label>Personality Prompt</label>
+                    <textarea id="botPrompt" name="bot_prompt" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-save">💾 Save Settings</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>🏠 Manual Room Control</h2>
+            <div class="form-group">
+                <label>New Room Name</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="newRoomName">
+                    <button class="btn btn-save" style="width:auto;" onclick="createRoom()">Create</button>
                 </div>
             </div>
-            <div class="form-group">
-                <label>System Instructions (Prompt)</label>
-                <textarea id="botPrompt" name="bot_prompt" rows="4" placeholder="You are a helpful assistant..."></textarea>
-            </div>
-            <button type="submit" class="btn">Update Configuration</button>
-        </form>
+            <table>
+                <thead><tr><th>Room</th><th>Users</th><th>Action</th></tr></thead>
+                <tbody id="roomList"></tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>📡 Live Room Status</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Room Name</th>
-                    <th>Users</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="roomListBody">
-                </tbody>
-        </table>
-    </div>
-</div>
+    <script>
+        function toast(msg, color = '#2ecc71') {
+            const el = document.getElementById('notification');
+            el.textContent = msg; el.style.background = color; el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
 
-<script>
-    async function loadSettings() {
-        const res = await fetch('/api/admin/config');
-        const config = await res.json();
-        document.getElementById('botName').value = config.bot_name;
-        document.getElementById('botDelay').value = config.bot_delay;
-        document.getElementById('groupSize').value = config.group_size;
-        document.getElementById('botPrompt').value = config.bot_prompt;
-    }
+        async function loadSettings() {
+            const res = await fetch('/api/admin/config');
+            const config = await res.json();
+            document.getElementById('groupSize').value = config.group_size;
+            document.getElementById('botEnabled').checked = config.bot_enabled;
+            document.getElementById('botName').value = config.bot_name;
+            document.getElementById('botPrompt').value = config.bot_prompt || '';
+        }
 
-    async function refreshRooms() {
-        const res = await fetch('/api/rooms');
-        const data = await res.json();
-        const tbody = document.getElementById('roomListBody');
-        tbody.innerHTML = '';
-        data.rooms.forEach(room => {
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${room.room_id}</strong></td>
-                    <td>${room.user_count} Online</td>
-                    <td><span class="badge">Active</span></td>
-                </tr>
-            `;
-        });
-    }
+        document.getElementById('configForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            fd.set('bot_enabled', document.getElementById('botEnabled').checked);
+            fd.append('duration', 60);
+            fd.append('bot_delay', 2);
+            await fetch('/api/admin/config', { method: 'POST', body: fd });
+            toast('Settings updated!');
+        };
 
-    document.getElementById('botConfigForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        fd.append('bot_enabled', true);
-        fd.append('duration', 60); // Default duration
-        
-        const res = await fetch('/api/admin/config', { method: 'POST', body: fd });
-        if(res.ok) alert("Settings successfully pushed to server!");
-    };
+        async function loadRooms() {
+            const res = await fetch('/api/rooms');
+            const data = await res.json();
+            const tbody = document.getElementById('roomList');
+            tbody.innerHTML = '';
+            data.rooms.forEach(room => {
+                tbody.innerHTML += `<tr><td><strong>${room.room_id}</strong></td><td>${room.user_count}</td>
+                <td><button class="btn-danger" onclick="deleteRoom('${room.room_id}')">Delete</button></td></tr>`;
+            });
+        }
 
-    loadSettings();
-    refreshRooms();
-    setInterval(refreshRooms, 5000);
-</script>
+        async function createRoom() {
+            const name = document.getElementById('newRoomName').value.trim();
+            if (!name) return;
+            const fd = new FormData(); fd.append('room_id', name);
+            await fetch('/api/rooms/create', { method: 'POST', body: fd });
+            document.getElementById('newRoomName').value = '';
+            loadRooms();
+            toast('Room created');
+        }
 
+        async function deleteRoom(rid) {
+            if(!confirm('Delete?')) return;
+            await fetch(`/api/rooms/delete/${rid}`, { method: 'POST' });
+            loadRooms();
+        }
+
+        function goToWait() { window.location.href = `/wait?uid=admin_${Math.floor(Math.random()*1000)}&cond=default`; }
+
+        loadSettings(); loadRooms(); setInterval(loadRooms, 5000);
+    </script>
 </body>
 </html>

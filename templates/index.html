@@ -9,19 +9,80 @@
             --primary: #667eea;
             --secondary: #764ba2;
             --bg: #f4f7f6;
+            --white: #ffffff;
         }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
+            color: #333;
+        }
+
+        /* --- NAVIGATION HEADER --- */
+        .nav-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-logo {
+            font-weight: 800;
+            font-size: 1.4rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .nav-links a.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            border-radius: 0;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 40px 20px;
         }
+
         .container {
-            background: white;
+            background: var(--white);
             width: 100%;
             max-width: 500px;
             border-radius: 20px;
@@ -29,10 +90,10 @@
             padding: 30px;
             text-align: center;
         }
-        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
-        p { color: #666; margin-bottom: 25px; font-size: 14px; }
 
-        /* Room List Section */
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 25px; font-size: 14px; }
+
         .room-list-header {
             text-align: left;
             font-weight: bold;
@@ -41,16 +102,12 @@
             border-bottom: 2px solid #f0f0f0;
             padding-bottom: 5px;
         }
+
         #room-list {
             max-height: 400px;
             overflow-y: auto;
             margin-bottom: 20px;
-            padding-right: 5px;
         }
-        
-        /* Custom Scrollbar */
-        #room-list::-webkit-scrollbar { width: 6px; }
-        #room-list::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
 
         .room-card {
             background: #fdfdfd;
@@ -65,12 +122,13 @@
             cursor: pointer;
             text-align: left;
         }
+
         .room-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             border-color: var(--primary);
-            background: #fff;
         }
+
         .room-info h4 { color: #333; margin-bottom: 4px; font-size: 16px; }
         .room-info span { font-size: 12px; color: #888; }
         
@@ -81,96 +139,98 @@
             border-radius: 8px;
             font-size: 13px;
             font-weight: bold;
-            transition: background 0.2s;
-        }
-        .room-card:hover .join-badge {
-            background: var(--primary);
-            color: white;
         }
 
         .user-tag {
-            font-size: 12px;
+            font-size: 11px;
             color: #999;
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #f0f0f0;
         }
+
         #suggested-id { font-weight: bold; color: var(--secondary); }
-        
-        .empty-state {
-            padding: 40px 20px;
-            color: #999;
-            font-style: italic;
-        }
+
+        .empty-state { padding: 40px 20px; color: #999; font-style: italic; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>🌍 Active Chat Rooms</h1>
-    <p>Select a live room below to join the conversation.</p>
+    <header class="nav-header">
+        <a href="/" class="nav-logo">🚀 ACTR</a>
+        <nav class="nav-links">
+            <a href="/" id="nav-lobby">Lobby</a>
+            <a href="javascript:void(0)" onclick="goToWait()" id="nav-wait">Wait Room</a>
+            <a href="/dashboard" id="nav-dash">Dashboard</a>
+            <a href="/admin" id="nav-admin">Admin</a>
+        </nav>
+    </header>
 
-    <div class="room-list-header">Live Channels</div>
-    <div id="room-list">
-        <div class="empty-state">Searching for available rooms...</div>
+    <div class="main-content">
+        <div class="container">
+            <h1>Active Chat Rooms</h1>
+            <p class="subtitle">Select a live room below to join the conversation.</p>
+
+            <div class="room-list-header">Live Channels</div>
+            <div id="room-list">
+                <div class="empty-state">Searching for available rooms...</div>
+            </div>
+
+            <div class="user-tag">
+                Logged in as: <span id="suggested-id">{{next_uid}}</span>
+            </div>
+        </div>
     </div>
 
-    <div class="user-tag">
-        Logged in as: <span id="suggested-id">{{next_uid}}</span>
-    </div>
-</div>
-
-<script>
-    // 1. Fetch rooms from the server on load
-    async function loadRooms() {
-        try {
-            const response = await fetch('/api/rooms');
-            const data = await response.json();
-            const listElement = document.getElementById('room-list');
-            
-            if (!data.rooms || data.rooms.length === 0) {
-                listElement.innerHTML = '<div class="empty-state">No active rooms found. Please wait for an admin to create one.</div>';
-                return;
-            }
-
-            // Simple update: only rewrite if count changed to prevent flicker
-            const currentCount = listElement.querySelectorAll('.room-card').length;
-            if (data.rooms.length === currentCount && currentCount !== 0) return;
-
-            listElement.innerHTML = ''; 
-
-            data.rooms.forEach(room => {
-                const card = document.createElement('div');
-                card.className = 'room-card';
-                card.onclick = () => joinRoom(room.room_id);
+    <script>
+        // Fetch rooms from the server
+        async function loadRooms() {
+            try {
+                const response = await fetch('/api/rooms');
+                const data = await response.json();
+                const listElement = document.getElementById('room-list');
                 
-                card.innerHTML = `
-                    <div class="room-info">
-                        <h4>${room.room_id}</h4>
-                        <span>${room.user_count} participants online</span>
-                    </div>
-                    <div class="join-badge">Enter Room</div>
-                `;
-                listElement.appendChild(card);
-            });
-        } catch (error) {
-            console.error("Error loading rooms:", error);
-            document.getElementById('room-list').innerHTML = '<p style="color:red; padding: 20px;">Connection lost. Retrying...</p>';
+                if (!data.rooms || data.rooms.length === 0) {
+                    listElement.innerHTML = '<div class="empty-state">No active rooms found. Please wait for an admin to create one.</div>';
+                    return;
+                }
+
+                listElement.innerHTML = ''; 
+
+                data.rooms.forEach(room => {
+                    const card = document.createElement('div');
+                    card.className = 'room-card';
+                    card.onclick = () => joinRoom(room.room_id);
+                    
+                    card.innerHTML = `
+                        <div class="room-info">
+                            <h4>${room.room_id}</h4>
+                            <span>${room.user_count} participants online</span>
+                        </div>
+                        <div class="join-badge">Enter Room</div>
+                    `;
+                    listElement.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error loading rooms:", error);
+            }
         }
-    }
 
-    // 2. Navigate to the chat page
-    function joinRoom(roomId) {
-        const uid = document.getElementById('suggested-id').textContent;
-        window.location.href = `/chat?uid=${encodeURIComponent(uid)}&room=${encodeURIComponent(roomId)}`;
-    }
+        // Navigation Helpers
+        function joinRoom(roomId) {
+            const uid = document.getElementById('suggested-id').textContent;
+            window.location.href = `/chat?uid=${encodeURIComponent(uid)}&room=${encodeURIComponent(roomId)}`;
+        }
 
-    // Initialize
-    window.onload = loadRooms;
-    
-    // Poll for room updates every 5 seconds for a "live" feel
-    setInterval(loadRooms, 5000);
-</script>
+        function goToWait() {
+            const uid = document.getElementById('suggested-id').textContent;
+            window.location.href = `/wait?uid=${encodeURIComponent(uid)}&cond=default`;
+        }
+
+        // Initialize
+        window.onload = loadRooms;
+        setInterval(loadRooms, 5000); // Update every 5 seconds
+    </script>
 
 </body>
 </html>
