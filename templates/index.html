@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Lobby | Sessions</title>
+    <link rel="stylesheet" href="/static/theme.css">
+    <style>
+        :root {
+            --bot-accent: var(--orange-dark);
+            --bg: var(--gray-100);
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #333;
+        }
+
+        .nav-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-logo {
+            font-weight: 800; font-size: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-decoration: none; flex-shrink: 0;
+        }
+
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem;
+            transition: all 0.15s; padding: 5px 12px; border-radius: 8px;
+        }
+        .nav-links a:hover { color: var(--primary); background: rgba(102, 126, 234, 0.07); }
+        .nav-links a.active { color: var(--primary); background: rgba(102, 126, 234, 0.12); }
+
+        .main-content { flex: 1; padding: 40px 20px; }
+
+        .container {
+            background: var(--white); width: 100%; max-width: 1200px;
+            border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            padding: 30px; margin: 0 auto;
+        }
+
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 25px; font-size: 14px; }
+
+        /* Session cards */
+        .session-card {
+            border: 1px solid #e2e8f0; border-radius: 12px;
+            margin-bottom: 15px; overflow: hidden;
+        }
+        .session-header {
+            background: #f8fafc; padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer;
+        }
+        .session-header:hover { background: #f1f5f9; }
+        .session-title { font-weight: 700; font-size: 1rem; color: #333; }
+        .session-meta { font-size: 0.8rem; color: #888; margin-top: 2px; }
+        .session-body { padding: 15px 20px; display: none; border-top: 1px solid #e2e8f0; }
+
+        .group-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .group-card {
+            background: #eef2ff; color: var(--primary);
+            padding: 10px 18px; border-radius: 10px; font-size: 0.9rem;
+            font-weight: 700; cursor: pointer; border: 1px solid rgba(102,126,234,0.2);
+            transition: all 0.2s;
+        }
+        .group-card:hover { background: var(--primary); color: white; transform: translateY(-2px); }
+
+        .empty-state { padding: 40px 20px; color: #999; font-style: italic; text-align: center; }
+
+        .user-tag {
+            font-size: 11px; color: #999; margin-top: 20px;
+            padding-top: 15px; border-top: 1px solid #f0f0f0; text-align: center;
+        }
+        #suggested-id { font-weight: bold; color: var(--secondary); }
+    </style>
+</head>
+<body>
+
+    <header class="nav-header">
+        <a href="/" class="nav-logo">ACTR</a>
+        <nav class="nav-links">
+            <a href="/" class="active">Lobby</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/admin">Admin</a>
+            <a href="/manual">Manual</a>
+        </nav>
+    </header>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>Active Sessions</h1>
+            <p class="subtitle">Select a session and join a small group to start chatting.</p>
+
+            <div id="session-list">
+                <div class="empty-state">Loading sessions...</div>
+            </div>
+
+            <div class="user-tag">
+                Your ID: <span id="suggested-id">loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ========================================
+           Lobby: Session → Group hierarchy view
+           ======================================== */
+        const uid = 'user_' + Math.floor(Math.random() * 100000);
+        document.getElementById('suggested-id').textContent = uid;
+
+        function toggleSession(id) {
+            const el = document.getElementById(`body-${id}`);
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function joinGroup(sessionId, groupId) {
+            window.location.href = `/chat/${encodeURIComponent(sessionId)}/${encodeURIComponent(groupId)}?uid=${encodeURIComponent(uid)}`;
+        }
+
+        function goToWait(sessionId) {
+            window.location.href = `/wait?uid=${encodeURIComponent(uid)}&session_id=${encodeURIComponent(sessionId)}`;
+        }
+
+        async function loadSessions() {
+            const listEl = document.getElementById('session-list');
+            try {
+                const res = await fetch('/api/sessions');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const sessions = data.sessions || [];
+
+                if (sessions.length === 0) {
+                    listEl.innerHTML = '<div class="empty-state">No active sessions. Ask an admin to create one.</div>';
+                    return;
+                }
+
+                listEl.innerHTML = sessions.map(s => `
+                    <div class="session-card">
+                        <div class="session-header" onclick="toggleSession('${s.id}')">
+                            <div>
+                                <div class="session-title">${s.name}</div>
+                                <div class="session-meta">ID: ${s.id} &nbsp;|&nbsp; Group size: ${s.group_size} &nbsp;|&nbsp; ${s.groups.length} active group(s)</div>
+                            </div>
+                            <span style="color: var(--primary); font-weight: bold;">▼</span>
+                        </div>
+                        <div class="session-body" id="body-${s.id}">
+                            ${s.groups.length > 0 ? `
+                                <p style="font-size:0.85rem; color:#555; margin-bottom:8px;">Active groups — click to join:</p>
+                                <div class="group-grid">
+                                    ${s.groups.map(g => `
+                                        <div class="group-card" onclick="joinGroup('${s.id}','${g}')">${g}</div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p style="color:#aaa; font-size:0.85rem;">No active groups yet.</p>'}
+                            <div style="margin-top:15px;">
+                                <button onclick="goToWait('${s.id}')" style="
+                                    background: var(--primary); color: white; border: none;
+                                    padding: 8px 20px; border-radius: 20px; font-size: 0.85rem;
+                                    font-weight: 600; cursor: pointer;">
+                                    🎯 Join Matching Queue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                listEl.innerHTML = '<div class="empty-state">Failed to load sessions. Is the server running?</div>';
+            }
+        }
+
+        loadSessions();
+        setInterval(loadSessions, 5000);
+    </script>
+
+</body>
+</html>

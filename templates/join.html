@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Chat — ACTR</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gradient);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .join-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 48px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 450px;
+        }
+        .logo {
+            font-weight: 800;
+            font-size: 2rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 32px;
+        }
+        .info-box {
+            background: #f0f2f5;
+            border-left: 4px solid var(--primary);
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+        .info-box strong {
+            color: var(--secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            color: #555;
+        }
+        input[type=text] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e8e8e8;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.15s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .btn-join {
+            width: 100%;
+            padding: 14px;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .btn-join:hover {
+            opacity: 0.9;
+        }
+        .error-msg {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="join-card">
+        <div class="logo">ACTR</div>
+        <div class="subtitle">Join Group Chat</div>
+
+        <div class="info-box">
+            <strong>Your assigned name in this chat:</strong>
+            <span id="assigned-name" style="font-size:1.1rem; color:var(--primary); font-weight:700;">Loading...</span>
+        </div>
+
+        <div id="error-msg" class="error-msg"></div>
+
+        <form id="joinForm">
+            <div class="form-group">
+                <label>Your Participant ID</label>
+                <input type="text" id="participant-id" placeholder="Enter your unique ID" required autocomplete="off">
+                <div style="font-size:0.75rem; color:#888; margin-top:6px;">
+                    This ID is used for tracking purposes only. You will appear as "<span id="name-preview">...</span>" in the chat.
+                </div>
+            </div>
+            <button type="submit" class="btn-join">Join Chat</button>
+        </form>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        const groupId = urlParams.get('group_id');
+
+        if (!sessionId || !groupId) {
+            document.getElementById('error-msg').textContent = 'Invalid link: missing session or group ID.';
+            document.getElementById('error-msg').style.display = 'block';
+            document.getElementById('joinForm').style.display = 'none';
+        }
+
+        // Fetch session config to determine assigned name
+        let assignedName = null;
+        let participantNames = [];
+
+        async function loadSessionInfo() {
+            try {
+                const res = await fetch(`/api/sessions/${sessionId}/config`);
+                if (!res.ok) throw new Error('Session not found');
+                const config = await res.json();
+                participantNames = config.participant_names || [];
+
+                // Check how many people already joined this group
+                const groupRes = await fetch(`/api/groups/${sessionId}/${groupId}/info`);
+                if (groupRes.ok) {
+                    const groupData = await groupRes.json();
+                    const takenNames = Object.values(groupData.member_names || {});
+                    const availableNames = participantNames.filter(n => !takenNames.includes(n));
+
+                    if (availableNames.length > 0) {
+                        assignedName = availableNames[0];
+                    } else {
+                        assignedName = 'Participant';
+                    }
+                } else {
+                    // Group doesn't exist yet, take first name
+                    assignedName = participantNames[0] || 'Participant';
+                }
+
+                document.getElementById('assigned-name').textContent = assignedName;
+                document.getElementById('name-preview').textContent = assignedName;
+            } catch (e) {
+                console.error('Failed to load session info', e);
+                document.getElementById('assigned-name').textContent = 'Participant';
+                document.getElementById('name-preview').textContent = 'Participant';
+            }
+        }
+
+        loadSessionInfo();
+
+        document.getElementById('joinForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const participantId = document.getElementById('participant-id').value.trim();
+
+            if (!participantId) {
+                document.getElementById('error-msg').textContent = 'Please enter your participant ID.';
+                document.getElementById('error-msg').style.display = 'block';
+                return;
+            }
+
+            // Redirect to chat with participant ID as uid
+            window.location.href = `/chat/${sessionId}/${groupId}?uid=${encodeURIComponent(participantId)}`;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiting for Match</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #9c27b0;
+            --bg: #f4f7f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-header {
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(10px);
+            padding: 0 24px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+        }
+
+        .nav-logo {
+            font-weight: 800;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 5px 12px;
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+        .nav-links a:hover { color: var(--primary); background: rgba(102,126,234,0.07); }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin-top: 48px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .console {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            height: 140px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            text-align: left;
+            margin: 20px 0;
+            border: 1px solid #333;
+        }
+
+        .persona-status {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .persona-badge {
+            font-size: 10px;
+            background: #f0f2f5;
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(156, 39, 176, 0.2);
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            margin: 5px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-danger { background: #ff4757; color: white; }
+        .btn-danger:hover { background: #ff6b81; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <header class="nav-header">
+        <a href="/" class="nav-logo">ACTR</a>
+        <nav class="nav-links">
+            <a href="/">Lobby</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/admin">Admin</a>
+            <a href="/manual">Manual</a>
+        </nav>
+    </header>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>🎯 Matching...</h1>
+            <p style="color: #667eea; font-weight: bold; margin-top: 10px;" id="uid-display">...</p>
+
+            <div class="spinner"></div>
+
+            <div id="status-text">Synchronizing with system...</div>
+
+            <div id="persona-container" class="persona-status"></div>
+
+            <div class="console" id="console"></div>
+
+            <button class="btn btn-danger" onclick="leaveQueue()">Leave Queue</button>
+        </div>
+    </div>
+
+    <script>
+        /* ========================================
+           Wait / Matching Page
+           URL params: ?uid=...&session_id=...
+           ======================================== */
+        const urlParams = new URLSearchParams(window.location.search);
+        const uid = urlParams.get('uid') || 'user_' + Math.floor(Math.random() * 100000);
+        const sessionId = urlParams.get('session_id') || null;
+
+        document.getElementById('uid-display').textContent = `USER ID: ${uid}`;
+
+        let activePersonas = [];
+        let pollingInterval = null;
+
+        function log(msg) {
+            const consoleEl = document.getElementById('console');
+            const line = document.createElement('div');
+            line.style.marginBottom = "2px";
+            line.textContent = `> [${new Date().toLocaleTimeString()}] ${msg}`;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        /* Load bot personas from the session config */
+        async function loadBotData() {
+            if (!sessionId) {
+                log("No session_id provided. Waiting for admin to assign one.");
+                return;
+            }
+            try {
+                const res = await fetch(`/api/sessions/${sessionId}/config`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const config = await res.json();
+                activePersonas = config.bots || [];
+
+                const container = document.getElementById('persona-container');
+                container.innerHTML = activePersonas.map(b => {
+                    const icon = (b.avatar_type === 'human') ? '👤' : '🤖';
+                    return `<span class="persona-badge">${icon} ${b.name} Ready</span>`;
+                }).join('');
+
+                if (activePersonas.length > 0) {
+                    const names = activePersonas.map(b => b.name).join(' and ');
+                    log(`${names} joined in.`);
+                }
+            } catch (e) {
+                log("Failed to sync bot data.");
+            }
+        }
+
+        /* Poll the match endpoint every 2.5 seconds */
+        async function checkMatch() {
+            if (!sessionId) return;
+            try {
+                const res = await fetch(`/api/match?session_id=${encodeURIComponent(sessionId)}&uid=${encodeURIComponent(uid)}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+
+                if (data.status === "matched") {
+                    log("✅ MATCH FOUND!");
+                    log("Establishing secure WebSocket...");
+                    clearInterval(pollingInterval);
+                    setTimeout(() => {
+                        window.location.href = `/chat/${encodeURIComponent(data.session_id)}/${encodeURIComponent(data.group_id)}?uid=${encodeURIComponent(uid)}`;
+                    }, 1000);
+                } else {
+                    if (Math.random() > 0.7) log("Searching matching pool...");
+                }
+            } catch (e) {
+                log("⚠️ Server connection lost. Retrying...");
+            }
+        }
+
+        async function leaveQueue() {
+            if (sessionId) {
+                try {
+                    await fetch(`/api/leave?session_id=${encodeURIComponent(sessionId)}&uid=${encodeURIComponent(uid)}`);
+                } catch (e) { /* ignore */ }
+            }
+            window.location.href = '/';
+        }
+
+        /* Init */
+        (async () => {
+            if (!sessionId) {
+                log("Error: No session_id in URL. Please go back to the lobby.");
+                document.getElementById('status-text').textContent = "Missing session ID.";
+                return;
+            }
+            log(`Initializing matching for session: ${sessionId}`);
+            await loadBotData();
+            pollingInterval = setInterval(checkMatch, 2500);
+            log("Polling server for available pairs...");
+        })();
+    </script>
+</body>
+</html>

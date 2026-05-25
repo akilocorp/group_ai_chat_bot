@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Manual — ACTR</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg: #f0f2f5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: #2d3436;
+            padding-top: 48px;
+            line-height: 1.7;
+        }
+
+        /* NAV */
+        .nav-header {
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(10px);
+            padding: 0 24px;
+            height: 48px;
+            display: flex; align-items: center; gap: 20px;
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 100;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+        }
+        .nav-logo {
+            font-weight: 800; font-size: 1.2rem;
+            background: var(--gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-decoration: none; flex-shrink: 0;
+        }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem;
+            padding: 5px 12px; border-radius: 8px; transition: all 0.15s;
+        }
+        .nav-links a:hover { color: var(--primary); background: rgba(102,126,234,0.07); }
+        .nav-links a.active { color: var(--primary); background: rgba(102,126,234,0.12); }
+
+        /* LAYOUT */
+        .page { display: flex; max-width: 1100px; margin: 0 auto; padding: 40px 20px; gap: 32px; }
+
+        /* SIDEBAR TOC */
+        .toc {
+            width: 220px; flex-shrink: 0;
+            position: sticky; top: 68px; align-self: flex-start;
+        }
+        .toc h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #aaa; margin-bottom: 10px; }
+        .toc a {
+            display: block; padding: 6px 10px; border-radius: 6px;
+            text-decoration: none; font-size: 0.85rem; color: #555; font-weight: 500;
+            transition: all 0.15s;
+        }
+        .toc a:hover { color: var(--primary); background: rgba(102,126,234,0.07); }
+        .toc a.sub { padding-left: 20px; font-size: 0.8rem; color: #888; }
+
+        /* CONTENT */
+        .content { flex: 1; min-width: 0; }
+
+        .section { background: white; border-radius: 14px; padding: 32px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+
+        h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px;
+             background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .lead { font-size: 1rem; color: #666; margin-bottom: 0; }
+
+        h2 { font-size: 1.2rem; font-weight: 700; color: #2d3436; margin-bottom: 16px;
+             padding-bottom: 10px; border-bottom: 2px solid #f0f2f5; }
+        h3 { font-size: 1rem; font-weight: 700; color: var(--secondary); margin: 20px 0 8px; }
+
+        p { color: #444; margin-bottom: 12px; font-size: 0.93rem; }
+        ul, ol { padding-left: 20px; margin-bottom: 12px; }
+        li { color: #444; font-size: 0.93rem; margin-bottom: 5px; }
+
+        /* MODE CARDS */
+        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
+        .mode-card {
+            border-radius: 12px; padding: 20px;
+            border: 2px solid transparent;
+        }
+        .mode-card.m1 { background: #eef2ff; border-color: #c7d2fe; }
+        .mode-card.m2 { background: #f3e8ff; border-color: #d8b4fe; }
+        .mode-card.m3 { background: #fce7f3; border-color: #f9a8d4; }
+        .mode-card .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 10px;
+        }
+        .m1 .badge { background: #667eea; color: white; }
+        .m2 .badge { background: #9333ea; color: white; }
+        .m3 .badge { background: #db2777; color: white; }
+        .mode-card h3 { margin: 0 0 8px; font-size: 0.95rem; color: #1e1b4b; }
+        .mode-card p { font-size: 0.83rem; color: #555; margin: 0 0 10px; }
+        .mode-card ul { padding-left: 16px; }
+        .mode-card li { font-size: 0.82rem; color: #555; margin-bottom: 3px; }
+
+        /* PARAM TABLE */
+        .param-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.87rem; }
+        .param-table th {
+            background: #f8fafc; text-align: left; padding: 10px 14px;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+            color: #888; border-bottom: 2px solid #e2e8f0;
+        }
+        .param-table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+        .param-table tr:last-child td { border-bottom: none; }
+        .param-table td:first-child { font-weight: 700; color: #2d3436; white-space: nowrap; }
+        .param-table td:nth-child(2) { color: #667eea; font-family: monospace; font-size: 0.82rem; }
+        .param-table td:nth-child(3) { color: #555; }
+
+        /* FLOW STEPS */
+        .flow { display: flex; flex-direction: column; gap: 0; margin-top: 16px; }
+        .flow-step { display: flex; gap: 16px; align-items: flex-start; }
+        .flow-step:not(:last-child) .step-line { flex: 1; width: 2px; background: #e2e8f0; margin: 4px auto 0; min-height: 28px; }
+        .step-num {
+            width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+            background: var(--gradient); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 0.85rem;
+        }
+        .step-col { display: flex; flex-direction: column; align-items: center; }
+        .step-body { padding-bottom: 24px; }
+        .step-body strong { display: block; font-size: 0.93rem; margin-bottom: 3px; }
+        .step-body span { font-size: 0.85rem; color: #666; }
+
+        /* TIP BOX */
+        .tip {
+            background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+            padding: 12px 16px; font-size: 0.85rem; color: #92400e; margin-top: 12px;
+        }
+        .tip strong { color: #78350f; }
+
+        .info-box {
+            background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;
+            padding: 12px 16px; font-size: 0.85rem; color: #1e40af; margin-top: 12px;
+        }
+
+        code {
+            background: #f1f5f9; padding: 2px 6px; border-radius: 4px;
+            font-family: monospace; font-size: 0.85em; color: #7c3aed;
+        }
+    </style>
+</head>
+<body>
+
+<header class="nav-header">
+    <a href="/" class="nav-logo">ACTR</a>
+    <nav class="nav-links">
+        <a href="/">Lobby</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/admin">Admin</a>
+        <a href="/manual" class="active">Manual</a>
+    </nav>
+</header>
+
+<div class="page">
+
+    <!-- Table of Contents -->
+    <aside class="toc">
+        <h3>Contents</h3>
+        <a href="#overview">Overview</a>
+        <a href="#workflow">How It Works</a>
+        <a href="#modes">Response Modes</a>
+        <a class="sub" href="#mode1">Mode 1 — Fixed Delay</a>
+        <a class="sub" href="#mode2">Mode 2 — Random Delay</a>
+        <a class="sub" href="#mode3">Mode 3 — Natural Mimicry</a>
+        <a href="#mode1-guide">Mode 1 Deep Dive</a>
+        <a href="#admin-guide">Admin Guide</a>
+        <a href="#dashboard-guide">Dashboard & Export</a>
+        <a href="#faq">FAQ</a>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="content">
+
+        <!-- Hero -->
+        <div class="section" id="overview">
+            <h1>ACTR User Manual</h1>
+            <p class="lead">A multi-session group chat platform with configurable AI personas. Designed for research experiments where human participants interact in small groups — with or without AI bots present.</p>
+        </div>
+
+        <!-- Workflow -->
+        <div class="section" id="workflow">
+            <h2>How It Works</h2>
+            <div class="flow">
+                <div class="flow-step">
+                    <div class="step-col"><div class="step-num">1</div><div class="step-line"></div></div>
+                    <div class="step-body"><strong>Admin creates a session</strong><span>Set group size, enable bots, configure personas and their behavior on the <a href="/admin">Admin</a> page.</span></div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-col"><div class="step-num">2</div><div class="step-line"></div></div>
+                    <div class="step-body"><strong>Participants join the lobby</strong><span>Users visit the <a href="/">Lobby</a>, pick a session, and click <em>Join Matching Queue</em>.</span></div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-col"><div class="step-num">3</div><div class="step-line"></div></div>
+                    <div class="step-body"><strong>Auto-matching</strong><span>Once enough participants are queued (equal to Group Size), they are automatically matched into a small group and redirected to the chat room.</span></div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-col"><div class="step-num">4</div><div class="step-line"></div></div>
+                    <div class="step-body"><strong>Group chat begins</strong><span>Participants chat in real time. If bots are enabled, they respond according to the configured mode and persona prompt.</span></div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-col"><div class="step-num">5</div></div>
+                    <div class="step-body"><strong>Admin monitors & exports</strong><span>The <a href="/dashboard">Dashboard</a> shows live activity. Full chat logs and activity history can be exported as CSV for analysis.</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode Overview -->
+        <div class="section" id="modes">
+            <h2>Bot Response Modes</h2>
+            <p>Each AI persona in a session has its own <strong>Response Mode</strong> that controls <em>when</em> and <em>whether</em> it replies. Choose the mode that best matches your experimental design.</p>
+
+            <div class="mode-grid">
+                <div class="mode-card m1">
+                    <span class="badge">Mode 1</span>
+                    <h3>Fixed Delay</h3>
+                    <p>The bot always responds after a fixed number of seconds. Predictable and controlled.</p>
+                    <ul>
+                        <li>Always replies</li>
+                        <li>Exact delay you set</li>
+                        <li>Best for controlled experiments</li>
+                    </ul>
+                </div>
+                <div class="mode-card m2">
+                    <span class="badge">Mode 2</span>
+                    <h3>Random Delay</h3>
+                    <p>Adds a random 0.5–2.5 s jitter on top of the fixed delay. Feels slightly less robotic.</p>
+                    <ul>
+                        <li>Always replies</li>
+                        <li>Delay = fixed + random</li>
+                        <li>Good for realism studies</li>
+                    </ul>
+                </div>
+                <div class="mode-card m3">
+                    <span class="badge">Mode 3</span>
+                    <h3>Natural Mimicry</h3>
+                    <p>Delay scales with message length. Bot may skip messages based on Skip Rate.</p>
+                    <ul>
+                        <li>May skip messages</li>
+                        <li>Delay ∝ message length</li>
+                        <li>Most human-like</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode 1 Detail -->
+        <div class="section" id="mode1">
+            <h2>Mode 1 — Fixed Delay (Detailed)</h2>
+            <p>Mode 1 is the most transparent and reproducible mode. The bot waits exactly <code>delay_seconds</code> after a human message is received, then generates and sends a response. Every message gets a reply.</p>
+
+            <h3>When to use Mode 1</h3>
+            <ul>
+                <li>You need consistent, reproducible bot behavior across all participants</li>
+                <li>You are studying the effect of response timing on human perception</li>
+                <li>You want to isolate the content of bot responses from timing variability</li>
+                <li>Pilot testing — Mode 1 is the easiest to debug and verify</li>
+            </ul>
+
+            <h3>How the delay works</h3>
+            <p>After a human sends a message, the server waits exactly <code>delay_seconds</code>, then calls the OpenAI API and streams the response back. The typing animation plays while the response is being delivered. The total visible latency is <code>delay_seconds + API response time + typing animation duration</code>.</p>
+
+            <div class="tip">
+                <strong>Tip:</strong> Set <code>delay_seconds</code> to 2–4 s for most experiments. Very short delays (&lt;1 s) can feel unnatural; very long delays (&gt;10 s) may frustrate participants.
+            </div>
+        </div>
+
+        <!-- Mode 2 Detail -->
+        <div class="section" id="mode2">
+            <h2>Mode 2 — Random Delay</h2>
+            <p>Identical to Mode 1 except the actual wait time is <code>delay_seconds + uniform(0.5, 2.5)</code> seconds. The extra jitter makes the bot feel slightly less mechanical without changing its response rate.</p>
+            <div class="info-box">Use Mode 2 when you want Mode 1 behavior but with reduced suspicion that the responder is a bot.</div>
+        </div>
+
+        <!-- Mode 3 Detail -->
+        <div class="section" id="mode3">
+            <h2>Mode 3 — Natural Mimicry</h2>
+            <p>The bot simulates a human reader: delay scales with the length of the incoming message (<code>words × 0.25 s + random 0.5–2.0 s</code>, capped at 8 s), and it may skip responding entirely based on <code>skip_rate</code>.</p>
+            <ul>
+                <li><strong>Skip Rate 0.0</strong> — always replies (same as Mode 2 with dynamic delay)</li>
+                <li><strong>Skip Rate 0.2</strong> — skips ~20% of messages</li>
+                <li><strong>Skip Rate 0.5</strong> — skips half of all messages</li>
+            </ul>
+            <div class="tip"><strong>Tip:</strong> Keep Skip Rate below 0.3 to avoid participants feeling ignored.</div>
+        </div>
+
+        <!-- Mode 1 Deep Dive -->
+        <div class="section" id="mode1-guide">
+            <h2>Mode 1 — All Configurable Parameters</h2>
+            <p>These are all the variables you can set per-persona when using Mode 1. All are set in the Admin page under <em>AI Personas</em>.</p>
+
+            <table class="param-table">
+                <thead>
+                    <tr><th>Parameter</th><th>Default</th><th>What it controls</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Delay (sec)</td>
+                        <td>3</td>
+                        <td>Exact seconds the bot waits before responding. This is the primary timing variable in Mode 1.</td>
+                    </tr>
+                    <tr>
+                        <td>Typing Speed (CPS)</td>
+                        <td>10</td>
+                        <td>Characters per second for the typing animation. Higher = faster reveal. Does not affect when the response is generated, only how fast it appears on screen.</td>
+                    </tr>
+                    <tr>
+                        <td>Max Tokens</td>
+                        <td>150</td>
+                        <td>Maximum length of the bot's response in tokens (~¾ of a word each). Lower values produce shorter, more concise replies.</td>
+                    </tr>
+                    <tr>
+                        <td>Temperature</td>
+                        <td>0.7</td>
+                        <td>Controls response creativity. 0.0 = deterministic and repetitive; 1.0 = highly varied and creative. For research consistency, values between 0.3–0.7 are recommended.</td>
+                    </tr>
+                    <tr>
+                        <td>Context Window</td>
+                        <td>15</td>
+                        <td>Number of recent messages the bot reads before generating a reply. Higher = more context-aware but slower and more expensive.</td>
+                    </tr>
+                    <tr>
+                        <td>Idle Threshold (sec)</td>
+                        <td>20</td>
+                        <td>If no one speaks for this many seconds, the bot initiates a new message to restart the conversation.</td>
+                    </tr>
+                    <tr>
+                        <td>Personality Prompt</td>
+                        <td>—</td>
+                        <td>The system instruction that defines the bot's persona, tone, and role. This is the most important variable for shaping what the bot says.</td>
+                    </tr>
+                    <tr>
+                        <td>Bot Name</td>
+                        <td>—</td>
+                        <td>The display name shown in the chat. Participants can @mention this name to direct a message at the bot.</td>
+                    </tr>
+                    <tr>
+                        <td>Session Mode</td>
+                        <td>1</td>
+                        <td>Controls which bots respond per message. Mode 1: all bots reply to every message. Mode 2: AI picks the single most relevant bot. Mode 3: bots only respond when @mentioned by name.</td>
+                    </tr>
+                    <tr>
+                        <td>Group Duration (min)</td>
+                        <td>30</td>
+                        <td>Maximum duration for each group chat session in minutes. Groups are closed after this time limit.</td>
+                    </tr>
+                    <tr>
+                        <td>Group Size</td>
+                        <td>2</td>
+                        <td>Number of human participants matched into each group. Does not include bots.</td>
+                    </tr>
+                    <tr>
+                        <td>Participant Names</td>
+                        <td>—</td>
+                        <td>Optional comma-separated list of display names assigned to participants in order (e.g. <code>Alice, Bob</code>). If blank, UIDs are used.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box" style="margin-top: 16px;">
+                <strong>Recommended Mode 1 starting config:</strong> Delay = 3 s · Typing CPS = 10 · Max Tokens = 150 · Temperature = 0.5 · Context = 15 messages
+            </div>
+        </div>
+
+        <!-- Admin Guide -->
+        <div class="section" id="admin-guide">
+            <h2>Admin Guide</h2>
+
+            <h3>Creating a session</h3>
+            <ol>
+                <li>Go to <a href="/admin">Admin</a>.</li>
+                <li>Fill in Session Name, Group Size, and whether bots are enabled.</li>
+                <li>Select Session Mode (Normal for most experiments).</li>
+                <li>Click <strong>+ Add Persona</strong> to add one or more bots.</li>
+                <li>For each persona: set a name, choose Mode 1, write a personality prompt, and tune the parameters.</li>
+                <li>Click <strong>Create Session</strong>. A Session ID (e.g. <code>SES-A1B2C</code>) is generated.</li>
+                <li>Share the Lobby URL with participants. They select the session and join the queue.</li>
+            </ol>
+
+            <h3>Test Sandbox</h3>
+            <p>Use the <em>Admin Test Sandbox</em> at the bottom of the Admin page to join any group as <code>ADMIN_TESTER</code>. Your messages are logged with that prefix so they can be filtered out of analysis.</p>
+
+            <div class="tip"><strong>Tip:</strong> Always test your bot configuration in the sandbox before running a real experiment session.</div>
+        </div>
+
+        <!-- Dashboard Guide -->
+        <div class="section" id="dashboard-guide">
+            <h2>Dashboard &amp; Export</h2>
+
+            <h3>Live monitoring</h3>
+            <p>The <a href="/dashboard">Dashboard</a> shows all active rooms, participant counts, and message volumes in real time (refreshes every 4 s). Click <em>View Feed</em> on any room to see its live message stream.</p>
+
+            <h3>Exporting data</h3>
+            <p>Go to the <strong>Export</strong> tab on the Dashboard. You can download:</p>
+            <ul>
+                <li><strong>Activity Log (CSV)</strong> — every event in a session: who joined, when they sent messages, when bots responded, errors, etc. One row per event.</li>
+                <li><strong>Chat History (CSV)</strong> — every message in a specific room: timestamp, sender, and full message text.</li>
+            </ul>
+            <p>Both files are ready to open in Excel, R, or Python (pandas).</p>
+
+            <div class="info-box">
+                Activity log columns: <code>timestamp · event_type · session_id · room_id · actor · details</code><br>
+                Chat history columns: <code>timestamp · room_id · sender · message</code>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="section" id="faq">
+            <h2>FAQ</h2>
+
+            <h3>Can participants tell the bot is an AI?</h3>
+            <p>That depends on your persona prompt and mode settings. Mode 1 with a short fixed delay is the most transparent. Mode 3 with a well-written prompt is the hardest to detect.</p>
+
+            <h3>What happens if a participant drops out mid-session?</h3>
+            <p>The remaining participants can continue chatting. The bot will still respond. The disconnected participant's messages are preserved in the log.</p>
+
+            <h3>How many bots can I add per session?</h3>
+            <p>There is no hard limit. In Session Mode 2, the AI picks the single most relevant bot per message. In Session Mode 1, all bots respond to every message. In Session Mode 3, bots only respond when @mentioned.</p>
+
+            <h3>Where is data stored?</h3>
+            <p>By default, all data is stored locally in JSON files in the <code>db/</code> and <code>activity_logs/</code> folders. If a <code>MONGO_URL</code> is set in <code>.env</code>, MongoDB is used instead.</p>
+
+            <h3>How do I reset a session?</h3>
+            <p>Currently there is no one-click reset. To start fresh, create a new session from the Admin page. Old sessions and their data remain on disk.</p>
+        </div>
+
+    </div><!-- /content -->
+</div><!-- /page -->
+
+</body>
+</html>

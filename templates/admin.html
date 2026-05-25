@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — ACTR</title>
+    <link rel="stylesheet" href="/static/theme.css">
+    <style>
+        :root {
+            --gradient: var(--primary-gradient);
+            --bg: var(--bg-color);
+            --success: #2ecc71;
+            --danger: #e74c3c;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #2d3436; line-height: 1.6; padding-top: 48px; }
+
+        /* NAV */
+        .nav-header {
+            background: rgba(255,255,255,0.97); backdrop-filter: blur(10px);
+            padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 20px;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+        }
+        .nav-logo { font-weight: 800; font-size: 1.2rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; flex-shrink: 0; }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a { text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem; padding: 5px 12px; border-radius: 8px; transition: all 0.15s; }
+        .nav-links a:hover { color: var(--primary); background: rgba(102,126,234,0.07); }
+        .nav-links a.active { color: var(--primary); background: rgba(102,126,234,0.12); }
+
+        /* LAYOUT */
+        .container { max-width: 1060px; margin: 32px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 24px; }
+
+        .card { background: white; border-radius: 14px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+        .card-title { font-size: 1.1rem; font-weight: 700; color: var(--secondary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #f0f2f5; display: flex; align-items: center; gap: 8px; }
+
+        /* FORM */
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; color: #333; }
+        label .hint { font-weight: 400; color: #aaa; font-size: 0.8rem; }
+        input[type=text], input[type=number], select, textarea {
+            width: 100%; padding: 9px 12px; border: 2px solid #e8e8e8;
+            border-radius: 8px; font-size: 0.9rem; font-family: inherit;
+            transition: border-color 0.15s; background: #fafafa;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: white; }
+        textarea { resize: vertical; }
+
+        /* RANGE SLIDER */
+        .range-row { display: flex; align-items: center; gap: 12px; }
+        .range-row input[type=range] { flex: 1; accent-color: var(--primary); }
+        .range-val { min-width: 44px; text-align: right; font-weight: 700; color: var(--primary); font-size: 0.9rem; }
+
+        /* HELPER */
+        .helper { font-size: 0.77rem; color: #888; margin-top: 5px; padding: 6px 10px; background: rgba(102,126,234,0.05); border-left: 3px solid var(--primary); border-radius: 0 6px 6px 0; }
+
+        /* MODE INFO */
+        .mode-info { margin-top: 8px; padding: 10px 12px; border-radius: 8px; font-size: 0.8rem; line-height: 1.5; border: 1px solid #e0e0e0; background: #fafafa; }
+        .mode-info strong { display: block; margin-bottom: 3px; color: var(--secondary); }
+
+        /* GRIDS */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+
+        /* BUTTONS */
+        .btn { padding: 9px 18px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-size: 0.88rem; }
+        .btn-primary { background: var(--gradient); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: #fff; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-lg { padding: 13px 24px; font-size: 1rem; width: 100%; margin-top: 8px; }
+
+        /* BOT CARD */
+        .bot-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .bot-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .bot-card-title { font-weight: 700; font-size: 0.95rem; color: #2d3436; }
+
+        /* MODE TABS inside bot card */
+        .mode-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+        .mode-tab { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border: 2px solid #e0e0e0; background: white; color: #888; transition: all 0.15s; }
+        .mode-tab.active-m1 { border-color: #667eea; background: #eef2ff; color: #667eea; }
+        .mode-tab.active-m2 { border-color: #9333ea; background: #f3e8ff; color: #9333ea; }
+        .mode-tab.active-m3 { border-color: #db2777; background: #fce7f3; color: #db2777; }
+
+        /* SECTION DIVIDER inside bot card */
+        .section-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: #aaa; margin: 18px 0 10px; }
+
+        /* NOTIFY */
+        .notify { position: fixed; top: 60px; right: 20px; padding: 13px 22px; border-radius: 8px; color: white; font-weight: 700; display: none; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+        /* SUCCESS BANNER */
+        .session-created-banner { background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 16px 20px; display: none; margin-bottom: 8px; }
+        .session-created-banner strong { color: #065f46; font-size: 1rem; }
+        .session-created-banner code { background: #a7f3d0; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-size: 0.95rem; color: #064e3b; }
+    </style>
+</head>
+<body>
+
+<header class="nav-header">
+    <a href="/" class="nav-logo">ACTR</a>
+    <nav class="nav-links">
+        <a href="/">Lobby</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/admin" class="active">Admin</a>
+        <a href="/manual">Manual</a>
+    </nav>
+</header>
+
+<div id="notification" class="notify"></div>
+
+<div class="container">
+
+    <!-- ===== CREATE SESSION ===== -->
+    <div class="card">
+        <div class="card-title">🎛️ Create New Session</div>
+
+        <div id="session-created-banner" class="session-created-banner"></div>
+
+        <form id="newSessionForm">
+
+            <!-- Row 1: Name + Group Size + Bots toggle -->
+            <div class="grid-3">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Session Name</label>
+                    <input type="text" id="sessionName" placeholder="e.g., Study 1 — AI Trust Experiment" required>
+                    <div class="helper">A unique Session ID (e.g. SES-A1B2C) is generated automatically on creation.</div>
+                </div>
+                <div class="form-group">
+                    <label>Enable AI Bots?</label>
+                    <select id="botEnabled">
+                        <option value="true">Yes — AI personas active</option>
+                        <option value="false">No — human only</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2: Group size, session mode, spy mode, group duration -->
+            <div class="grid-4">
+                <div class="form-group">
+                    <label>Group Size</label>
+                    <input type="number" id="groupSize" value="2" min="1" max="20">
+                    <div class="helper">Human participants per group (bots not counted).</div>
+                </div>
+                <div class="form-group">
+                    <label>Session Mode</label>
+                    <select id="sessionMode" onchange="updateSessionModeInfo(this.value)">
+                        <option value="1">Mode 1 — All bots reply to every message</option>
+                        <option value="2">Mode 2 — Smart single bot (AI picks the most relevant)</option>
+                        <option value="3">Mode 3 — @mention only (bot responds when named)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Spy Mode</label>
+                    <select id="spyModeEnabled">
+                        <option value="false">Disabled</option>
+                        <option value="true">Enabled (admin view)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Group Duration <span class="hint">(minutes)</span></label>
+                    <input type="number" id="groupTimeout" value="30" min="5" max="1440">
+                    <div class="helper">Maximum duration for each group chat session.</div>
+                </div>
+            </div>
+
+            <div class="mode-info" id="session-mode-info">
+                <strong>Mode 1 — All bots reply to every message</strong>Every bot responds to every message. All bots are always active in the conversation.
+            </div>
+
+            <!-- Row 3: Participant names -->
+            <div class="form-group" style="margin-top:16px;">
+                <label>Participant Display Names <span class="hint">(optional)</span></label>
+                <input type="text" id="participantNames" placeholder="e.g.  Alice, Bob, Carol  — assigned in join order">
+                <div class="helper">Comma-separated. Leave blank to show raw UIDs. Names are assigned in the order participants join.</div>
+            </div>
+
+            <!-- Experiment options -->
+            <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">⚙️ Experiment Options</div>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Assignment</label>
+                    <select id="assignmentMode">
+                        <option value="fifo">FIFO — first-come group formation</option>
+                        <option value="stratified">Stratified — separate queue per condition</option>
+                    </select>
+                    <div class="helper">Stratified: pass <code>condition</code> in embed URL from Qualtrics embedded data.</div>
+                </div>
+                <div class="form-group">
+                    <label>Speaking turns</label>
+                    <select id="turnMode">
+                        <option value="none">Off — anyone can speak anytime</option>
+                        <option value="round_robin">Round-robin — humans take fixed turns</option>
+                        <option value="timed">Timed — each turn lasts N seconds</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Turn duration <span class="hint">(seconds, timed mode)</span></label>
+                    <input type="number" id="turnDuration" value="60" min="10" max="600">
+                </div>
+            </div>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>AI starts conversation?</label>
+                    <select id="aiStartsConversation">
+                        <option value="false">No — wait for human first</option>
+                        <option value="true">Yes — first bot sends opening message</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Qualtrics auto-advance</label>
+                    <select id="qualtricsHandoff">
+                        <option value="false">Off</option>
+                        <option value="true">On — postMessage to parent survey</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Store chat in Qualtrics</label>
+                    <select id="qualtricsStoreChat">
+                        <option value="false">Off — server/Dashboard export only</option>
+                        <option value="true">On — push transcript via postMessage</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Qualtrics field: transcript</label>
+                    <input type="text" id="qualtricsFieldTranscript" value="chat_transcript" placeholder="chat_transcript">
+                </div>
+                <div class="form-group">
+                    <label>Qualtrics field: status</label>
+                    <input type="text" id="qualtricsFieldStatus" value="chat_status" placeholder="chat_status">
+                </div>
+            </div>
+            <div class="helper" style="margin-bottom:12px;">
+                For Qualtrics: add the parent-page script from <code>/static/qualtrics-parent-snippet.js</code> to your survey block (see README).
+            </div>
+
+            <!-- ===== AI PERSONAS ===== -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 24px 0 12px;">
+                <div style="font-size:1rem; font-weight:700; color:var(--secondary);">AI Personas</div>
+                <button type="button" class="btn btn-success" onclick="addBotUI()">+ Add Persona</button>
+            </div>
+
+            <div id="botListContainer"></div>
+
+            <button type="submit" class="btn btn-primary btn-lg">🚀 Create Session</button>
+        </form>
+    </div>
+
+    <!-- ===== TEST SANDBOX ===== -->
+    <div class="card" style="border: 2px solid var(--primary);">
+        <div class="card-title">🛠️ Admin Test Sandbox</div>
+        <p style="font-size:0.85rem; color:#666; margin-bottom:16px;">
+            Join any group as <strong>ADMIN_TESTER</strong> to verify bot behavior before running a real session. Your messages are prefixed so they can be filtered from analysis data.
+        </p>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Session ID</label>
+                <input type="text" id="testSessionId" placeholder="e.g., SES-A1B2C">
+            </div>
+            <div class="form-group">
+                <label>Group ID</label>
+                <input type="text" id="testGroupId" placeholder="e.g., GRP-X9Y8">
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="joinTestSandbox()">Join as Admin Tester</button>
+    </div>
+
+</div><!-- /container -->
+
+<script>
+/* ============================================================
+   MODE DESCRIPTIONS
+   ============================================================ */
+const SESSION_MODE_INFO = {
+    '1': { title: 'Mode 1 — All bots reply to every message', desc: 'Every bot responds to every message. All bots are always active in the conversation.' },
+    '2': { title: 'Mode 2 — Smart single bot', desc: 'AI analyzes the message and picks the most relevant bot to respond. Only one bot speaks per message. Falls back to a random bot if intent is unclear.' },
+    '3': { title: 'Mode 3 — @mention only', desc: 'A bot only responds when its name is mentioned in the message (e.g. "@Alice what do you think?"). Bots stay silent otherwise.' }
+};
+
+const BOT_MODE_INFO = {
+    1: { title: 'Mode 1 — Fixed Delay', desc: 'Bot always responds after exactly the delay you set. Fully predictable and reproducible — best for controlled experiments.' },
+    2: { title: 'Mode 2 — Random Delay', desc: 'Adds a random 0.5–2.5 s jitter on top of the fixed delay. Same response rate as Mode 1 but feels slightly less mechanical.' },
+    3: { title: 'Mode 3 — Natural Mimicry', desc: 'Delay scales with message length. Bot may skip messages based on Skip Rate. Most human-like behavior.' }
+};
+
+function updateSessionModeInfo(val) {
+    const el = document.getElementById('session-mode-info');
+    const info = SESSION_MODE_INFO[val];
+    if (info) el.innerHTML = `<strong>${info.title}</strong>${info.desc}`;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function toast(msg, color = '#2ecc71') {
+    const el = document.getElementById('notification');
+    el.textContent = msg; el.style.background = color;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3500);
+}
+
+/* ============================================================
+   BOT PERSONA UI
+   ============================================================ */
+let botPersonas = [];
+
+function addBotUI() {
+    botPersonas.push({
+        name: '', prompt: 'You are a helpful, friendly participant in a group discussion. Keep your responses concise and natural.',
+        mode: 1,
+        avatar_type: 'bot',
+        delay_seconds: 3,
+        typing_cps: 10,
+        max_tokens: 150,
+        temperature: 0.7,
+        context_messages: 15,
+        idle_threshold: 20,
+        skip_rate: 0.15
+    });
+    renderBots();
+}
+
+function removeBotUI(i) { botPersonas.splice(i, 1); renderBots(); }
+function updateBot(i, field, value) { botPersonas[i][field] = value; }
+
+function setMode(i, mode) {
+    botPersonas[i].mode = mode;
+    renderBots();
+}
+
+function renderBots() {
+    const container = document.getElementById('botListContainer');
+    if (botPersonas.length === 0) {
+        container.innerHTML = '<p style="color:#aaa; font-size:0.85rem; text-align:center; padding:20px 0;">No personas yet. Click "+ Add Persona" to add one.</p>';
+        return;
+    }
+    container.innerHTML = botPersonas.map((bot, i) => {
+        const m = bot.mode || 1;
+        const modeClass = `active-m${m}`;
+        return `
+        <div class="bot-card">
+            <div class="bot-card-header">
+                <span class="bot-card-title">Persona #${i + 1}</span>
+                <button type="button" class="btn btn-danger" onclick="removeBotUI(${i})">Remove</button>
+            </div>
+
+            <!-- Name + Avatar Type + Mode selector -->
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" placeholder="e.g., Alex" value="${bot.name}"
+                           oninput="updateBot(${i}, 'name', this.value)">
+                    <div class="helper">Shown in chat. Participants can @mention this name.</div>
+                </div>
+                <div class="form-group">
+                    <label>Avatar Type</label>
+                    <select onchange="updateBot(${i}, 'avatar_type', this.value)">
+                        <option value="bot" ${(bot.avatar_type||'bot')==='bot'?'selected':''}>Bot Avatar</option>
+                        <option value="human" ${bot.avatar_type==='human'?'selected':''}>Human Avatar</option>
+                    </select>
+                    <div class="helper">Display as bot or human in chat UI.</div>
+                </div>
+                <div class="form-group">
+                    <label>Response Mode</label>
+                    <div class="mode-tabs">
+                        <div class="mode-tab ${m===1?modeClass:''}" onclick="setMode(${i},1)">Mode 1</div>
+                        <div class="mode-tab ${m===2?modeClass:''}" onclick="setMode(${i},2)">Mode 2</div>
+                        <div class="mode-tab ${m===3?modeClass:''}" onclick="setMode(${i},3)">Mode 3</div>
+                    </div>
+                    <div class="mode-info">${BOT_MODE_INFO[m].desc}</div>
+                </div>
+            </div>
+
+            <!-- Personality Prompt -->
+            <div class="form-group">
+                <label>Personality Prompt</label>
+                <textarea rows="3" oninput="updateBot(${i}, 'prompt', this.value)">${bot.prompt}</textarea>
+                <div class="helper">System instructions defining this persona's role, tone, and behavior. This is the most important variable for shaping what the bot says.</div>
+            </div>
+
+            <!-- ── TIMING ── -->
+            <div class="section-label">⏱ Timing</div>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Response Delay <span class="hint">(seconds)</span></label>
+                    <div class="range-row">
+                        <input type="range" min="0" max="15" step="0.5" value="${bot.delay_seconds}"
+                               oninput="updateBot(${i},'delay_seconds',Number(this.value)); this.nextElementSibling.textContent=this.value+'s'">
+                        <span class="range-val">${bot.delay_seconds}s</span>
+                    </div>
+                    <div class="helper">Exact wait before responding (Mode 1). Recommended: 2–5 s.</div>
+                </div>
+                <div class="form-group">
+                    <label>Idle Trigger <span class="hint">(seconds)</span></label>
+                    <div class="range-row">
+                        <input type="range" min="5" max="120" step="5" value="${bot.idle_threshold}"
+                               oninput="updateBot(${i},'idle_threshold',Number(this.value)); this.nextElementSibling.textContent=this.value+'s'">
+                        <span class="range-val">${bot.idle_threshold}s</span>
+                    </div>
+                    <div class="helper">If no one speaks for this long, the bot initiates a new message.</div>
+                </div>
+                <div class="form-group">
+                    <label>Typing Speed <span class="hint">(chars/sec)</span></label>
+                    <div class="range-row">
+                        <input type="range" min="2" max="40" step="1" value="${bot.typing_cps}"
+                               oninput="updateBot(${i},'typing_cps',Number(this.value)); this.nextElementSibling.textContent=this.value">
+                        <span class="range-val">${bot.typing_cps}</span>
+                    </div>
+                    <div class="helper">How fast the message appears on screen. 8–15 feels natural.</div>
+                </div>
+            </div>
+
+            <!-- ── RESPONSE QUALITY ── -->
+            <div class="section-label">🧠 Response Quality</div>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Max Response Length <span class="hint">(tokens)</span></label>
+                    <div class="range-row">
+                        <input type="range" min="20" max="500" step="10" value="${bot.max_tokens}"
+                               oninput="updateBot(${i},'max_tokens',Number(this.value)); this.nextElementSibling.textContent=this.value">
+                        <span class="range-val">${bot.max_tokens}</span>
+                    </div>
+                    <div class="helper">~¾ word per token. 100 ≈ 2 sentences. 200 ≈ short paragraph.</div>
+                </div>
+                <div class="form-group">
+                    <label>Creativity <span class="hint">(temperature)</span></label>
+                    <div class="range-row">
+                        <input type="range" min="0" max="1" step="0.05" value="${bot.temperature}"
+                               oninput="updateBot(${i},'temperature',Number(this.value)); this.nextElementSibling.textContent=Number(this.value).toFixed(2)">
+                        <span class="range-val">${Number(bot.temperature).toFixed(2)}</span>
+                    </div>
+                    <div class="helper">0.0 = deterministic · 0.7 = balanced · 1.0 = highly varied.</div>
+                </div>
+                <div class="form-group">
+                    <label>Context Window <span class="hint">(messages)</span></label>
+                    <div class="range-row">
+                        <input type="range" min="3" max="50" step="1" value="${bot.context_messages}"
+                               oninput="updateBot(${i},'context_messages',Number(this.value)); this.nextElementSibling.textContent=this.value">
+                        <span class="range-val">${bot.context_messages}</span>
+                    </div>
+                    <div class="helper">How many recent messages the bot reads before replying. More = smarter but slower.</div>
+                </div>
+            </div>
+
+            <!-- ── MODE 3 ONLY ── -->
+            ${m === 3 ? `
+            <div class="section-label">🎲 Mode 3 — Natural Mimicry</div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Skip Rate</label>
+                    <div class="range-row">
+                        <input type="range" min="0" max="0.8" step="0.05" value="${bot.skip_rate}"
+                               oninput="updateBot(${i},'skip_rate',Number(this.value)); this.nextElementSibling.textContent=Math.round(Number(this.value)*100)+'%'">
+                        <span class="range-val">${Math.round(bot.skip_rate*100)}%</span>
+                    </div>
+                    <div class="helper">Probability of ignoring a message. 0% = always reply · 30% = skips ~1 in 3.</div>
+                </div>
+            </div>
+            ` : ''}
+        </div>
+        `;
+    }).join('');
+}
+
+/* ============================================================
+   FORM SUBMIT
+   ============================================================ */
+document.getElementById('newSessionForm').onsubmit = async (e) => {
+    e.preventDefault();
+
+    // Collect bot data including new fields
+    const bots = botPersonas.map(b => ({
+        name:             b.name,
+        prompt:           b.prompt,
+        mode:             b.mode,
+        avatar_type:      b.avatar_type || 'bot',
+        delay_seconds:    b.delay_seconds,
+        typing_cps:       b.typing_cps,
+        max_tokens:       b.max_tokens,
+        temperature:      b.temperature,
+        context_messages: b.context_messages,
+        idle_threshold:   b.idle_threshold,
+        skip_rate:        b.skip_rate
+    }));
+
+    const payload = {
+        session_name:     document.getElementById('sessionName').value,
+        group_size:       parseInt(document.getElementById('groupSize').value),
+        bot_enabled:      document.getElementById('botEnabled').value === 'true',
+        group_timeout:    parseInt(document.getElementById('groupTimeout').value),
+        session_mode:     parseInt(document.getElementById('sessionMode').value),
+        spy_mode_enabled: document.getElementById('spyModeEnabled').value === 'true',
+        assignment_mode: document.getElementById('assignmentMode').value,
+        turn_mode: document.getElementById('turnMode').value,
+        turn_duration_seconds: parseInt(document.getElementById('turnDuration').value, 10),
+        ai_starts_conversation: document.getElementById('aiStartsConversation').value === 'true',
+        qualtrics_handoff_enabled: document.getElementById('qualtricsHandoff').value === 'true',
+        qualtrics_store_chat: document.getElementById('qualtricsStoreChat').value === 'true',
+        qualtrics_field_transcript: document.getElementById('qualtricsFieldTranscript').value.trim() || 'chat_transcript',
+        qualtrics_field_status: document.getElementById('qualtricsFieldStatus').value.trim() || 'chat_status',
+        participant_names: document.getElementById('participantNames').value
+            ? document.getElementById('participantNames').value.split(',').map(s => s.trim()).filter(Boolean)
+            : null,
+        bots
+    };
+
+    try {
+        const res = await fetch('/api/sessions/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const banner = document.getElementById('session-created-banner');
+            const base = window.location.origin;
+            const embedUrl = `${base}/embed.html?session_id=${encodeURIComponent(data.session_id)}&participant_id=\${e://Field/ResponseID}&condition=\${e://Field/condition}`;
+            banner.innerHTML = `✅ <strong>Session created!</strong> ID: <code>${data.session_id}</code><br><br>
+                <strong>Qualtrics iframe URL:</strong><br>
+                <code style="word-break:break-all;display:block;margin:8px 0;padding:8px;background:#fff3e0;">${embedUrl}</code>
+                <span style="font-size:0.85rem;color:#636e72;">
+                  Enable Qualtrics options above as needed. Add parent script: <code>/static/qualtrics-parent-snippet.js</code>.
+                  Pull API: <code>/api/export/participant/${data.session_id}/{participant_id}</code>
+                </span>`;
+            banner.style.display = 'block';
+            document.getElementById('sessionName').value = '';
+            botPersonas = [];
+            renderBots();
+        } else {
+            toast('Error: ' + (data.message || 'Unknown'), '#e74c3c');
+        }
+    } catch (err) {
+        toast('Network error: ' + err.message, '#e74c3c');
+    }
+};
+
+function joinTestSandbox() {
+    const sid = document.getElementById('testSessionId').value.trim();
+    const gid = document.getElementById('testGroupId').value.trim();
+    if (!sid || !gid) { toast('Enter both Session ID and Group ID.', '#e74c3c'); return; }
+    window.location.href = `/chat/${encodeURIComponent(sid)}/${encodeURIComponent(gid)}?uid=ADMIN_TESTER`;
+}
+
+// Init
+addBotUI();
+</script>
+</body>
+</html>

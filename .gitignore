@@ -1,0 +1,31 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Databases & Local Data
+*.db
+*.sqlite3
+config/admin_config.json
+config/participant_index.json
+db/local_db.json
+
+# Runtime logs & activity
+logs/
+activity_logs/
+conversations/
+
+# IDE
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db   
