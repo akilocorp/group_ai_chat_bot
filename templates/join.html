@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Join Chat — ACTR</title>
+    <link rel="stylesheet" href="/static/theme.css">
     <style>
         :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient: var(--primary-gradient);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -31,9 +30,7 @@
         .logo {
             font-weight: 800;
             font-size: 2rem;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--orange);
             text-align: center;
             margin-bottom: 8px;
         }
@@ -44,8 +41,8 @@
             margin-bottom: 32px;
         }
         .info-box {
-            background: #f0f2f5;
-            border-left: 4px solid var(--primary);
+            background: var(--gray-100);
+            border-left: 4px solid var(--orange);
             padding: 14px 18px;
             border-radius: 8px;
             margin-bottom: 24px;
@@ -53,7 +50,7 @@
             line-height: 1.6;
         }
         .info-box strong {
-            color: var(--secondary);
+            color: var(--orange-dark);
             display: block;
             margin-bottom: 4px;
         }
@@ -78,7 +75,7 @@
         }
         input:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--orange);
         }
         .btn-join {
             width: 100%;

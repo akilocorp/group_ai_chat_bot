@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 PARTICIPANT_INDEX_FILE = "config/participant_index.json"
@@ -22,7 +22,9 @@ class SessionConfig:
         self.participant_names = []
         self.spy_mode_enabled = False
         self.session_mode = 1
-        self.group_timeout = 30
+        # Survey open for N days; each group chat lasts M minutes (from group formation)
+        self.survey_open_days = 7
+        self.group_chat_duration_minutes = 5
         # Qualtrics integration (optional)
         self.qualtrics_handoff_enabled = False
         self.qualtrics_store_chat = False
@@ -47,7 +49,8 @@ class SessionConfig:
             "participant_names": self.participant_names,
             "spy_mode_enabled": self.spy_mode_enabled,
             "session_mode": self.session_mode,
-            "group_timeout": self.group_timeout,
+            "survey_open_days": self.survey_open_days,
+            "group_chat_duration_minutes": self.group_chat_duration_minutes,
             "qualtrics_handoff_enabled": self.qualtrics_handoff_enabled,
             "qualtrics_store_chat": self.qualtrics_store_chat,
             "qualtrics_field_transcript": self.qualtrics_field_transcript,
@@ -71,7 +74,13 @@ class SessionConfig:
         obj.participant_names = data.get("participant_names", [])
         obj.spy_mode_enabled = data.get("spy_mode_enabled", False)
         obj.session_mode = data.get("session_mode", 1)
-        obj.group_timeout = data.get("group_timeout", 30)
+        obj.survey_open_days = max(1, min(int(data.get("survey_open_days", 7)), 90))
+        gcm = data.get("group_chat_duration_minutes")
+        if gcm is not None:
+            obj.group_chat_duration_minutes = max(1, min(int(gcm), 180))
+        else:
+            # Legacy group_timeout was inactivity minutes — default 5 min per-group chat
+            obj.group_chat_duration_minutes = 5
         obj.qualtrics_handoff_enabled = data.get("qualtrics_handoff_enabled", False)
         obj.qualtrics_store_chat = data.get("qualtrics_store_chat", False)
         obj.qualtrics_field_transcript = data.get("qualtrics_field_transcript", "chat_transcript")
@@ -161,7 +170,8 @@ class MatchManager:
         group_size: int,
         bot_enabled: bool,
         bots: List,
-        group_timeout: int = 30,
+        survey_open_days: int = 7,
+        group_chat_duration_minutes: int = 5,
         participant_names: List = None,
         spy_mode_enabled: bool = False,
         session_mode: int = 1,
@@ -177,7 +187,8 @@ class MatchManager:
         session_id = f"SES-{uuid.uuid4().hex[:5].upper()}"
         config = SessionConfig(session_id, name, group_size, bot_enabled)
         config.bots = bots
-        config.group_timeout = group_timeout
+        config.survey_open_days = max(1, min(survey_open_days, 90))
+        config.group_chat_duration_minutes = max(1, min(group_chat_duration_minutes, 180))
         config.participant_names = participant_names or []
         config.spy_mode_enabled = spy_mode_enabled
         config.session_mode = session_mode
@@ -201,6 +212,65 @@ class MatchManager:
     def get_session(self, session_id: str) -> Optional[SessionConfig]:
         return self.sessions.get(session_id)
 
+    def is_session_open(self, session: SessionConfig) -> bool:
+        """True while the session still accepts new participants (survey collection window)."""
+        if not session:
+            return False
+        try:
+            created = session.created_at
+            if isinstance(created, str):
+                created = datetime.fromisoformat(created)
+        except (TypeError, ValueError):
+            created = datetime.now()
+        deadline = created + timedelta(days=max(1, session.survey_open_days))
+        return datetime.now() < deadline
+
+    def session_to_admin_dict(self, session: SessionConfig) -> Dict:
+        return session.to_dict()
+
+    def update_session(self, session_id: str, data: Dict) -> bool:
+        session = self.sessions.get(session_id)
+        if not session:
+            return False
+        if "session_name" in data and data["session_name"]:
+            session.name = str(data["session_name"]).strip()
+        if "group_size" in data:
+            session.group_size = max(1, int(data["group_size"]))
+        if "bot_enabled" in data:
+            session.bot_enabled = bool(data["bot_enabled"])
+        if "bots" in data:
+            session.bots = data["bots"]
+        if "participant_names" in data:
+            session.participant_names = data["participant_names"] or []
+        if "spy_mode_enabled" in data:
+            session.spy_mode_enabled = bool(data["spy_mode_enabled"])
+        if "session_mode" in data:
+            session.session_mode = int(data["session_mode"])
+        if "survey_open_days" in data:
+            session.survey_open_days = max(1, min(int(data["survey_open_days"]), 90))
+        if "group_chat_duration_minutes" in data:
+            session.group_chat_duration_minutes = max(1, min(int(data["group_chat_duration_minutes"]), 180))
+        if "qualtrics_handoff_enabled" in data:
+            session.qualtrics_handoff_enabled = bool(data["qualtrics_handoff_enabled"])
+        if "qualtrics_store_chat" in data:
+            session.qualtrics_store_chat = bool(data["qualtrics_store_chat"])
+        if "qualtrics_field_transcript" in data:
+            session.qualtrics_field_transcript = str(data["qualtrics_field_transcript"] or "chat_transcript")
+        if "qualtrics_field_status" in data:
+            session.qualtrics_field_status = str(data["qualtrics_field_status"] or "chat_status")
+        if "ai_starts_conversation" in data:
+            session.ai_starts_conversation = bool(data["ai_starts_conversation"])
+        if "turn_mode" in data:
+            tm = data["turn_mode"]
+            session.turn_mode = tm if tm in ("none", "round_robin", "timed") else "none"
+        if "turn_duration_seconds" in data:
+            session.turn_duration_seconds = max(10, int(data["turn_duration_seconds"]))
+        if "assignment_mode" in data:
+            am = data["assignment_mode"]
+            session.assignment_mode = am if am in ("fifo", "stratified") else "fifo"
+        self.save_all_sessions()
+        return True
+
     def get_all_sessions_summary(self) -> List[Dict]:
         summary = []
         for sid, config in self.sessions.items():
@@ -212,6 +282,9 @@ class MatchManager:
                 "group_size": config.group_size,
                 "bot_enabled": config.bot_enabled,
                 "assignment_mode": config.assignment_mode,
+                "survey_open_days": config.survey_open_days,
+                "group_chat_duration_minutes": config.group_chat_duration_minutes,
+                "is_open": self.is_session_open(config),
             })
         return summary
 
@@ -224,10 +297,13 @@ class MatchManager:
             print(f"⚠️ Warning: Attempted to queue for invalid session {session_id}")
             return None
 
+        session_config = self.sessions[session_id]
+        if not self.is_session_open(session_config):
+            print(f"🚫 Session {session_id} is closed (survey collection ended).")
+            return None
+
         if uid in self.user_locations:
             return self.user_locations[uid].get("group_id")
-
-        session_config = self.sessions[session_id]
 
         if session_config.assignment_mode == "stratified":
             return self._add_to_stratified_queue(session_id, uid, condition, session_config)

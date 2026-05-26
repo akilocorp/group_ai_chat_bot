@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login — ACTR</title>
+    <link rel="stylesheet" href="/static/theme.css">
     <style>
         :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient: var(--primary-gradient);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -31,9 +30,7 @@
         .logo {
             font-weight: 800;
             font-size: 2rem;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--orange);
             text-align: center;
             margin-bottom: 8px;
         }
@@ -64,7 +61,7 @@
         }
         input:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--orange);
         }
         .btn-login {
             width: 100%;
@@ -96,7 +93,7 @@
 <body>
     <div class="login-card">
         <div class="logo">ACTR</div>
-        <div class="subtitle">Admin Access</div>
+        <div class="subtitle">Admin access</div>
 
         <div id="error-msg" class="error-msg"></div>
 
@@ -109,7 +106,7 @@
                 <label>Password</label>
                 <input type="password" id="password" required autocomplete="current-password">
             </div>
-            <button type="submit" class="btn-login">Login</button>
+            <button type="submit" class="btn-login">Sign in</button>
         </form>
     </div>
 
@@ -124,10 +121,8 @@
             const errorEl = document.getElementById('error-msg');
 
             if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-                // Store auth token in cookie (expires in 24 hours)
                 document.cookie = 'actr_auth=authenticated; path=/; max-age=86400; SameSite=Lax';
                 sessionStorage.setItem('actr_auth', 'authenticated');
-                // Redirect to the page they were trying to access, or default to lobby
                 const redirect = new URLSearchParams(window.location.search).get('redirect') || '/';
                 window.location.href = redirect;
             } else {

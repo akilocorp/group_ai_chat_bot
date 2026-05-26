@@ -8,12 +8,12 @@ import os
 import uuid
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -83,26 +83,26 @@ def touch_group_activity(session_id: str, group_id: str):
 
 
 async def group_timeout_watcher():
-    """Closes inactive groups after session-configured timeout (minutes)."""
+    """Ends each group chat after group_chat_duration_minutes from group formation."""
     while True:
-        await asyncio.sleep(60)
+        await asyncio.sleep(15)
         now = datetime.now()
         for session_id, groups in list(match_manager.active_rooms.items()):
             session = match_manager.get_session(session_id)
             if not session:
                 continue
-            timeout_seconds = max(1, session.group_timeout) * 60
+            duration_seconds = max(1, session.group_chat_duration_minutes) * 60
             for group_id, group_info in list(groups.items()):
-                last = group_info.get("last_activity") or group_info.get("created_at")
-                if not last:
+                started = group_info.get("created_at")
+                if not started:
                     continue
-                if isinstance(last, str):
+                if isinstance(started, str):
                     try:
-                        last = datetime.fromisoformat(last)
+                        started = datetime.fromisoformat(started)
                     except ValueError:
                         continue
-                if (now - last).total_seconds() >= timeout_seconds:
-                    await notify_session_ended(session_id, group_id, "timeout")
+                if (now - started).total_seconds() >= duration_seconds:
+                    await notify_session_ended(session_id, group_id, "duration_limit")
                     for entry in list(group_info.get("connections", [])):
                         try:
                             await entry["websocket"].close()
@@ -114,7 +114,9 @@ async def group_timeout_watcher():
                         except Exception:
                             pass
                     match_manager.end_group(session_id, group_id)
-                    print(f"⏱️ Group {group_id} closed after {session.group_timeout}m inactivity")
+                    print(
+                        f"⏱️ Group {group_id} closed after {session.group_chat_duration_minutes}m chat duration"
+                    )
 
 async def broadcast(session_id: str, group_id: str, payload):
     """Broadcasts a JSON message to all connections in a specific small group."""
@@ -204,7 +206,7 @@ async def login_page(request: Request):
 async def root(request: Request):
     if not check_auth(request):
         return templates.TemplateResponse("login.html", {"request": request})
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("dashboard.html", {"request": request})
 
 @app.get("/wait", response_class=HTMLResponse)
 async def wait_page(request: Request):
@@ -234,9 +236,8 @@ async def admin_page(request: Request):
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
-    if not check_auth(request):
-        return templates.TemplateResponse("login.html", {"request": request})
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    """Legacy URL — unified dashboard lives at /."""
+    return RedirectResponse(url="/", status_code=302)
 
 @app.get("/manual", response_class=HTMLResponse)
 async def manual_page(request: Request):
@@ -270,7 +271,8 @@ class SessionCreateRequest(BaseModel):
     participant_names: Optional[List[str]] = None
     spy_mode_enabled: bool = False
     session_mode: int = 1
-    group_timeout: int = 30
+    survey_open_days: int = 7
+    group_chat_duration_minutes: int = 5
     qualtrics_handoff_enabled: bool = False
     qualtrics_store_chat: bool = False
     qualtrics_field_transcript: str = "chat_transcript"
@@ -301,7 +303,8 @@ async def create_session(data: SessionCreateRequest):
             group_size=data.group_size,
             bot_enabled=data.bot_enabled,
             bots=cleaned_bots,
-            group_timeout=data.group_timeout,
+            survey_open_days=data.survey_open_days,
+            group_chat_duration_minutes=data.group_chat_duration_minutes,
             participant_names=data.participant_names,
             spy_mode_enabled=data.spy_mode_enabled,
             session_mode=data.session_mode,
@@ -345,7 +348,72 @@ async def get_session_config(session_id: str):
         "turn_mode": session.turn_mode,
         "turn_duration_seconds": session.turn_duration_seconds,
         "assignment_mode": session.assignment_mode,
+        "survey_open_days": session.survey_open_days,
+        "group_chat_duration_minutes": session.group_chat_duration_minutes,
     }
+
+
+class SessionUpdateRequest(BaseModel):
+    session_name: Optional[str] = None
+    group_size: Optional[int] = None
+    bot_enabled: Optional[bool] = None
+    bots: Optional[List[Dict]] = None
+    participant_names: Optional[List[str]] = None
+    spy_mode_enabled: Optional[bool] = None
+    session_mode: Optional[int] = None
+    survey_open_days: Optional[int] = None
+    group_chat_duration_minutes: Optional[int] = None
+    qualtrics_handoff_enabled: Optional[bool] = None
+    qualtrics_store_chat: Optional[bool] = None
+    qualtrics_field_transcript: Optional[str] = None
+    qualtrics_field_status: Optional[str] = None
+    ai_starts_conversation: Optional[bool] = None
+    turn_mode: Optional[str] = None
+    turn_duration_seconds: Optional[int] = None
+    assignment_mode: Optional[str] = None
+
+
+@app.get("/api/sessions/{session_id}/admin")
+async def get_session_admin_detail(session_id: str):
+    """Full session config for Admin read-only view and modify."""
+    session = match_manager.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    data = match_manager.session_to_admin_dict(session)
+    data["is_open"] = match_manager.is_session_open(session)
+    try:
+        created = session.created_at
+        if isinstance(created, str):
+            created = datetime.fromisoformat(created)
+        data["survey_closes_at"] = (created + timedelta(days=session.survey_open_days)).isoformat()
+    except (TypeError, ValueError):
+        data["survey_closes_at"] = None
+    return data
+
+
+@app.put("/api/sessions/{session_id}")
+async def modify_session(session_id: str, data: SessionUpdateRequest):
+    """Update an existing session configuration (Admin modify)."""
+    if session_id not in match_manager.sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+    try:
+        payload = data.model_dump(exclude_unset=True)
+        if "bots" in payload and payload["bots"] is not None:
+            cleaned = []
+            for bot in payload["bots"]:
+                name = (bot.get("name") or "").strip()
+                if not name:
+                    raise HTTPException(status_code=400, detail="Each bot must have a non-empty name")
+                cleaned.append({**bot, "name": name})
+            payload["bots"] = cleaned
+        if not match_manager.update_session(session_id, payload):
+            raise HTTPException(status_code=404, detail="Session not found")
+        return {"status": "success", "session_id": session_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_id = error_handler.handle_exception(e, "modify_session")
+        return {"status": "error", "message": str(e), "error_id": error_id}
 
 
 @app.get("/api/export/participant/{session_id}/{participant_id}")
@@ -498,6 +566,8 @@ async def export_session_activity(session_id: str):
         writer.writerow(["Session Mode", session_cfg.session_mode])
         writer.writerow(["Bot Enabled", session_cfg.bot_enabled])
         writer.writerow(["Group Size", session_cfg.group_size])
+        writer.writerow(["Survey Open (days)", getattr(session_cfg, "survey_open_days", "")])
+        writer.writerow(["Group Chat Duration (min)", getattr(session_cfg, "group_chat_duration_minutes", "")])
         writer.writerow(["History Limit", getattr(session_cfg, 'history_limit', '')])
         writer.writerow(["Participant Names", ", ".join(getattr(session_cfg, 'participant_names', []) or [])])
         writer.writerow([])
@@ -585,6 +655,13 @@ async def match_user(
                 "session_id": session_id,
                 "group_id": loc["group_id"],
             }
+    session = match_manager.get_session(session_id)
+    if session and not match_manager.is_session_open(session):
+        return {
+            "status": "session_closed",
+            "message": "This study session is no longer accepting participants.",
+            "session_id": session_id,
+        }
     group_id = match_manager.add_to_queue(session_id, uid, condition=condition)
     if group_id:
         asyncio.create_task(

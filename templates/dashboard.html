@@ -4,97 +4,196 @@
     <title>Dashboard — ACTR</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/theme.css">
     <style>
-        :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --accent: #9c27b0;
-            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--gradient);
-            color: #fff;
+            background: var(--bg-color);
+            color: var(--gray-900);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            padding-top: 48px;
         }
-
-        /* NAV */
         .nav-header {
-            background: rgba(255,255,255,0.97); backdrop-filter: blur(10px);
-            padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 20px;
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            width: 100%;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(10px);
+            padding: 0 24px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
             box-shadow: 0 1px 8px rgba(0,0,0,0.08);
         }
-        .nav-logo { font-weight: 800; font-size: 1.2rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; flex-shrink: 0; }
+        .nav-logo { font-weight: 800; font-size: 1.2rem; color: var(--orange); text-decoration: none; }
         .nav-links { display: flex; gap: 4px; }
-        .nav-links a { text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem; padding: 5px 12px; border-radius: 8px; transition: all 0.15s; }
-        .nav-links a:hover { color: var(--primary); background: rgba(102,126,234,0.07); }
-        .nav-links a.active { color: var(--primary); background: rgba(102,126,234,0.12); }
+        .nav-links a {
+            text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem;
+            padding: 5px 12px; border-radius: 8px; transition: all 0.15s;
+        }
+        .nav-links a:hover { color: var(--orange); background: var(--orange-pale); }
+        .nav-links a.active { color: var(--orange-dark); background: var(--orange-pale); }
 
-        /* MAIN */
-        .main-content { padding: 32px 20px; flex: 1; margin-top: 48px; }
-        .container { max-width: 1300px; margin: auto; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 28px; backdrop-filter: blur(10px); }
+        .main-content { padding: 24px 20px 40px; flex: 1; }
+        .page-wrap { max-width: 1320px; margin: 0 auto; }
 
-        /* STATS */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: rgba(255,255,255,0.1); padding: 18px; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-card h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; margin-bottom: 6px; }
-        .stat-card .number { font-size: 28px; font-weight: 800; }
+        .page-hero {
+            display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+            gap: 16px; margin-bottom: 20px;
+        }
+        .page-hero h1 { font-size: 1.65rem; font-weight: 800; color: var(--gray-900); }
+        .page-hero .subtitle { font-size: 0.9rem; color: var(--gray-700); margin-top: 6px; }
+        .uid-pill {
+            background: white; border: 1px solid var(--gray-300); border-radius: 999px;
+            padding: 10px 18px; font-size: 0.85rem; box-shadow: var(--shadow-sm);
+        }
+        .uid-pill strong { color: var(--orange-dark); }
 
-        /* TABS */
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-btn { padding: 10px 20px; background: rgba(255,255,255,0.1); border: none; color: #fff; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: 0.2s; }
-        .tab-btn.active { background: var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .panel {
+            background: white; border: 1px solid var(--gray-300); border-radius: 14px;
+            padding: 24px; box-shadow: var(--shadow-md); margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white; padding: 16px; border-radius: 12px; text-align: center;
+            border: 1px solid var(--gray-300); box-shadow: var(--shadow-sm);
+        }
+        .stat-card h3 {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--gray-700); margin-bottom: 6px;
+        }
+        .stat-card .number { font-size: 1.75rem; font-weight: 800; color: var(--orange-dark); }
+
+        .tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+        .tab-btn {
+            padding: 9px 16px; background: var(--gray-100); border: 1px solid var(--gray-300);
+            color: var(--gray-700); cursor: pointer; border-radius: 8px;
+            font-weight: 600; font-size: 0.82rem; transition: 0.15s;
+        }
+        .tab-btn:hover { border-color: #fdba74; color: var(--orange-dark); }
+        .tab-btn.active {
+            background: var(--orange-dark); border-color: var(--orange-dark); color: #fff;
+            box-shadow: 0 4px 12px rgba(211, 84, 0, 0.2);
+        }
         .tab-content { display: none; animation: fadeIn 0.25s ease; }
         .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-        /* ROOMS TABLE */
-        .rooms-table { width: 100%; border-collapse: collapse; background: rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; }
-        .rooms-table th { background: rgba(255,255,255,0.05); padding: 13px 15px; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #ccc; }
-        .rooms-table td { padding: 13px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.88rem; }
-        .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-        .badge-bot { background: var(--accent); color: white; margin-right: 4px; }
-
-        /* LIVE FEED */
-        .chat-monitor-layout { display: grid; grid-template-columns: 240px 1fr; gap: 16px; height: 480px; }
-        .sidebar { background: rgba(0,0,0,0.2); border-radius: 10px; overflow-y: auto; padding: 10px; }
-        .room-item { padding: 11px 12px; margin-bottom: 6px; border-radius: 8px; background: rgba(255,255,255,0.05); cursor: pointer; transition: 0.15s; font-size: 0.85rem; }
-        .room-item:hover { background: rgba(255,255,255,0.12); }
-        .room-item.active { background: var(--primary); }
-        .viewer { background: rgba(0,0,0,0.3); border-radius: 10px; display: flex; flex-direction: column; padding: 18px; }
-        .messages-list { flex: 1; overflow-y: auto; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .msg-bubble { background: rgba(255,255,255,0.1); padding: 9px 14px; border-radius: 10px; max-width: 85%; font-size: 0.87rem; }
-        .msg-bubble b { color: #a5b4fc; display: block; font-size: 0.72rem; margin-bottom: 2px; }
-        .msg-bubble.bot-msg { border-left: 4px solid var(--accent); background: rgba(156,39,176,0.12); }
-
-        /* EXPORT TAB */
-        .export-section { margin-bottom: 28px; }
-        .export-section h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 14px; opacity: 0.9; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
-        .export-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
-        .export-card {
-            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px; padding: 18px;
+        /* Lobby / join */
+        .session-card {
+            border: 1px solid var(--gray-300); border-radius: 12px;
+            margin-bottom: 12px; overflow: hidden; background: white;
         }
-        .export-card .ec-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
-        .export-card .ec-desc { font-size: 0.78rem; opacity: 0.65; margin-bottom: 14px; line-height: 1.5; }
-        .export-card .ec-meta { font-size: 0.75rem; opacity: 0.5; margin-bottom: 12px; font-family: monospace; }
-        .btn-export {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
-            font-weight: 700; font-size: 0.82rem; transition: all 0.15s;
-            background: rgba(255,255,255,0.15); color: white;
+        .session-header {
+            background: var(--gray-100); padding: 14px 18px;
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer;
         }
-        .btn-export:hover { background: rgba(255,255,255,0.25); }
-        .btn-export.primary { background: var(--primary); }
-        .btn-export.primary:hover { opacity: 0.9; }
-        .no-sessions { opacity: 0.5; font-style: italic; font-size: 0.85rem; padding: 20px 0; }
+        .session-header:hover { background: #eef1f4; }
+        .session-title { font-weight: 700; font-size: 1rem; }
+        .session-meta { font-size: 0.78rem; color: var(--gray-700); margin-top: 4px; }
+        .session-body { padding: 14px 18px; display: none; border-top: 1px solid var(--gray-300); }
+        .group-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .group-card {
+            background: var(--orange-pale); color: var(--orange-dark);
+            padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+            cursor: pointer; border: 1px solid rgba(230,126,34,0.25); transition: 0.15s;
+        }
+        .group-card:hover { background: var(--orange); color: white; transform: translateY(-1px); }
+        .btn-queue {
+            margin-top: 12px; background: var(--orange); color: white; border: none;
+            padding: 8px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-queue:hover { opacity: 0.92; }
+        .empty-state { padding: 32px; color: var(--gray-500); text-align: center; font-style: italic; }
 
-        /* SYSTEM LOG */
-        .logs { background: #111; color: #00ff41; padding: 12px 15px; border-radius: 10px; height: 100px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 10.5px; margin-top: 20px; border: 1px solid #222; }
+        /* Published sessions */
+        .published-layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+        @media (max-width: 900px) { .published-layout { grid-template-columns: 1fr; } }
+        .session-list { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; }
+        .session-row {
+            padding: 12px 14px; border: 1px solid var(--gray-300); border-radius: 10px;
+            cursor: pointer; transition: 0.15s;
+        }
+        .session-row:hover { background: var(--orange-pale); border-color: #fdba74; }
+        .session-row.active { border-color: var(--orange); background: #fff7ed; }
+        .session-row-id { font-weight: 800; color: var(--orange-dark); font-size: 0.88rem; }
+        .session-row-meta { font-size: 0.75rem; color: var(--gray-700); margin-top: 4px; }
+        .badge-open { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; float: right; }
+        .badge-closed { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; float: right; }
+        .detail-panel {
+            border: 1px solid var(--gray-300); border-radius: 12px; padding: 20px; background: var(--gray-100);
+            min-height: 200px;
+        }
+        .detail-panel.empty { display: flex; align-items: center; justify-content: center; color: var(--gray-500); font-size: 0.9rem; }
+        .detail-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-modify { background: white; color: var(--orange-dark); border: 2px solid var(--orange); padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.82rem; }
+        .btn-action { padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.82rem; border: none; }
+        .btn-primary { background: var(--orange); color: white; }
+        .btn-danger { background: #fff; color: #b42318; border: 1px solid #f5c2c7; }
+        .param-section-title {
+            font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--orange-dark); margin: 14px 0 8px;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.82rem; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px 10px; border: 2px solid #e8e8e8; border-radius: 8px; font-size: 0.88rem;
+        }
+        .form-group .helper { font-size: 0.75rem; color: #888; margin-top: 4px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        @media (max-width: 700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+        #sessionDetailForm.readonly input,
+        #sessionDetailForm.readonly select,
+        #sessionDetailForm.readonly textarea {
+            background: #eceff1; color: #546e7a; border-color: #cfd8dc; cursor: not-allowed;
+        }
+
+        /* Sandbox */
+        .sandbox-box {
+            border: 2px dashed var(--orange); border-radius: 12px; padding: 20px;
+            background: linear-gradient(180deg, #fffbf5, #fff);
+        }
+
+        /* Tables & monitor (from old dashboard) */
+        .rooms-table { width: 100%; border-collapse: collapse; border: 1px solid var(--gray-300); border-radius: 10px; overflow: hidden; }
+        .rooms-table th { background: var(--gray-100); padding: 12px; text-align: left; font-size: 0.72rem; text-transform: uppercase; color: var(--gray-700); }
+        .rooms-table td { padding: 12px; border-top: 1px solid var(--gray-300); font-size: 0.86rem; }
+        .badge-bot { background: var(--orange-dark); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; margin-right: 4px; }
+        .chat-monitor-layout { display: grid; grid-template-columns: 220px 1fr; gap: 14px; height: 460px; }
+        .sidebar { background: var(--gray-100); border-radius: 10px; overflow-y: auto; padding: 8px; border: 1px solid var(--gray-300); }
+        .room-item { padding: 10px; margin-bottom: 6px; border-radius: 8px; background: white; cursor: pointer; font-size: 0.82rem; border: 1px solid transparent; }
+        .room-item:hover { border-color: #fdba74; }
+        .room-item.active { background: var(--orange); color: white; }
+        .viewer { background: white; border-radius: 10px; display: flex; flex-direction: column; padding: 14px; border: 1px solid var(--gray-300); }
+        .messages-list { flex: 1; overflow-y: auto; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .msg-bubble { background: var(--gray-100); padding: 8px 12px; border-radius: 8px; max-width: 88%; font-size: 0.85rem; border: 1px solid var(--gray-300); }
+        .msg-bubble b { display: block; font-size: 0.7rem; color: var(--orange-dark); margin-bottom: 2px; }
+        .msg-bubble.bot-msg { border-left: 3px solid var(--orange-dark); }
+        .export-section { margin-bottom: 24px; }
+        .export-section h3 { font-size: 0.95rem; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-300); }
+        .export-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+        .export-card { border: 1px solid var(--gray-300); border-radius: 12px; padding: 16px; background: white; }
+        .btn-export { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 0.8rem; background: var(--orange); color: white; margin-top: 8px; display: inline-block; text-decoration: none; }
+        .logs {
+            background: #1d1f24; color: #c8e6c9; padding: 12px; border-radius: 10px;
+            height: 90px; overflow-y: auto; font-family: monospace; font-size: 10px; margin-top: 16px;
+        }
+        .notify {
+            position: fixed; top: 56px; right: 20px; padding: 12px 20px; border-radius: 8px;
+            color: white; font-weight: 700; display: none; z-index: 2000;
+        }
+        .tab-intro { font-size: 0.88rem; color: var(--gray-700); margin-bottom: 16px; }
     </style>
 </head>
 <body>
@@ -102,116 +201,136 @@
 <header class="nav-header">
     <a href="/" class="nav-logo">ACTR</a>
     <nav class="nav-links">
-        <a href="/">Lobby</a>
-        <a href="/dashboard" class="active">Dashboard</a>
+        <a href="/" class="active">Dashboard</a>
         <a href="/admin">Admin</a>
         <a href="/manual">Manual</a>
     </nav>
 </header>
 
-<div class="main-content">
-    <div class="container">
+<div id="notification" class="notify"></div>
 
-        <!-- Stats -->
+<div class="main-content">
+    <div class="page-wrap">
+
+        <div class="page-hero">
+            <div>
+                <h1>Research Dashboard</h1>
+                <p class="subtitle">Join group chats, manage sessions, monitor rooms, and export data — all in one place.</p>
+            </div>
+            <div class="uid-pill">Your participant ID: <strong id="suggested-id">…</strong></div>
+        </div>
+
         <div class="stats-grid">
             <div class="stat-card"><h3>Active Rooms</h3><div class="number" id="total-rooms">0</div></div>
             <div class="stat-card"><h3>In Queue</h3><div class="number" id="waiting-count">0</div></div>
             <div class="stat-card"><h3>Bot Status</h3><div class="number" id="bot-status">--</div></div>
-            <div class="stat-card"><h3>Personas</h3><div class="number" id="active-bots">0</div></div>
+            <div class="stat-card"><h3>Sessions</h3><div class="number" id="session-count">0</div></div>
         </div>
 
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab-btn active" id="btn-sessions" onclick="switchTab('sessions')">Session Management</button>
-            <button class="tab-btn"         id="btn-rooms"   onclick="switchTab('rooms')">Room Management</button>
-            <button class="tab-btn"         id="btn-monitor" onclick="switchTab('monitor')">Live Feed</button>
-            <button class="tab-btn"         id="btn-export"  onclick="switchTab('export')">Export Data</button>
-        </div>
-
-        <!-- Session Management -->
-        <div id="sessions-tab" class="tab-content active">
-            <table class="rooms-table">
-                <thead>
-                    <tr>
-                        <th>Session ID</th>
-                        <th>Name</th>
-                        <th>Group Size</th>
-                        <th>Active Groups</th>
-                        <th>Bots</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="sessions-body"></tbody>
-            </table>
-        </div>
-
-        <!-- Room Management -->
-        <div id="rooms-tab" class="tab-content">
-            <table class="rooms-table">
-                <thead>
-                    <tr>
-                        <th>Room</th>
-                        <th>Session</th>
-                        <th>Participants</th>
-                        <th>Bots</th>
-                        <th>Messages</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="rooms-body"></tbody>
-            </table>
-        </div>
-
-        <!-- Live Feed -->
-        <div id="monitor-tab" class="tab-content">
-            <div class="chat-monitor-layout">
-                <div class="sidebar" id="sidebar-list"></div>
-                <div class="viewer">
-                    <h3 id="current-room-name" style="font-size:0.95rem; opacity:0.8;">Select a room to monitor</h3>
-                    <div class="messages-list" id="monitor-messages"></div>
-                </div>
+        <div class="panel">
+            <div class="tabs">
+                <button class="tab-btn active" id="btn-sessions" onclick="switchTab('sessions')">Sessions</button>
+                <button class="tab-btn" id="btn-rooms" onclick="switchTab('rooms')">Rooms</button>
+                <button class="tab-btn" id="btn-export" onclick="switchTab('export')">Export</button>
+                <button class="tab-btn" id="btn-sandbox" onclick="switchTab('sandbox')">Sandbox</button>
             </div>
-        </div>
 
-        <!-- Export Data -->
-        <div id="export-tab" class="tab-content">
+            <!-- Sessions: Join + Published -->
+            <div id="sessions-tab" class="tab-content active">
+                <p class="tab-intro">Join active groups or queue into sessions. Click a published session to inspect and modify settings.</p>
 
-            <!-- Activity Logs by Session -->
-            <div class="export-section">
-                <h3>📋 Activity Logs — by Session</h3>
-                <p style="font-size:0.8rem; opacity:0.6; margin-bottom:14px;">
-                    Every event in a session: who joined, when they sent messages, when bots responded, errors, and more. One row per event.
-                    Columns: <code style="opacity:0.8;">timestamp · event_type · session_id · room_id · actor · details</code>
-                </p>
-                <div class="export-grid" id="export-sessions-list">
-                    <p class="no-sessions">Loading sessions…</p>
+                <h3 style="margin-bottom:8px;color:var(--orange-dark);font-size:0.95rem;">Join & Chat</h3>
+                <div id="session-list" style="margin-bottom:18px;"><div class="empty-state">Loading sessions…</div></div>
+
+                <h3 style="margin-bottom:8px;color:var(--orange-dark);font-size:0.95rem;">Published Sessions</h3>
+                <div class="published-layout">
+                    <div>
+                        <div id="publishedSessionList" class="session-list">
+                            <p style="color:#999;font-size:0.88rem;">Loading…</p>
+                        </div>
+                    </div>
+                    <div id="session-detail-panel" class="detail-panel empty">
+                        Select a session to view settings
+                    </div>
                 </div>
             </div>
 
-            <!-- Chat History by Room -->
-            <div class="export-section">
-                <h3>💬 Chat History — by Room</h3>
-                <p style="font-size:0.8rem; opacity:0.6; margin-bottom:14px;">
-                    Full message transcript for each room. Columns: <code style="opacity:0.8;">timestamp · room_id · sender · message</code>
-                </p>
-                <div class="export-grid" id="export-rooms-list">
-                    <p class="no-sessions">Loading rooms…</p>
+            <!-- Rooms: table + live feed -->
+            <div id="rooms-tab" class="tab-content">
+                <table class="rooms-table" style="margin-bottom:16px;">
+                    <thead>
+                        <tr>
+                            <th>Room</th><th>Session</th><th>Participants</th><th>Bots</th><th>Messages</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rooms-body"></tbody>
+                </table>
+
+                <div class="chat-monitor-layout">
+                    <div class="sidebar" id="sidebar-list"></div>
+                    <div class="viewer">
+                        <h3 id="current-room-name" style="font-size:0.9rem;color:var(--gray-700);">Select a room</h3>
+                        <div class="messages-list" id="monitor-messages"></div>
+                    </div>
                 </div>
             </div>
 
-        </div>
+            <!-- Export -->
+            <div id="export-tab" class="tab-content">
+                <div class="export-section">
+                    <h3>Activity logs — by session</h3>
+                    <div class="export-grid" id="export-sessions-list"><p class="empty-state">Loading…</p></div>
+                </div>
+                <div class="export-section">
+                    <h3>Chat history — by room</h3>
+                    <div class="export-grid" id="export-rooms-list"><p class="empty-state">Loading…</p></div>
+                </div>
+            </div>
 
-        <!-- System log -->
-        <div class="logs" id="system-logs"></div>
+            <!-- Test Sandbox -->
+            <div id="sandbox-tab" class="tab-content">
+                <div class="sandbox-box">
+                    <h3 style="color:var(--orange-dark);margin-bottom:10px;">Admin Test Sandbox</h3>
+                    <p style="font-size:0.88rem;color:var(--gray-700);margin-bottom:16px;">
+                        Join any group as <strong>ADMIN_TESTER</strong> to verify bots before a real run. Messages are prefixed for filtering in exports.
+                    </p>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Session ID</label>
+                            <input type="text" id="testSessionId" placeholder="e.g. SES-A1B2C">
+                        </div>
+                        <div class="form-group">
+                            <label>Group ID</label>
+                            <input type="text" id="testGroupId" placeholder="e.g. GRP-X9Y8">
+                        </div>
+                    </div>
+                    <button type="button" class="btn-action btn-primary" onclick="joinTestSandbox()">Join as Admin Tester</button>
+                </div>
+            </div>
+
+            <div class="logs" id="system-logs"></div>
+        </div>
     </div>
 </div>
 
 <script>
+const uid = 'user_' + Math.floor(Math.random() * 100000);
+document.getElementById('suggested-id').textContent = uid;
+
 let selectedRoomId = null;
 let allRoomsCache = [];
 let allSessionsCache = [];
+let selectedSessionId = null;
+let detailSnapshot = null;
 
-/* ---- Logging ---- */
+function toast(msg, color = '#27ae60') {
+    const el = document.getElementById('notification');
+    el.textContent = msg;
+    el.style.background = color;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
 function log(msg) {
     const logs = document.getElementById('system-logs');
     const entry = document.createElement('div');
@@ -219,16 +338,257 @@ function log(msg) {
     logs.prepend(entry);
 }
 
-/* ---- Tab switching ---- */
-function switchTab(t) {
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(t + '-tab').classList.add('active');
-    document.getElementById('btn-' + t).classList.add('active');
-    if (t === 'export') renderExportTab();
+function isAdminLoggedIn() {
+    return document.cookie.includes('actr_auth=authenticated');
 }
 
-/* ---- Main data refresh ---- */
+function switchTab(t) {
+    if (t === 'join' || t === 'published') t = 'sessions';
+    if (t === 'monitor') t = 'rooms';
+    if (!['sessions','rooms','export','sandbox'].includes(t)) t = 'sessions';
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const tabEl = document.getElementById(t + '-tab');
+    const btnEl = document.getElementById('btn-' + t);
+    if (tabEl) tabEl.classList.add('active');
+    if (btnEl) btnEl.classList.add('active');
+    if (t === 'export') renderExportTab();
+    if (t === 'sessions') loadPublishedSessions();
+    history.replaceState(null, '', t === 'sessions' ? '/' : `/?tab=${t}`);
+}
+
+/* ---- Lobby ---- */
+function toggleSession(id) {
+    const el = document.getElementById('body-' + id);
+    if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+function joinGroup(sessionId, groupId) {
+    window.location.href = `/chat/${encodeURIComponent(sessionId)}/${encodeURIComponent(groupId)}?uid=${encodeURIComponent(uid)}`;
+}
+
+function goToWait(sessionId) {
+    window.location.href = `/wait?uid=${encodeURIComponent(uid)}&session_id=${encodeURIComponent(sessionId)}`;
+}
+
+function renderLobbySessions(sessions) {
+    const listEl = document.getElementById('session-list');
+    if (!sessions.length) {
+        listEl.innerHTML = '<div class="empty-state">No active sessions. Create one in Admin.</div>';
+        return;
+    }
+    listEl.innerHTML = sessions.map(s => `
+        <div class="session-card">
+            <div class="session-header" onclick="toggleSession('${s.id}')">
+                <div>
+                    <div class="session-title">${s.name || s.id}</div>
+                    <div class="session-meta">ID: ${s.id} · ${s.group_size}/group · ${s.groups.length} active group(s) · ${s.group_chat_duration_minutes ?? 5} min chat</div>
+                </div>
+                <span style="color:var(--orange-dark);font-weight:700;">▼</span>
+            </div>
+            <div class="session-body" id="body-${s.id}">
+                ${s.groups.length ? `
+                    <p style="font-size:0.84rem;color:var(--gray-700);margin-bottom:8px;">Active groups — click to enter:</p>
+                    <div class="group-grid">${s.groups.map(g => `
+                        <div class="group-card" onclick="joinGroup('${s.id}','${g}')">${g}</div>
+                    `).join('')}</div>
+                ` : '<p style="color:var(--gray-500);font-size:0.84rem;">No active groups yet.</p>'}
+                <button type="button" class="btn-queue" onclick="goToWait('${s.id}')">Join Matching Queue</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+/* ---- Published sessions ---- */
+async function loadPublishedSessions() {
+    const list = document.getElementById('publishedSessionList');
+    try {
+        const res = await fetch('/api/sessions');
+        const data = await res.json();
+        const sessions = data.sessions || [];
+        if (!sessions.length) {
+            list.innerHTML = '<p style="color:#999;font-size:0.88rem;">No sessions yet. <a href="/admin">Create one in Admin</a>.</p>';
+            return;
+        }
+        list.innerHTML = sessions.map(s => `
+            <div class="session-row ${s.id === selectedSessionId ? 'active' : ''}" data-id="${s.id}" onclick="selectSession('${s.id}')">
+                <span class="${s.is_open ? 'badge-open' : 'badge-closed'}">${s.is_open ? 'Open' : 'Closed'}</span>
+                <div class="session-row-id">${s.id}</div>
+                <div class="session-row-meta">${s.name || 'Unnamed'} · ${s.group_size}/group · ${s.group_chat_duration_minutes ?? 5} min · ${s.survey_open_days ?? 7} days</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        list.innerHTML = '<p style="color:#c0392b;">Failed to load</p>';
+    }
+}
+
+async function selectSession(sessionId) {
+    selectedSessionId = sessionId;
+    document.querySelectorAll('.session-row').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === sessionId);
+    });
+    const panel = document.getElementById('session-detail-panel');
+    panel.classList.remove('empty');
+    try {
+        const res = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/admin`);
+        if (!res.ok) throw new Error('Not found');
+        const cfg = await res.json();
+        detailSnapshot = JSON.parse(JSON.stringify(cfg));
+        const closes = cfg.survey_closes_at ? new Date(cfg.survey_closes_at).toLocaleString() : '—';
+        const status = cfg.is_open ? 'Collecting' : 'Closed';
+        panel.innerHTML = `
+            <div class="detail-header">
+                <div>
+                    <h3 style="color:var(--orange-dark);">${cfg.session_id}</h3>
+                    <p style="font-size:0.82rem;color:var(--gray-700);margin-top:4px;">${cfg.name} · ${status} · ${cfg.group_chat_duration_minutes} min/group · open ${cfg.survey_open_days} days · ~${closes}</p>
+                </div>
+                <div class="detail-actions">
+                    <button type="button" class="btn-modify" id="btnUnlockModify">Modify</button>
+                    <button type="button" class="btn-action btn-primary" id="btnConfirmModify" style="display:none;">Confirm</button>
+                    <button type="button" class="btn-action btn-danger" id="btnCancelModify" style="display:none;">Cancel</button>
+                    ${isAdminLoggedIn() ? `<button type="button" class="btn-action btn-danger" id="btnDeleteSession">Delete</button>` : ''}
+                </div>
+            </div>
+            <form id="sessionDetailForm" class="readonly">
+                <div class="param-section-title">Basic</div>
+                <div class="grid-2">
+                    <div class="form-group"><label>Session name</label><input type="text" id="modSessionName" disabled></div>
+                    <div class="form-group"><label>Group size</label><input type="number" id="modGroupSize" min="1" max="20" disabled></div>
+                </div>
+                <div class="param-section-title">Timing</div>
+                <div class="grid-2">
+                    <div class="form-group"><label>Survey open (days)</label><input type="number" id="modSurveyOpenDays" min="1" max="90" disabled></div>
+                    <div class="form-group"><label>Chat duration (min)</label><input type="number" id="modGroupChatDuration" min="1" max="180" disabled></div>
+                </div>
+                <div class="param-section-title">Experiment</div>
+                <div class="grid-3">
+                    <div class="form-group"><label>Mode</label><select id="modSessionMode" disabled><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+                    <div class="form-group"><label>Bots</label><select id="modBotEnabled" disabled><option value="true">Yes</option><option value="false">No</option></select></div>
+                    <div class="form-group"><label>Assignment</label><select id="modAssignmentMode" disabled><option value="fifo">FIFO</option><option value="stratified">Stratified</option></select></div>
+                </div>
+                <div class="grid-3">
+                    <div class="form-group"><label>Turns</label><select id="modTurnMode" disabled><option value="none">Off</option><option value="round_robin">Round-robin</option><option value="timed">Timed</option></select></div>
+                    <div class="form-group"><label>Turn sec</label><input type="number" id="modTurnDuration" disabled></div>
+                    <div class="form-group"><label>AI starts</label><select id="modAiStarts" disabled><option value="false">No</option><option value="true">Yes</option></select></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group"><label>Qualtrics advance</label><select id="modQualtricsHandoff" disabled><option value="false">Off</option><option value="true">On</option></select></div>
+                    <div class="form-group"><label>Store in Qualtrics</label><select id="modQualtricsStore" disabled><option value="false">Off</option><option value="true">On</option></select></div>
+                </div>
+                <div class="form-group"><label>Personas (JSON)</label><textarea id="modBotsJson" rows="6" disabled style="font-family:monospace;font-size:0.78rem;"></textarea></div>
+            </form>
+        `;
+        fillSessionDetailForm(cfg);
+        setDetailEditMode(false);
+        document.getElementById('btnUnlockModify').onclick = () => setDetailEditMode(true);
+        document.getElementById('btnCancelModify').onclick = () => {
+            if (detailSnapshot) fillSessionDetailForm(detailSnapshot);
+            setDetailEditMode(false);
+        };
+        document.getElementById('btnConfirmModify').onclick = confirmModifySession;
+        const delBtn = document.getElementById('btnDeleteSession');
+        if (delBtn) delBtn.onclick = () => deleteSessionAdmin(sessionId);
+    } catch (e) {
+        panel.innerHTML = `<p style="color:#c0392b;">Could not load: ${e.message}</p>`;
+    }
+}
+
+function fillSessionDetailForm(cfg) {
+    document.getElementById('modSessionName').value = cfg.name || '';
+    document.getElementById('modGroupSize').value = cfg.group_size;
+    document.getElementById('modSurveyOpenDays').value = cfg.survey_open_days ?? 7;
+    document.getElementById('modGroupChatDuration').value = cfg.group_chat_duration_minutes ?? 5;
+    document.getElementById('modSessionMode').value = String(cfg.session_mode ?? 1);
+    document.getElementById('modBotEnabled').value = cfg.bot_enabled ? 'true' : 'false';
+    document.getElementById('modAssignmentMode').value = cfg.assignment_mode || 'fifo';
+    document.getElementById('modTurnMode').value = cfg.turn_mode || 'none';
+    document.getElementById('modTurnDuration').value = cfg.turn_duration_seconds ?? 60;
+    document.getElementById('modAiStarts').value = cfg.ai_starts_conversation ? 'true' : 'false';
+    document.getElementById('modQualtricsHandoff').value = cfg.qualtrics_handoff_enabled ? 'true' : 'false';
+    document.getElementById('modQualtricsStore').value = cfg.qualtrics_store_chat ? 'true' : 'false';
+    document.getElementById('modBotsJson').value = JSON.stringify(cfg.bots || [], null, 2);
+}
+
+function setDetailEditMode(editing) {
+    const form = document.getElementById('sessionDetailForm');
+    if (!form) return;
+    form.classList.toggle('readonly', !editing);
+    form.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = !editing; });
+    const unlock = document.getElementById('btnUnlockModify');
+    const confirm = document.getElementById('btnConfirmModify');
+    const cancel = document.getElementById('btnCancelModify');
+    if (unlock) unlock.style.display = editing ? 'none' : 'inline-block';
+    if (confirm) confirm.style.display = editing ? 'inline-block' : 'none';
+    if (cancel) cancel.style.display = editing ? 'inline-block' : 'none';
+}
+
+async function confirmModifySession() {
+    if (!selectedSessionId) return;
+    let payload;
+    try {
+        const bots = JSON.parse(document.getElementById('modBotsJson').value || '[]');
+        payload = {
+            session_name: document.getElementById('modSessionName').value,
+            group_size: parseInt(document.getElementById('modGroupSize').value, 10),
+            survey_open_days: parseInt(document.getElementById('modSurveyOpenDays').value, 10),
+            group_chat_duration_minutes: parseInt(document.getElementById('modGroupChatDuration').value, 10),
+            session_mode: parseInt(document.getElementById('modSessionMode').value, 10),
+            bot_enabled: document.getElementById('modBotEnabled').value === 'true',
+            assignment_mode: document.getElementById('modAssignmentMode').value,
+            turn_mode: document.getElementById('modTurnMode').value,
+            turn_duration_seconds: parseInt(document.getElementById('modTurnDuration').value, 10),
+            ai_starts_conversation: document.getElementById('modAiStarts').value === 'true',
+            qualtrics_handoff_enabled: document.getElementById('modQualtricsHandoff').value === 'true',
+            qualtrics_store_chat: document.getElementById('modQualtricsStore').value === 'true',
+            bots
+        };
+    } catch (e) {
+        toast('Invalid personas JSON', '#e74c3c');
+        return;
+    }
+    try {
+        const res = await fetch(`/api/sessions/${encodeURIComponent(selectedSessionId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            toast('Saved: ' + selectedSessionId);
+            setDetailEditMode(false);
+            await updateData();
+            await selectSession(selectedSessionId);
+        } else {
+            toast('Save failed', '#e74c3c');
+        }
+    } catch (e) {
+        toast('Network error', '#e74c3c');
+    }
+}
+
+async function deleteSessionAdmin(sessionId) {
+    if (!confirm(`Delete session ${sessionId} and all rooms?`)) return;
+    const res = await fetch(`/api/admin/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.status === 'success') {
+        toast('Deleted ' + sessionId);
+        selectedSessionId = null;
+        document.getElementById('session-detail-panel').classList.add('empty');
+        document.getElementById('session-detail-panel').innerHTML = 'Select a session to view settings';
+        updateData();
+    } else {
+        toast('Delete failed', '#e74c3c');
+    }
+}
+
+function joinTestSandbox() {
+    const sid = document.getElementById('testSessionId').value.trim();
+    const gid = document.getElementById('testGroupId').value.trim();
+    if (!sid || !gid) { toast('Enter Session ID and Group ID', '#e74c3c'); return; }
+    window.location.href = `/chat/${encodeURIComponent(sid)}/${encodeURIComponent(gid)}?uid=ADMIN_TESTER`;
+}
+
+/* ---- Dashboard data ---- */
 async function updateData() {
     try {
         const [roomsRes, cfgRes, sessionsRes] = await Promise.all([
@@ -236,70 +596,51 @@ async function updateData() {
             fetch('/api/admin/config'),
             fetch('/api/sessions')
         ]);
-        const data    = await roomsRes.json();
-        const config  = await cfgRes.json();
+        const data = await roomsRes.json();
+        const config = await cfgRes.json();
         const sessData = await sessionsRes.json();
 
-        allRoomsCache    = data.rooms || [];
+        allRoomsCache = data.rooms || [];
         allSessionsCache = sessData.sessions || [];
 
-        document.getElementById('total-rooms').textContent   = allRoomsCache.length;
+        document.getElementById('total-rooms').textContent = allRoomsCache.length;
         document.getElementById('waiting-count').textContent = data.waiting_count || 0;
-        document.getElementById('bot-status').textContent    = data.bot_enabled ? 'ON' : 'OFF';
-        document.getElementById('active-bots').textContent   = config.bots ? config.bots.length : 0;
+        document.getElementById('bot-status').textContent = data.bot_enabled ? 'ON' : 'OFF';
+        document.getElementById('session-count').textContent = allSessionsCache.length;
+
+        renderLobbySessions(allSessionsCache);
 
         const botNames = (config.bots || []).map(b => b.name);
-
-        /* Sessions table */
-        document.getElementById('sessions-body').innerHTML = allSessionsCache.map(s => {
-            return `
-                <tr>
-                    <td><strong>${s.id}</strong></td>
-                    <td>${s.name}</td>
-                    <td>${s.group_size}</td>
-                    <td>${s.groups.length}</td>
-                    <td>${s.bot_enabled ? 'Enabled' : 'Disabled'}</td>
-                    <td>
-                        <button class="tab-btn" style="padding:5px 10px; font-size:0.72rem; background:rgba(231,76,60,0.3);" onclick="deleteSession('${s.id}')">Delete</button>
-                    </td>
-                </tr>
-            `;
-        }).join('') || '<tr><td colspan="6" style="text-align:center; opacity:0.4; padding:20px;">No sessions</td></tr>';
-
-        /* Rooms table */
         document.getElementById('rooms-body').innerHTML = allRoomsCache.map(r => {
-            const botsInRoom   = r.participants.filter(p => botNames.includes(p));
-            const humansInRoom = r.participants.filter(p => !botNames.includes(p));
-            return `
-                <tr>
-                    <td><strong>${r.id}</strong><br><small style="opacity:0.5">${new Date(r.created_at).toLocaleTimeString()}</small></td>
-                    <td style="font-size:0.8rem; opacity:0.7;">${r.session_name || r.session_id}</td>
-                    <td>${humansInRoom.length} user${humansInRoom.length !== 1 ? 's' : ''}</td>
-                    <td>${botsInRoom.map(b => `<span class="badge badge-bot">${b}</span>`).join('') || '<span style="opacity:0.4">—</span>'}</td>
-                    <td>${r.message_count}</td>
-                    <td>
-                        <button class="tab-btn" style="padding:5px 10px; font-size:0.72rem; margin-right:4px;" onclick="monitorRoom('${r.id}')">View</button>
-                        <button class="tab-btn" style="padding:5px 10px; font-size:0.72rem; margin-right:4px; background:rgba(255,193,7,0.3);" onclick="pauseRoom('${r.id}')">Pause</button>
-                        <button class="tab-btn" style="padding:5px 10px; font-size:0.72rem; background:rgba(231,76,60,0.3);" onclick="deleteRoom('${r.id}')">Delete</button>
-                    </td>
-                </tr>
-            `;
-        }).join('') || '<tr><td colspan="6" style="text-align:center; opacity:0.4; padding:20px;">No active rooms</td></tr>';
+            const botsInRoom = r.participants.filter(p => botNames.includes(p));
+            const humans = r.participants.length - botsInRoom.length;
+            return `<tr>
+                <td><strong>${r.id}</strong><br><small>${new Date(r.created_at).toLocaleTimeString()}</small></td>
+                <td>${r.session_name || r.session_id}</td>
+                <td>${humans}</td>
+                <td>${botsInRoom.map(b => `<span class="badge-bot">${b}</span>`).join('') || '—'}</td>
+                <td>${r.message_count}</td>
+                <td>
+                    <button class="tab-btn" style="padding:4px 8px;font-size:0.72rem;" onclick="monitorRoom('${r.id}')">View</button>
+                    <button class="tab-btn" style="padding:4px 8px;font-size:0.72rem;" onclick="pauseRoom('${r.id}')">Pause</button>
+                    <button class="tab-btn" style="padding:4px 8px;font-size:0.72rem;background:#fff1f0;color:#b42318;" onclick="deleteRoom('${r.id}')">Del</button>
+                </td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#999;">No active rooms</td></tr>';
 
-        /* Sidebar */
         document.getElementById('sidebar-list').innerHTML = allRoomsCache.map(r => `
             <div class="room-item ${selectedRoomId === r.id ? 'active' : ''}" onclick="selectRoom('${r.id}')">
-                <b style="font-size:0.82rem;">${r.id}</b><br>
-                <small style="opacity:0.6;">${r.message_count} msgs · ${r.participants.length} members</small>
+                <b>${r.id}</b><br><small>${r.message_count} msgs</small>
             </div>
-        `).join('') || '<p style="opacity:0.4; font-size:0.8rem; padding:8px;">No rooms yet</p>';
+        `).join('') || '<p style="padding:8px;color:#999;font-size:0.8rem;">No rooms</p>';
 
         if (selectedRoomId) fetchMessages(selectedRoomId);
-
-    } catch (e) { console.error('Update failed', e); }
+        if (document.getElementById('sessions-tab').classList.contains('active')) {
+            loadPublishedSessions();
+        }
+    } catch (e) { console.error(e); }
 }
 
-/* ---- Live feed ---- */
 async function fetchMessages(rid) {
     try {
         const [msgRes, cfgRes] = await Promise.all([
@@ -307,124 +648,80 @@ async function fetchMessages(rid) {
             fetch('/api/admin/config')
         ]);
         if (!msgRes.ok) return;
-        const data    = await msgRes.json();
-        const config  = await cfgRes.json();
-        const botNames = (config.bots || []).map(b => b.name);
-
+        const data = await msgRes.json();
+        const botNames = ((await cfgRes.json()).bots || []).map(b => b.name);
         const container = document.getElementById('monitor-messages');
         container.innerHTML = '';
         (data.messages || []).forEach(m => {
             const bubble = document.createElement('div');
-            bubble.className = `msg-bubble ${botNames.includes(m.sender) ? 'bot-msg' : ''}`;
-            const label = document.createElement('b');
-            label.textContent = m.sender + (m.timestamp ? '  ' + new Date(m.timestamp).toLocaleTimeString() : '');
-            const text = document.createElement('span');
-            text.textContent = m.text;
-            bubble.appendChild(label);
-            bubble.appendChild(text);
+            bubble.className = 'msg-bubble' + (botNames.includes(m.sender) ? ' bot-msg' : '');
+            bubble.innerHTML = `<b>${m.sender}</b>${m.text}`;
             container.appendChild(bubble);
         });
         container.scrollTop = container.scrollHeight;
-    } catch (e) { console.error('fetchMessages failed', e); }
+    } catch (e) { console.error(e); }
 }
 
-function monitorRoom(id) { switchTab('monitor'); selectRoom(id); }
+function monitorRoom(id) { switchTab('rooms'); selectRoom(id); }
 function selectRoom(id) {
     selectedRoomId = id;
     document.getElementById('current-room-name').textContent = 'Monitoring: ' + id;
     fetchMessages(id);
+    updateData();
 }
 
 async function pauseRoom(id) {
-    if (!confirm(`Pause room ${id}? This will prevent new messages from being processed.`)) return;
-    try {
-        const res = await fetch(`/api/admin/rooms/${id}/pause`, { method: 'POST' });
-        const data = await res.json();
-        if (data.status === 'success') {
-            log(`Room ${id} paused.`);
-            updateData();
-        } else {
-            alert('Failed to pause room: ' + (data.message || 'Unknown error'));
-        }
-    } catch (e) {
-        alert('Network error: ' + e.message);
-    }
+    if (!confirm(`Pause room ${id}?`)) return;
+    const res = await fetch(`/api/admin/rooms/${id}/pause`, { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'success') { log(`Paused ${id}`); updateData(); }
 }
 
 async function deleteRoom(id) {
-    if (!confirm(`Delete room ${id}? This will remove all chat history and cannot be undone.`)) return;
-    try {
-        const res = await fetch(`/api/admin/rooms/${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.status === 'success') {
-            log(`Room ${id} deleted.`);
-            if (selectedRoomId === id) selectedRoomId = null;
-            updateData();
-        } else {
-            alert('Failed to delete room: ' + (data.message || 'Unknown error'));
-        }
-    } catch (e) {
-        alert('Network error: ' + e.message);
+    if (!confirm(`Delete room ${id}?`)) return;
+    const res = await fetch(`/api/admin/rooms/${id}`, { method: 'DELETE' });
+    if ((await res.json()).status === 'success') {
+        if (selectedRoomId === id) selectedRoomId = null;
+        log(`Deleted room ${id}`);
+        updateData();
     }
 }
 
-async function deleteSession(id) {
-    if (!confirm(`Delete session ${id}? This will remove the session config and all associated rooms. Cannot be undone.`)) return;
-    try {
-        const res = await fetch(`/api/admin/sessions/${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.status === 'success') {
-            log(`Session ${id} deleted.`);
-            updateData();
-        } else {
-            alert('Failed to delete session: ' + (data.message || 'Unknown error'));
-        }
-    } catch (e) {
-        alert('Network error: ' + e.message);
-    }
-}
-
-/* ---- Export tab ---- */
 function renderExportTab() {
-    /* Sessions */
     const sessContainer = document.getElementById('export-sessions-list');
-    if (allSessionsCache.length === 0) {
-        sessContainer.innerHTML = '<p class="no-sessions">No sessions found.</p>';
-    } else {
-        sessContainer.innerHTML = allSessionsCache.map(s => `
-            <div class="export-card">
-                <div class="ec-title">${s.name}</div>
-                <div class="ec-meta">${s.id} &nbsp;·&nbsp; ${s.groups.length} group(s)</div>
-                <div class="ec-desc">Full activity log: join events, messages, bot responses, errors.</div>
-                <a href="/api/export/session/${encodeURIComponent(s.id)}/activity" download>
-                    <button class="btn-export primary">⬇ Download Activity CSV</button>
-                </a>
-            </div>
-        `).join('');
-    }
+    sessContainer.innerHTML = allSessionsCache.length ? allSessionsCache.map(s => `
+        <div class="export-card">
+            <strong>${s.name}</strong><br><small>${s.id}</small>
+            <p style="font-size:0.8rem;margin:8px 0;color:var(--gray-700);">Activity log CSV</p>
+            <a href="/api/export/session/${encodeURIComponent(s.id)}/activity" download class="btn-export">Download</a>
+        </div>
+    `).join('') : '<p class="empty-state">No sessions</p>';
 
-    /* Rooms */
     const roomContainer = document.getElementById('export-rooms-list');
-    if (allRoomsCache.length === 0) {
-        roomContainer.innerHTML = '<p class="no-sessions">No active rooms found. Rooms appear here once participants join.</p>';
-    } else {
-        roomContainer.innerHTML = allRoomsCache.map(r => `
-            <div class="export-card">
-                <div class="ec-title">${r.id}</div>
-                <div class="ec-meta">${r.session_name || r.session_id} &nbsp;·&nbsp; ${r.message_count} messages &nbsp;·&nbsp; ${r.participants.length} members</div>
-                <div class="ec-desc">Full chat transcript with timestamps, sender names, and message text.</div>
-                <a href="/api/export/room/${encodeURIComponent(r.id)}/messages" download>
-                    <button class="btn-export primary">⬇ Download Chat CSV</button>
-                </a>
-            </div>
-        `).join('');
-    }
+    roomContainer.innerHTML = allRoomsCache.length ? allRoomsCache.map(r => `
+        <div class="export-card">
+            <strong>${r.id}</strong><br><small>${r.message_count} messages</small>
+            <a href="/api/export/room/${encodeURIComponent(r.id)}/messages" download class="btn-export">Download</a>
+        </div>
+    `).join('') : '<p class="empty-state">No rooms yet</p>';
 }
 
-/* ---- Init ---- */
-updateData();
-setInterval(updateData, 4000);
-log('Dashboard initialized.');
+/* Init */
+(function init() {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab') || 'sessions';
+    const session = params.get('session');
+    switchTab(tab);
+    if (session && tab === 'sessions') {
+        setTimeout(() => selectSession(session), 500);
+    }
+    if (params.get('session') && tab === 'sandbox') {
+        document.getElementById('testSessionId').value = params.get('session');
+    }
+    updateData();
+    setInterval(updateData, 4000);
+    log('Dashboard ready.');
+})();
 </script>
 </body>
 </html>

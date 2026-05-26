@@ -329,6 +329,11 @@
                     const res = await fetch(matchUrl);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
+                    if (data.status === 'session_closed') {
+                        clearInterval(poll);
+                        reject(new Error(data.message || 'This study session is closed.'));
+                        return;
+                    }
                     if (data.status === 'matched') {
                         clearInterval(poll);
                         resolve(data.group_id);

@@ -17,6 +17,7 @@
 
         /* NAV */
         .nav-header {
+            width: 100%;
             background: rgba(255,255,255,0.97); backdrop-filter: blur(10px);
             padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 20px;
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
@@ -25,14 +26,25 @@
         .nav-logo { font-weight: 800; font-size: 1.2rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; flex-shrink: 0; }
         .nav-links { display: flex; gap: 4px; }
         .nav-links a { text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem; padding: 5px 12px; border-radius: 8px; transition: all 0.15s; }
-        .nav-links a:hover { color: var(--primary); background: rgba(102,126,234,0.07); }
-        .nav-links a.active { color: var(--primary); background: rgba(102,126,234,0.12); }
+        .nav-links a:hover { color: var(--orange); background: var(--orange-pale); }
+        .nav-links a.active { color: var(--orange-dark); background: var(--orange-pale); }
 
         /* LAYOUT */
-        .container { max-width: 1060px; margin: 32px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 24px; }
+        .container { max-width: 1060px; margin: 24px auto 36px; padding: 0 20px; display: flex; flex-direction: column; gap: 18px; }
 
-        .card { background: white; border-radius: 14px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
-        .card-title { font-size: 1.1rem; font-weight: 700; color: var(--secondary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #f0f2f5; display: flex; align-items: center; gap: 8px; }
+        .card { background: white; border-radius: 14px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--gray-300); }
+        .card-title { font-size: 1.1rem; font-weight: 700; color: var(--orange-dark); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #f0f2f5; display: flex; align-items: center; gap: 8px; }
+        .intro { font-size: 0.9rem; color: var(--gray-700); margin-bottom: 12px; }
+        .sticky-actions {
+            position: sticky;
+            bottom: 10px;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid var(--gray-300);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 12px;
+            backdrop-filter: blur(6px);
+        }
 
         /* FORM */
         .form-group { margin-bottom: 16px; }
@@ -52,7 +64,7 @@
         .range-val { min-width: 44px; text-align: right; font-weight: 700; color: var(--primary); font-size: 0.9rem; }
 
         /* HELPER */
-        .helper { font-size: 0.77rem; color: #888; margin-top: 5px; padding: 6px 10px; background: rgba(102,126,234,0.05); border-left: 3px solid var(--primary); border-radius: 0 6px 6px 0; }
+        .helper { font-size: 0.77rem; color: #888; margin-top: 5px; padding: 6px 10px; background: rgba(230,126,34,0.06); border-left: 3px solid var(--orange); border-radius: 0 6px 6px 0; }
 
         /* MODE INFO */
         .mode-info { margin-top: 8px; padding: 10px 12px; border-radius: 8px; font-size: 0.8rem; line-height: 1.5; border: 1px solid #e0e0e0; background: #fafafa; }
@@ -80,9 +92,9 @@
         /* MODE TABS inside bot card */
         .mode-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
         .mode-tab { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border: 2px solid #e0e0e0; background: white; color: #888; transition: all 0.15s; }
-        .mode-tab.active-m1 { border-color: #667eea; background: #eef2ff; color: #667eea; }
-        .mode-tab.active-m2 { border-color: #9333ea; background: #f3e8ff; color: #9333ea; }
-        .mode-tab.active-m3 { border-color: #db2777; background: #fce7f3; color: #db2777; }
+        .mode-tab.active-m1 { border-color: var(--orange); background: #fff7ed; color: var(--orange); }
+        .mode-tab.active-m2 { border-color: var(--orange-dark); background: #fff7ed; color: var(--orange-dark); }
+        .mode-tab.active-m3 { border-color: var(--orange-light); background: #fff7ed; color: var(--orange-light); }
 
         /* SECTION DIVIDER inside bot card */
         .section-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: #aaa; margin: 18px 0 10px; }
@@ -90,10 +102,65 @@
         /* NOTIFY */
         .notify { position: fixed; top: 60px; right: 20px; padding: 13px 22px; border-radius: 8px; color: white; font-weight: 700; display: none; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 
-        /* SUCCESS BANNER */
-        .session-created-banner { background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 16px 20px; display: none; margin-bottom: 8px; }
-        .session-created-banner strong { color: #065f46; font-size: 1rem; }
-        .session-created-banner code { background: #a7f3d0; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-size: 0.95rem; color: #064e3b; }
+        /* SESSION SETUP PANEL (shown after create, at page bottom) */
+        .setup-panel { display: none; border: 2px solid #fed7aa; background: linear-gradient(180deg, #fffbf5 0%, #ffffff 100%); }
+        .setup-panel.visible { display: block; }
+        .setup-panel h3 { color: var(--orange-dark); font-size: 1.05rem; margin-bottom: 12px; }
+        .setup-block {
+            background: white; border: 1px solid var(--gray-300); border-radius: 10px;
+            padding: 14px 16px; margin-bottom: 12px;
+        }
+        .setup-block h4 { font-size: 0.88rem; color: var(--orange-dark); margin-bottom: 8px; }
+        .setup-block p, .setup-block li { font-size: 0.84rem; color: var(--gray-700); line-height: 1.55; margin-bottom: 6px; }
+        .setup-block ul { padding-left: 18px; margin: 6px 0; }
+        .url-box {
+            display: flex; gap: 8px; align-items: stretch; margin-top: 8px;
+        }
+        .url-box code {
+            flex: 1; display: block; word-break: break-all;
+            background: var(--gray-100); border: 1px solid var(--gray-300);
+            padding: 10px 12px; border-radius: 8px; font-size: 0.78rem; color: #333;
+        }
+        .btn-copy {
+            flex-shrink: 0; padding: 8px 14px; background: var(--orange); color: white;
+            border: none; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;
+        }
+        .btn-copy:hover { opacity: 0.92; }
+        .tag-on { display: inline-block; background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-right: 6px; }
+        .tag-off { display: inline-block; background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-right: 6px; }
+        .warn-localhost { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; padding: 10px 12px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 12px; }
+
+        /* PUBLISHED SESSIONS */
+        .session-list { display: flex; flex-direction: column; gap: 8px; }
+        .session-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 12px 14px; border: 1px solid var(--gray-300); border-radius: 10px;
+            cursor: pointer; transition: background 0.15s, border-color 0.15s;
+        }
+        .session-row:hover { background: var(--orange-pale); border-color: #fdba74; }
+        .session-row.active { border-color: var(--orange); background: #fff7ed; }
+        .session-row-id { font-weight: 800; color: var(--orange-dark); font-size: 0.9rem; }
+        .session-row-meta { font-size: 0.78rem; color: var(--gray-700); }
+        .badge-open { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+        .badge-closed { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+        .detail-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-modify { background: white; color: var(--orange-dark); border: 2px solid var(--orange); }
+        .btn-modify:hover { background: var(--orange-pale); }
+        #sessionDetailForm.readonly input,
+        #sessionDetailForm.readonly select,
+        #sessionDetailForm.readonly textarea {
+            background: #eceff1; color: #546e7a; border-color: #cfd8dc; cursor: not-allowed;
+        }
+        #sessionDetailForm:not(.readonly) input,
+        #sessionDetailForm:not(.readonly) select,
+        #sessionDetailForm:not(.readonly) textarea {
+            background: white; color: #2d3436; cursor: text;
+        }
+        .param-section-title {
+            font-size: 0.78rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--orange-dark); margin: 18px 0 10px;
+        }
     </style>
 </head>
 <body>
@@ -101,8 +168,7 @@
 <header class="nav-header">
     <a href="/" class="nav-logo">ACTR</a>
     <nav class="nav-links">
-        <a href="/">Lobby</a>
-        <a href="/dashboard">Dashboard</a>
+        <a href="/">Dashboard</a>
         <a href="/admin" class="active">Admin</a>
         <a href="/manual">Manual</a>
     </nav>
@@ -115,8 +181,7 @@
     <!-- ===== CREATE SESSION ===== -->
     <div class="card">
         <div class="card-title">🎛️ Create New Session</div>
-
-        <div id="session-created-banner" class="session-created-banner"></div>
+        <p class="intro">Create one experimental session template. Participants can then be auto-matched into many groups with the same settings.</p>
 
         <form id="newSessionForm">
 
@@ -136,8 +201,8 @@
                 </div>
             </div>
 
-            <!-- Row 2: Group size, session mode, spy mode, group duration -->
-            <div class="grid-4">
+            <!-- Row 2: Group size, session mode, spy mode -->
+            <div class="grid-3">
                 <div class="form-group">
                     <label>Group Size</label>
                     <input type="number" id="groupSize" value="2" min="1" max="20">
@@ -158,10 +223,17 @@
                         <option value="true">Enabled (admin view)</option>
                     </select>
                 </div>
+            </div>
+            <div class="grid-2" style="margin-top:0;">
                 <div class="form-group">
-                    <label>Group Duration <span class="hint">(minutes)</span></label>
-                    <input type="number" id="groupTimeout" value="30" min="5" max="1440">
-                    <div class="helper">Maximum duration for each group chat session.</div>
+                    <label>Survey open (days)</label>
+                    <input type="number" id="surveyOpenDays" value="7" min="1" max="90">
+                    <div class="helper">During the survey period, participants can join the queue anytime; new groups form as people arrive.</div>
+                </div>
+                <div class="form-group">
+                    <label>Group chat duration (minutes)</label>
+                    <input type="number" id="groupChatDuration" value="5" min="1" max="180">
+                    <div class="helper">Each group ends this many minutes after it is formed (default 5).</div>
                 </div>
             </div>
 
@@ -196,8 +268,9 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Turn duration <span class="hint">(seconds, timed mode)</span></label>
+                    <label><span>Turn duration (seconds)</span> <span class="hint">Timed mode only</span></label>
                     <input type="number" id="turnDuration" value="60" min="10" max="600">
+                    <div class="helper">Only when Speaking turns = <strong>Timed</strong>: max seconds per person per turn. Ignore for Off / Round-robin.</div>
                 </div>
             </div>
             <div class="grid-3">
@@ -209,18 +282,20 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Qualtrics auto-advance</label>
+                    <label>Qualtrics auto-advance <span class="hint">(after chat ends)</span></label>
                     <select id="qualtricsHandoff">
                         <option value="false">Off</option>
                         <option value="true">On — postMessage to parent survey</option>
                     </select>
+                    <div class="helper">When chat ends, send an event to Qualtrics parent page so the survey can move to the next question automatically.</div>
                 </div>
                 <div class="form-group">
-                    <label>Store chat in Qualtrics</label>
+                    <label>Store chat in Qualtrics <span class="hint">(embedded data)</span></label>
                     <select id="qualtricsStoreChat">
                         <option value="false">Off — server/Dashboard export only</option>
                         <option value="true">On — push transcript via postMessage</option>
                     </select>
+                    <div class="helper">Include transcript in the Qualtrics event payload so it can be saved into fields like <code>chat_transcript</code>.</div>
                 </div>
             </div>
             <div class="grid-2">
@@ -245,27 +320,21 @@
 
             <div id="botListContainer"></div>
 
-            <button type="submit" class="btn btn-primary btn-lg">🚀 Create Session</button>
+            <div class="sticky-actions">
+                <button type="submit" class="btn btn-primary btn-lg">🚀 Create Session</button>
+            </div>
         </form>
     </div>
 
-    <!-- ===== TEST SANDBOX ===== -->
-    <div class="card" style="border: 2px solid var(--primary);">
-        <div class="card-title">🛠️ Admin Test Sandbox</div>
-        <p style="font-size:0.85rem; color:#666; margin-bottom:16px;">
-            Join any group as <strong>ADMIN_TESTER</strong> to verify bot behavior before running a real session. Your messages are prefixed so they can be filtered from analysis data.
+    <!-- ===== Qualtrics setup guide (after create) ===== -->
+    <div id="session-setup-panel" class="card setup-panel">
+        <div class="card-title">📋 Session setup guide</div>
+        <p style="font-size:0.88rem;color:var(--gray-700);margin-bottom:14px;">
+            After each successful Create Session, copy the Qualtrics content generated here.
         </p>
-        <div class="grid-2">
-            <div class="form-group">
-                <label>Session ID</label>
-                <input type="text" id="testSessionId" placeholder="e.g., SES-A1B2C">
-            </div>
-            <div class="form-group">
-                <label>Group ID</label>
-                <input type="text" id="testGroupId" placeholder="e.g., GRP-X9Y8">
-            </div>
+        <div id="setup-panel-content">
+            <p style="color:#999;font-size:0.9rem;">No session created yet. Fill the form above and click Create Session.</p>
         </div>
-        <button class="btn btn-primary" onclick="joinTestSandbox()">Join as Admin Tester</button>
     </div>
 
 </div><!-- /container -->
@@ -490,7 +559,8 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         session_name:     document.getElementById('sessionName').value,
         group_size:       parseInt(document.getElementById('groupSize').value),
         bot_enabled:      document.getElementById('botEnabled').value === 'true',
-        group_timeout:    parseInt(document.getElementById('groupTimeout').value),
+        survey_open_days: parseInt(document.getElementById('surveyOpenDays').value, 10),
+        group_chat_duration_minutes: parseInt(document.getElementById('groupChatDuration').value, 10),
         session_mode:     parseInt(document.getElementById('sessionMode').value),
         spy_mode_enabled: document.getElementById('spyModeEnabled').value === 'true',
         assignment_mode: document.getElementById('assignmentMode').value,
@@ -515,17 +585,8 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         });
         const data = await res.json();
         if (data.status === 'success') {
-            const banner = document.getElementById('session-created-banner');
-            const base = window.location.origin;
-            const embedUrl = `${base}/embed.html?session_id=${encodeURIComponent(data.session_id)}&participant_id=\${e://Field/ResponseID}&condition=\${e://Field/condition}`;
-            banner.innerHTML = `✅ <strong>Session created!</strong> ID: <code>${data.session_id}</code><br><br>
-                <strong>Qualtrics iframe URL:</strong><br>
-                <code style="word-break:break-all;display:block;margin:8px 0;padding:8px;background:#fff3e0;">${embedUrl}</code>
-                <span style="font-size:0.85rem;color:#636e72;">
-                  Enable Qualtrics options above as needed. Add parent script: <code>/static/qualtrics-parent-snippet.js</code>.
-                  Pull API: <code>/api/export/participant/${data.session_id}/{participant_id}</code>
-                </span>`;
-            banner.style.display = 'block';
+            showSessionSetupGuide(data.session_id, payload);
+            toast('Session created: ' + data.session_id);
             document.getElementById('sessionName').value = '';
             botPersonas = [];
             renderBots();
@@ -537,11 +598,111 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
     }
 };
 
-function joinTestSandbox() {
-    const sid = document.getElementById('testSessionId').value.trim();
-    const gid = document.getElementById('testGroupId').value.trim();
-    if (!sid || !gid) { toast('Enter both Session ID and Group ID.', '#e74c3c'); return; }
-    window.location.href = `/chat/${encodeURIComponent(sid)}/${encodeURIComponent(gid)}?uid=ADMIN_TESTER`;
+function showSessionSetupGuide(sessionId, payload) {
+    const panel = document.getElementById('session-setup-panel');
+    const content = document.getElementById('setup-panel-content');
+    const base = window.location.origin;
+    const isLocal = base.includes('localhost') || base.includes('127.0.0.1');
+    const publicBase = isLocal ? 'https://group.xjhuang.com' : base;
+    const embedUrl = `${publicBase}/embed.html?session_id=${encodeURIComponent(sessionId)}&participant_id=\${e://Field/ResponseID}&condition=\${e://Field/condition}`;
+    const pullUrl = `${publicBase}/api/export/participant/${encodeURIComponent(sessionId)}/{participant_id}`;
+    const days = payload.survey_open_days ?? 7;
+    const chatMin = payload.group_chat_duration_minutes ?? 5;
+
+    const handoffOn = payload.qualtrics_handoff_enabled;
+    const storeOn = payload.qualtrics_store_chat;
+    const handoffTag = handoffOn
+        ? '<span class="tag-on">On</span>'
+        : '<span class="tag-off">Off</span>';
+    const storeTag = storeOn
+        ? '<span class="tag-on">On</span>'
+        : '<span class="tag-off">Off</span>';
+
+    content.innerHTML = `
+        ${isLocal ? `<div class="warn-localhost">⚠️ You are on localhost. In Qualtrics use production URL: <strong>${publicBase}</strong></div>` : ''}
+
+        <div class="setup-block">
+            <h4>① Session ID</h4>
+            <p><code>${sessionId}</code> — Use this ID in Dashboard and exports. <a href="/?tab=sessions&session=${sessionId}">View session settings →</a></p>
+            <p>Survey open <strong>${days}</strong> days · <strong>${chatMin}</strong> min per group chat</p>
+        </div>
+
+        <div class="setup-block">
+            <h4>② Qualtrics iframe URL (most important)</h4>
+            <p>In your Qualtrics HTML question, put this in <code>&lt;iframe src="..."&gt;</code>:</p>
+            <div class="url-box">
+                <code id="embed-url-text">${embedUrl}</code>
+                <button type="button" class="btn-copy" onclick="copyText('embed-url-text')">Copy</button>
+            </div>
+            <p style="margin-top:10px;">Participants load the chat; <code>participant_id</code> uses Qualtrics ResponseID.</p>
+        </div>
+
+        <div class="setup-block">
+            <h4>③ Qualtrics options you selected</h4>
+            <ul>
+                <li><strong>Qualtrics auto-advance</strong> ${handoffTag}
+                    <br>When chat ends → notify Qualtrics parent → can auto-advance (needs parent script).</li>
+                <li><strong>Store chat in Qualtrics</strong> ${storeTag}
+                    <br>Transcript saved to <code>${payload.qualtrics_field_transcript}</code> and status <code>${payload.qualtrics_field_status}</code>.</li>
+            </ul>
+            <p>If both off: chat still works; no auto-advance or Qualtrics transcript (use Dashboard export).</p>
+        </div>
+
+        <div class="setup-block">
+            <h4>④ Parent-page script (if either option above is on)</h4>
+            <p>In the <strong>same HTML question</strong>, <strong>above</strong> the iframe:</p>
+            <p><code>${publicBase}/static/qualtrics-parent-snippet.js</code> (or paste file contents into Qualtrics)</p>
+            <p>Receives chat-ended messages, writes Embedded Data, can click Next.</p>
+        </div>
+
+        <div class="setup-block">
+            <h4>⑤ Pull API backup (optional)</h4>
+            <p>If not storing transcript in Qualtrics, call at end of survey:</p>
+            <div class="url-box">
+                <code id="pull-url-text">${pullUrl}</code>
+                <button type="button" class="btn-copy" onclick="copyText('pull-url-text')">Copy</button>
+            </div>
+        </div>
+
+        <div class="setup-block">
+            <h4>⑥ Full HTML for Qualtrics Text/Graphic question</h4>
+            <p>Survey → Add question → <strong>Text / Graphic → HTML</strong>, paste below (Session <code>${sessionId}</code>):</p>
+            <div class="url-box" style="align-items:flex-start;">
+                <code id="qualtrics-html-text" style="white-space:pre-wrap;font-size:0.72rem;">&lt;script src="${publicBase}/static/qualtrics-parent-snippet.js"&gt;&lt;/script&gt;
+&lt;iframe
+  src="${embedUrl}"
+  style="width:100%;min-height:600px;border:1px solid #ddd;border-radius:8px;"
+  allow="microphone"&gt;
+&lt;/iframe&gt;</code>
+                <button type="button" class="btn-copy" onclick="copyText('qualtrics-html-text')">Copy HTML</button>
+            </div>
+            <p style="margin-top:10px;"><strong>How to see results in Qualtrics:</strong></p>
+            <ol style="font-size:0.84rem;color:var(--gray-700);padding-left:18px;line-height:1.6;">
+                <li>Confirm <a href="${publicBase}" target="_blank">${publicBase}</a> is live.</li>
+                <li>Session visible on <a href="/?tab=sessions">Dashboard → Sessions</a> as <code>${sessionId}</code>.</li>
+                <li>Publish survey → Preview → HTML question → chat UI appears.</li>
+                <li>After chat ends: if store enabled, check <strong>Data & Analysis → Response → Embedded Data</strong> for <code>${payload.qualtrics_field_transcript}</code>.</li>
+                <li>Or export all chats from <a href="${publicBase}/?tab=export" target="_blank">Dashboard → Export</a>.</li>
+            </ol>
+        </div>
+    `;
+
+    panel.classList.add('visible');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyText(elementId) {
+    const el = document.getElementById(elementId);
+    const text = el ? el.textContent : '';
+    navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard')).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('Copied to clipboard');
+    });
 }
 
 // Init

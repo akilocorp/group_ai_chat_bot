@@ -1,89 +1,15 @@
 {
-  "SES-ED7E5": {
-    "session_id": "SES-ED7E5",
-    "name": "test",
-    "group_size": 2,
-    "bot_enabled": true,
-    "bots": [
-      {
-        "name": "a",
-        "prompt": "You are a helpful, friendly participant in a group discussion. Keep your responses concise and natural.",
-        "mode": 1,
-        "avatar_type": "bot",
-        "delay_seconds": 3,
-        "typing_cps": 10,
-        "max_tokens": 150,
-        "temperature": 0.7,
-        "context_messages": 15,
-        "idle_threshold": 20,
-        "skip_rate": 0.15
-      }
-    ],
-    "history_limit": 1000,
-    "created_at": "2026-04-01T17:37:13.418607",
-    "participant_names": [
-      "b"
-    ],
-    "spy_mode_enabled": false,
-    "session_mode": 1,
-    "group_timeout": 30,
-    "qualtrics_handoff_enabled": false,
-    "qualtrics_store_chat": false,
-    "qualtrics_field_transcript": "chat_transcript",
-    "qualtrics_field_status": "chat_status",
-    "ai_starts_conversation": false,
-    "turn_mode": "none",
-    "turn_duration_seconds": 60,
-    "assignment_mode": "fifo"
-  },
-  "SES-C7E18": {
-    "session_id": "SES-C7E18",
-    "name": "test",
-    "group_size": 1,
-    "bot_enabled": true,
-    "bots": [
-      {
-        "name": "b",
-        "prompt": "You are a helpful, friendly participant in a group discussion. Keep your responses concise and natural.",
-        "mode": 1,
-        "avatar_type": "bot",
-        "delay_seconds": 3,
-        "typing_cps": 10,
-        "max_tokens": 150,
-        "temperature": 0.7,
-        "context_messages": 15,
-        "idle_threshold": 20,
-        "skip_rate": 0.15
-      }
-    ],
-    "history_limit": 1000,
-    "created_at": "2026-04-01T17:38:11.027935",
-    "participant_names": [
-      "a"
-    ],
-    "spy_mode_enabled": false,
-    "session_mode": 1,
-    "group_timeout": 30,
-    "qualtrics_handoff_enabled": false,
-    "qualtrics_store_chat": false,
-    "qualtrics_field_transcript": "chat_transcript",
-    "qualtrics_field_status": "chat_status",
-    "ai_starts_conversation": false,
-    "turn_mode": "none",
-    "turn_duration_seconds": 60,
-    "assignment_mode": "fifo"
-  },
-  "SES-D37B8": {
-    "session_id": "SES-D37B8",
-    "name": "a",
+  "SES-2592F": {
+    "session_id": "SES-2592F",
+    "name": "Study1",
     "group_size": 1,
     "bot_enabled": true,
     "bots": [
       {
         "name": "a",
-        "prompt": "You are a helpful, friendly participant in a group discussion. Keep your responses concise and natural.",
-        "mode": 1,
-        "avatar_type": "bot",
+        "prompt": "You are a team player. You need to figure out five potential ways to solve climate change with your teammates. ",
+        "mode": 2,
+        "avatar_type": "human",
         "delay_seconds": 3,
         "typing_cps": 10,
         "max_tokens": 150,
@@ -94,9 +20,9 @@
       },
       {
         "name": "b",
-        "prompt": "You are a helpful, friendly participant in a group discussion. Keep your responses concise and natural.",
-        "mode": 1,
-        "avatar_type": "bot",
+        "prompt": "You are a team player. You need to figure out five potential ways to solve climate change with your teammates. ",
+        "mode": 2,
+        "avatar_type": "human",
         "delay_seconds": 3,
         "typing_cps": 10,
         "max_tokens": 150,
@@ -106,119 +32,15 @@
         "skip_rate": 0.15
       }
     ],
-    "history_limit": 100,
-    "created_at": "2026-04-01T21:21:12.332927",
+    "history_limit": 10000,
+    "created_at": "2026-05-26T10:20:32.955544",
     "participant_names": [
-      "c"
+      "a"
     ],
     "spy_mode_enabled": false,
     "session_mode": 1,
-    "group_timeout": 30,
-    "qualtrics_handoff_enabled": false,
-    "qualtrics_store_chat": false,
-    "qualtrics_field_transcript": "chat_transcript",
-    "qualtrics_field_status": "chat_status",
-    "ai_starts_conversation": false,
-    "turn_mode": "none",
-    "turn_duration_seconds": 60,
-    "assignment_mode": "fifo"
-  },
-  "SES-16607": {
-    "session_id": "SES-16607",
-    "name": "a",
-    "group_size": 1,
-    "bot_enabled": true,
-    "bots": [
-      {
-        "name": "a",
-        "prompt": "You are a helpful, friendly participant in a group discussion. Keep your responses concise and natural.",
-        "mode": 1,
-        "avatar_type": "bot",
-        "delay_seconds": 3,
-        "typing_cps": 10,
-        "max_tokens": 150,
-        "temperature": 0.7,
-        "context_messages": 15,
-        "idle_threshold": 20,
-        "skip_rate": 0.15
-      }
-    ],
-    "history_limit": 10000,
-    "created_at": "2026-04-01T23:38:03.557382",
-    "participant_names": [],
-    "spy_mode_enabled": false,
-    "session_mode": 1,
-    "group_timeout": 30,
-    "qualtrics_handoff_enabled": false,
-    "qualtrics_store_chat": false,
-    "qualtrics_field_transcript": "chat_transcript",
-    "qualtrics_field_status": "chat_status",
-    "ai_starts_conversation": false,
-    "turn_mode": "none",
-    "turn_duration_seconds": 60,
-    "assignment_mode": "fifo"
-  },
-  "SES-5A16F": {
-    "session_id": "SES-5A16F",
-    "name": "Study 1",
-    "group_size": 2,
-    "bot_enabled": true,
-    "bots": [
-      {
-        "name": "",
-        "prompt": "You are a helpful, friendly participant in a group discussion. Keep your responses concise and natural.",
-        "mode": 3,
-        "avatar_type": "bot",
-        "delay_seconds": 3,
-        "typing_cps": 10,
-        "max_tokens": 150,
-        "temperature": 0.7,
-        "context_messages": 39,
-        "idle_threshold": 20,
-        "skip_rate": 0
-      }
-    ],
-    "history_limit": 10000,
-    "created_at": "2026-05-25T15:00:04.115031",
-    "participant_names": [],
-    "spy_mode_enabled": false,
-    "session_mode": 1,
-    "group_timeout": 30,
-    "qualtrics_handoff_enabled": false,
-    "qualtrics_store_chat": false,
-    "qualtrics_field_transcript": "chat_transcript",
-    "qualtrics_field_status": "chat_status",
-    "ai_starts_conversation": false,
-    "turn_mode": "none",
-    "turn_duration_seconds": 60,
-    "assignment_mode": "fifo"
-  },
-  "SES-B61E4": {
-    "session_id": "SES-B61E4",
-    "name": "study test",
-    "group_size": 2,
-    "bot_enabled": true,
-    "bots": [
-      {
-        "name": "hi",
-        "prompt": "You are a helpful, friendly participant in a group discussion. Keep your responses concise and natural.",
-        "mode": 1,
-        "avatar_type": "bot",
-        "delay_seconds": 3,
-        "typing_cps": 10,
-        "max_tokens": 150,
-        "temperature": 0.7,
-        "context_messages": 15,
-        "idle_threshold": 20,
-        "skip_rate": 0.15
-      }
-    ],
-    "history_limit": 10000,
-    "created_at": "2026-05-25T16:08:35.085370",
-    "participant_names": [],
-    "spy_mode_enabled": false,
-    "session_mode": 1,
-    "group_timeout": 30,
+    "survey_open_days": 7,
+    "group_chat_duration_minutes": 5,
     "qualtrics_handoff_enabled": true,
     "qualtrics_store_chat": true,
     "qualtrics_field_transcript": "chat_transcript",

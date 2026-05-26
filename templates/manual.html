@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Manual — ACTR</title>
+    <link rel="stylesheet" href="/static/theme.css">
     <style>
         :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --bg: #f0f2f5;
+            --gradient: var(--primary-gradient);
+            --bg: var(--bg-color);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -33,8 +32,7 @@
         }
         .nav-logo {
             font-weight: 800; font-size: 1.2rem;
-            background: var(--gradient);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            color: var(--orange);
             text-decoration: none; flex-shrink: 0;
         }
         .nav-links { display: flex; gap: 4px; }
@@ -42,8 +40,8 @@
             text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem;
             padding: 5px 12px; border-radius: 8px; transition: all 0.15s;
         }
-        .nav-links a:hover { color: var(--primary); background: rgba(102,126,234,0.07); }
-        .nav-links a.active { color: var(--primary); background: rgba(102,126,234,0.12); }
+        .nav-links a:hover { color: var(--orange); background: var(--orange-pale); }
+        .nav-links a.active { color: var(--orange-dark); background: var(--orange-pale); }
 
         /* LAYOUT */
         .page { display: flex; max-width: 1100px; margin: 0 auto; padding: 40px 20px; gap: 32px; }
@@ -59,13 +57,13 @@
             text-decoration: none; font-size: 0.85rem; color: #555; font-weight: 500;
             transition: all 0.15s;
         }
-        .toc a:hover { color: var(--primary); background: rgba(102,126,234,0.07); }
+        .toc a:hover { color: var(--orange); background: var(--orange-pale); }
         .toc a.sub { padding-left: 20px; font-size: 0.8rem; color: #888; }
 
         /* CONTENT */
         .content { flex: 1; min-width: 0; }
 
-        .section { background: white; border-radius: 14px; padding: 32px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .section { background: white; border-radius: 14px; padding: 32px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); border: 1px solid var(--gray-300); }
 
         h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px;
              background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -73,7 +71,7 @@
 
         h2 { font-size: 1.2rem; font-weight: 700; color: #2d3436; margin-bottom: 16px;
              padding-bottom: 10px; border-bottom: 2px solid #f0f2f5; }
-        h3 { font-size: 1rem; font-weight: 700; color: var(--secondary); margin: 20px 0 8px; }
+        h3 { font-size: 1rem; font-weight: 700; color: var(--orange-dark); margin: 20px 0 8px; }
 
         p { color: #444; margin-bottom: 12px; font-size: 0.93rem; }
         ul, ol { padding-left: 20px; margin-bottom: 12px; }
@@ -85,18 +83,18 @@
             border-radius: 12px; padding: 20px;
             border: 2px solid transparent;
         }
-        .mode-card.m1 { background: #eef2ff; border-color: #c7d2fe; }
-        .mode-card.m2 { background: #f3e8ff; border-color: #d8b4fe; }
-        .mode-card.m3 { background: #fce7f3; border-color: #f9a8d4; }
+        .mode-card.m1 { background: #fff7ed; border-color: #fed7aa; }
+        .mode-card.m2 { background: #fff7ed; border-color: #fdba74; }
+        .mode-card.m3 { background: #fff7ed; border-color: #fb923c; }
         .mode-card .badge {
             display: inline-block; padding: 3px 10px; border-radius: 20px;
             font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
             letter-spacing: 0.05em; margin-bottom: 10px;
         }
-        .m1 .badge { background: #667eea; color: white; }
-        .m2 .badge { background: #9333ea; color: white; }
-        .m3 .badge { background: #db2777; color: white; }
-        .mode-card h3 { margin: 0 0 8px; font-size: 0.95rem; color: #1e1b4b; }
+        .m1 .badge { background: var(--orange); color: white; }
+        .m2 .badge { background: var(--orange-dark); color: white; }
+        .m3 .badge { background: var(--orange-light); color: white; }
+        .mode-card h3 { margin: 0 0 8px; font-size: 0.95rem; color: var(--gray-900); }
         .mode-card p { font-size: 0.83rem; color: #555; margin: 0 0 10px; }
         .mode-card ul { padding-left: 16px; }
         .mode-card li { font-size: 0.82rem; color: #555; margin-bottom: 3px; }
@@ -111,7 +109,7 @@
         .param-table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
         .param-table tr:last-child td { border-bottom: none; }
         .param-table td:first-child { font-weight: 700; color: #2d3436; white-space: nowrap; }
-        .param-table td:nth-child(2) { color: #667eea; font-family: monospace; font-size: 0.82rem; }
+        .param-table td:nth-child(2) { color: var(--orange-dark); font-family: monospace; font-size: 0.82rem; }
         .param-table td:nth-child(3) { color: #555; }
 
         /* FLOW STEPS */
@@ -131,19 +129,19 @@
 
         /* TIP BOX */
         .tip {
-            background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
-            padding: 12px 16px; font-size: 0.85rem; color: #92400e; margin-top: 12px;
+            background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px;
+            padding: 12px 16px; font-size: 0.85rem; color: #9a3412; margin-top: 12px;
         }
-        .tip strong { color: #78350f; }
+        .tip strong { color: #7c2d12; }
 
         .info-box {
-            background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;
-            padding: 12px 16px; font-size: 0.85rem; color: #1e40af; margin-top: 12px;
+            background: #f8fafc; border: 1px solid var(--gray-300); border-radius: 8px;
+            padding: 12px 16px; font-size: 0.85rem; color: var(--gray-700); margin-top: 12px;
         }
 
         code {
             background: #f1f5f9; padding: 2px 6px; border-radius: 4px;
-            font-family: monospace; font-size: 0.85em; color: #7c3aed;
+            font-family: monospace; font-size: 0.85em; color: var(--orange-dark);
         }
     </style>
 </head>
@@ -152,8 +150,7 @@
 <header class="nav-header">
     <a href="/" class="nav-logo">ACTR</a>
     <nav class="nav-links">
-        <a href="/">Lobby</a>
-        <a href="/dashboard">Dashboard</a>
+        <a href="/">Dashboard</a>
         <a href="/admin">Admin</a>
         <a href="/manual" class="active">Manual</a>
     </nav>
@@ -172,6 +169,7 @@
         <a class="sub" href="#mode3">Mode 3 — Natural Mimicry</a>
         <a href="#mode1-guide">Mode 1 Deep Dive</a>
         <a href="#admin-guide">Admin Guide</a>
+        <a href="#qualtrics-guide">Qualtrics Integration</a>
         <a href="#dashboard-guide">Dashboard & Export</a>
         <a href="#faq">FAQ</a>
     </aside>
@@ -195,7 +193,7 @@
                 </div>
                 <div class="flow-step">
                     <div class="step-col"><div class="step-num">2</div><div class="step-line"></div></div>
-                    <div class="step-body"><strong>Participants join the lobby</strong><span>Users visit the <a href="/">Lobby</a>, pick a session, and click <em>Join Matching Queue</em>.</span></div>
+                    <div class="step-body"><strong>Participants join a session</strong><span>Users visit the <a href="/">Dashboard</a> → <em>Join & Chat</em>, pick a session, and click <em>Join Matching Queue</em>.</span></div>
                 </div>
                 <div class="flow-step">
                     <div class="step-col"><div class="step-num">3</div><div class="step-line"></div></div>
@@ -207,7 +205,7 @@
                 </div>
                 <div class="flow-step">
                     <div class="step-col"><div class="step-num">5</div></div>
-                    <div class="step-body"><strong>Admin monitors & exports</strong><span>The <a href="/dashboard">Dashboard</a> shows live activity. Full chat logs and activity history can be exported as CSV for analysis.</span></div>
+                    <div class="step-body"><strong>Admin monitors & exports</strong><span>The <a href="/">Dashboard</a> shows live activity. Full chat logs and activity history can be exported as CSV for analysis.</span></div>
                 </div>
             </div>
         </div>
@@ -347,9 +345,14 @@
                         <td>Controls which bots respond per message. Mode 1: all bots reply to every message. Mode 2: AI picks the single most relevant bot. Mode 3: bots only respond when @mentioned by name.</td>
                     </tr>
                     <tr>
-                        <td>Group Duration (min)</td>
-                        <td>30</td>
-                        <td>Maximum duration for each group chat session in minutes. Groups are closed after this time limit.</td>
+                        <td>Survey open (days)</td>
+                        <td>7</td>
+                        <td>How many days the session accepts new participants (questionnaire collection window).</td>
+                    </tr>
+                    <tr>
+                        <td>Group chat duration (min)</td>
+                        <td>5</td>
+                        <td>Each group chat ends this many minutes after the group is formed (from match time).</td>
                     </tr>
                     <tr>
                         <td>Group Size</td>
@@ -377,11 +380,11 @@
             <ol>
                 <li>Go to <a href="/admin">Admin</a>.</li>
                 <li>Fill in Session Name, Group Size, and whether bots are enabled.</li>
-                <li>Select Session Mode (Normal for most experiments).</li>
+                <li>Select Session Mode (who replies), and tune Assignment / Turns / AI opening in Experiment Options.</li>
                 <li>Click <strong>+ Add Persona</strong> to add one or more bots.</li>
                 <li>For each persona: set a name, choose Mode 1, write a personality prompt, and tune the parameters.</li>
                 <li>Click <strong>Create Session</strong>. A Session ID (e.g. <code>SES-A1B2C</code>) is generated.</li>
-                <li>Share the Lobby URL with participants. They select the session and join the queue.</li>
+                <li>Share the Dashboard URL with participants. They open <em>Join & Chat</em>, select the session, and join the queue.</li>
             </ol>
 
             <h3>Test Sandbox</h3>
@@ -390,12 +393,36 @@
             <div class="tip"><strong>Tip:</strong> Always test your bot configuration in the sandbox before running a real experiment session.</div>
         </div>
 
+        <!-- Qualtrics Guide -->
+        <div class="section" id="qualtrics-guide">
+            <h2>Qualtrics Integration</h2>
+            <p>ACTR supports iframe embedding in Qualtrics using participant-level identifiers and optional post-chat auto-advance.</p>
+
+            <h3>Recommended setup</h3>
+            <ol>
+                <li>Create a session in <a href="/admin">Admin</a> and enable <strong>Qualtrics auto-advance</strong> and <strong>Store chat in Qualtrics</strong> if needed.</li>
+                <li>In Qualtrics Survey Flow, define embedded data: <code>session_id</code>, <code>condition</code>, <code>chat_transcript</code>, <code>chat_status</code>.</li>
+                <li>Embed the chat iframe using <code>participant_id=${e://Field/ResponseID}</code>.</li>
+                <li>Add the parent-page listener script (from <code>/static/qualtrics-parent-snippet.js</code>) so <code>session_ended</code> events write transcript/status and optionally advance to the next page.</li>
+            </ol>
+
+            <div class="info-box">
+                Embed URL pattern: <code>/embed.html?session_id=SES-XXXX&participant_id=${e://Field/ResponseID}&condition=${e://Field/condition}</code>
+            </div>
+
+            <h3>Push vs pull transcript</h3>
+            <ul>
+                <li><strong>Push:</strong> transcript included in <code>postMessage</code> and written to Qualtrics embedded data.</li>
+                <li><strong>Pull:</strong> fetch from API when needed: <code>/api/export/participant/{session_id}/{participant_id}</code>.</li>
+            </ul>
+        </div>
+
         <!-- Dashboard Guide -->
         <div class="section" id="dashboard-guide">
             <h2>Dashboard &amp; Export</h2>
 
             <h3>Live monitoring</h3>
-            <p>The <a href="/dashboard">Dashboard</a> shows all active rooms, participant counts, and message volumes in real time (refreshes every 4 s). Click <em>View Feed</em> on any room to see its live message stream.</p>
+            <p>The <a href="/">Dashboard</a> shows all active rooms, participant counts, and message volumes in real time (refreshes every 4 s). Use the <em>Live Feed</em> tab to monitor messages.</p>
 
             <h3>Exporting data</h3>
             <p>Go to the <strong>Export</strong> tab on the Dashboard. You can download:</p>
