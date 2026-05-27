@@ -1,5 +1,5 @@
 """
-Bot-to-bot chain triggers, rate limits, mentions, and self-correction helpers.
+Bot-to-bot chain triggers and optional mention/self-correction helpers.
 """
 
 from __future__ import annotations
@@ -7,14 +7,13 @@ from __future__ import annotations
 import asyncio
 import random
 import re
-from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set
 
 from human_defaults import HUMAN_LIKE_SESSION
 
 
 def interaction_settings(session=None) -> Dict:
-    """Read interaction knobs from session with safe defaults for older configs."""
+    """Session-level orchestration (spacing uses each persona's delay_seconds)."""
     if session is None:
         session = type("_Defaults", (), {})()
     hs = HUMAN_LIKE_SESSION
@@ -23,19 +22,6 @@ def interaction_settings(session=None) -> Dict:
             getattr(session, "bot_reply_on_any_message", hs["bot_reply_on_any_message"])
         ),
         "max_chain_depth": max(1, int(getattr(session, "max_chain_depth", hs["max_chain_depth"]))),
-        "cooldown_per_bot_sec": max(
-            0, int(getattr(session, "cooldown_per_bot_sec", hs["cooldown_per_bot_sec"]))
-        ),
-        "max_bot_msgs_per_minute_per_room": max(
-            1,
-            int(
-                getattr(
-                    session,
-                    "max_bot_msgs_per_minute_per_room",
-                    hs["max_bot_msgs_per_minute_per_room"],
-                )
-            ),
-        ),
         "use_mentions": bool(getattr(session, "use_mentions", hs["use_mentions"])),
         "mention_prob": max(
             0.0, min(1.0, float(getattr(session, "mention_prob", hs["mention_prob"])))
@@ -74,39 +60,6 @@ def all_peer_names(session, group_info=None, exclude: Optional[str] = None) -> L
                 seen.add(n)
                 names.append(n)
     return names
-
-
-def _ensure_rate_state(group_info: Dict) -> Dict:
-    if "bot_rate" not in group_info:
-        group_info["bot_rate"] = {"times": [], "last_bot": {}}
-    return group_info["bot_rate"]
-
-
-def can_bot_send_now(group_info: Dict, bot_name: str, settings: Dict) -> bool:
-    """Per-bot cooldown + room-wide messages-per-minute cap."""
-    rate = _ensure_rate_state(group_info)
-    now = datetime.now()
-
-    cooldown = settings.get("cooldown_per_bot_sec", 0)
-    if cooldown > 0:
-        last = rate["last_bot"].get(bot_name)
-        if last and (now - last).total_seconds() < cooldown:
-            return False
-
-    window_start = now - timedelta(seconds=60)
-    rate["times"] = [t for t in rate["times"] if t > window_start]
-    cap = settings.get("max_bot_msgs_per_minute_per_room", 24)
-    if len(rate["times"]) >= cap:
-        return False
-
-    return True
-
-
-def record_bot_send(group_info: Dict, bot_name: str) -> None:
-    rate = _ensure_rate_state(group_info)
-    now = datetime.now()
-    rate["last_bot"][bot_name] = now
-    rate["times"].append(now)
 
 
 def pick_mention_target(

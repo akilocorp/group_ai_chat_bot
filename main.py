@@ -42,8 +42,6 @@ from bot_queue import bot_response_queue, BotResponse
 from bot_interaction import (
     interaction_settings,
     all_peer_names,
-    can_bot_send_now,
-    record_bot_send,
     pick_mention_target,
     apply_mention_prefix,
     build_mention_system_note,
@@ -169,7 +167,6 @@ async def _ai_opening_wrapper(session_id: str, group_id: str, bot_cfg: Dict, bot
         return
     gi = match_manager.get_group_info(session_id, group_id) or {}
     settings = interaction_settings(session_cfg)
-    record_bot_send(gi, opener_name)
     schedule_bot_chain(
         session_id, group_id, opener_name, opener_text, 0, settings, process_ai_logic
     )
@@ -235,7 +232,6 @@ def reset_idle_timer(session_id: str, group_id: str, idle_seconds: int = DEFAULT
             await broadcast(session_id, group_id, {"type": "message", "sender": initiator.name, "text": reply})
             touch_group_activity(session_id, group_id)
             settings = interaction_settings(session_cfg)
-            record_bot_send(gi, initiator.name)
             schedule_bot_chain(
                 session_id,
                 group_id,
@@ -347,10 +343,8 @@ class SessionCreateRequest(BaseModel):
     condition_enabled: bool = True
     style_mimic_enabled: bool = False
     style_mimic_target: str = "c"
-    bot_reply_on_any_message: bool = False
+    bot_reply_on_any_message: bool = True
     max_chain_depth: int = 3
-    cooldown_per_bot_sec: int = 12
-    max_bot_msgs_per_minute_per_room: int = 12
     use_mentions: bool = False
     mention_prob: float = 0.0
     self_correction_prob: float = 0.0
@@ -402,8 +396,6 @@ async def create_session(data: SessionCreateRequest):
             style_mimic_target=data.style_mimic_target,
             bot_reply_on_any_message=data.bot_reply_on_any_message,
             max_chain_depth=data.max_chain_depth,
-            cooldown_per_bot_sec=data.cooldown_per_bot_sec,
-            max_bot_msgs_per_minute_per_room=data.max_bot_msgs_per_minute_per_room,
             use_mentions=data.use_mentions,
             mention_prob=data.mention_prob,
             self_correction_prob=data.self_correction_prob,
@@ -504,8 +496,6 @@ class SessionUpdateRequest(BaseModel):
     style_mimic_target: Optional[str] = None
     bot_reply_on_any_message: Optional[bool] = None
     max_chain_depth: Optional[int] = None
-    cooldown_per_bot_sec: Optional[int] = None
-    max_bot_msgs_per_minute_per_room: Optional[int] = None
     use_mentions: Optional[bool] = None
     mention_prob: Optional[float] = None
     self_correction_prob: Optional[float] = None
@@ -897,10 +887,6 @@ async def _enqueue_single_bot(
     chain_depth: int,
     settings: Dict,
 ):
-    if not can_bot_send_now(group_info, bot_cfg["name"], settings):
-        print(f"[AI] ⏳ Rate limit — skip {bot_cfg['name']}")
-        return
-
     bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
     max_ctx = resolve_context_max_chars(bot_cfg)
     full_summary = ctx.get_context_summary(max_chars=max_ctx)
@@ -1073,11 +1059,6 @@ async def handle_bot_reply(
             if settings is None:
                 settings = interaction_settings(session_cfg)
 
-            if not can_bot_send_now(group_info, bot.name, settings):
-                print(f"[BOT] ⏳ Rate limit — skip {bot.name}")
-                activity_logger.log_bot_skipped(session_id, group_id, bot.name)
-                return
-
             peer_names = all_peer_names(session_cfg, group_info, exclude=bot.name)
             mention_target = pick_mention_target(user_id, user_text, peer_names, settings)
             mention_note = build_mention_system_note(settings)
@@ -1162,7 +1143,6 @@ async def handle_bot_reply(
             activity_logger.log_bot_response(session_id, group_id, bot.name, reply, mode)
             reset_idle_timer(session_id, group_id, idle_threshold)
 
-            record_bot_send(group_info, bot.name)
             schedule_bot_chain(
                 session_id,
                 group_id,

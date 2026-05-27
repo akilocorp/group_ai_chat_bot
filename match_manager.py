@@ -66,8 +66,6 @@ class SessionConfig:
             "style_mimic_target": self.style_mimic_target,
             "bot_reply_on_any_message": self.bot_reply_on_any_message,
             "max_chain_depth": self.max_chain_depth,
-            "cooldown_per_bot_sec": self.cooldown_per_bot_sec,
-            "max_bot_msgs_per_minute_per_room": self.max_bot_msgs_per_minute_per_room,
             "use_mentions": self.use_mentions,
             "mention_prob": self.mention_prob,
             "self_correction_prob": self.self_correction_prob,
@@ -109,17 +107,6 @@ class SessionConfig:
         )
         obj.max_chain_depth = max(
             1, min(int(data.get("max_chain_depth", HUMAN_LIKE_SESSION["max_chain_depth"])), 10)
-        )
-        obj.cooldown_per_bot_sec = max(
-            0,
-            min(int(data.get("cooldown_per_bot_sec", HUMAN_LIKE_SESSION["cooldown_per_bot_sec"])), 120),
-        )
-        obj.max_bot_msgs_per_minute_per_room = max(
-            1,
-            min(
-                int(data.get("max_bot_msgs_per_minute_per_room", HUMAN_LIKE_SESSION["max_bot_msgs_per_minute_per_room"])),
-                120,
-            ),
         )
         obj.use_mentions = bool(data.get("use_mentions", HUMAN_LIKE_SESSION["use_mentions"]))
         obj.mention_prob = max(
@@ -228,8 +215,6 @@ class MatchManager:
         style_mimic_target: str = "c",
         bot_reply_on_any_message: bool = None,
         max_chain_depth: int = None,
-        cooldown_per_bot_sec: int = None,
-        max_bot_msgs_per_minute_per_room: int = None,
         use_mentions: bool = None,
         mention_prob: float = None,
         self_correction_prob: float = None,
@@ -270,24 +255,6 @@ class MatchManager:
         config.max_chain_depth = max(
             1,
             min(int(max_chain_depth if max_chain_depth is not None else hs["max_chain_depth"]), 10),
-        )
-        config.cooldown_per_bot_sec = max(
-            0,
-            min(
-                int(cooldown_per_bot_sec if cooldown_per_bot_sec is not None else hs["cooldown_per_bot_sec"]),
-                120,
-            ),
-        )
-        config.max_bot_msgs_per_minute_per_room = max(
-            1,
-            min(
-                int(
-                    max_bot_msgs_per_minute_per_room
-                    if max_bot_msgs_per_minute_per_room is not None
-                    else hs["max_bot_msgs_per_minute_per_room"]
-                ),
-                120,
-            ),
         )
         config.use_mentions = bool(use_mentions if use_mentions is not None else hs["use_mentions"])
         config.mention_prob = max(
@@ -386,12 +353,6 @@ class MatchManager:
             session.bot_reply_on_any_message = bool(data["bot_reply_on_any_message"])
         if "max_chain_depth" in data:
             session.max_chain_depth = max(1, min(int(data["max_chain_depth"]), 10))
-        if "cooldown_per_bot_sec" in data:
-            session.cooldown_per_bot_sec = max(0, min(int(data["cooldown_per_bot_sec"]), 120))
-        if "max_bot_msgs_per_minute_per_room" in data:
-            session.max_bot_msgs_per_minute_per_room = max(
-                1, min(int(data["max_bot_msgs_per_minute_per_room"]), 120)
-            )
         if "use_mentions" in data:
             session.use_mentions = bool(data["use_mentions"])
         if "mention_prob" in data:

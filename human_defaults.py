@@ -16,10 +16,8 @@ HUMAN_LIKE_PROMPT = (
 
 HUMAN_LIKE_SESSION: Dict[str, Any] = {
     "session_mode": 1,
-    "bot_reply_on_any_message": False,
+    "bot_reply_on_any_message": True,
     "max_chain_depth": 3,
-    "cooldown_per_bot_sec": 12,
-    "max_bot_msgs_per_minute_per_room": 12,
     "use_mentions": False,
     "mention_prob": 0.0,
     "self_correction_prob": 0.0,

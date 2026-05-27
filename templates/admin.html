@@ -226,42 +226,24 @@
                 <input type="text" id="participantNames" value="c" placeholder="c,d">
             </div>
 
-            <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">Bot interaction</div>
-            <div class="grid-3" style="margin-bottom:16px;">
-                <div class="form-group">
-                    <label>Reply on any message</label>
-                    <select id="botReplyOnAny">
-                        <option value="true">On — human or bot messages</option>
-                        <option value="false" selected>Off — human messages only</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Max chain depth</label>
-                    <input type="number" id="maxChainDepth" value="3" min="1" max="10" title="Bot-to-bot follow-up rounds after one human message (preset default 3)">
-                </div>
-                <div class="form-group">
-                    <label>Bot cooldown (sec)</label>
-                    <input type="number" id="cooldownPerBot" value="12" min="0" max="120">
-                </div>
-                <div class="form-group">
-                    <label>Max bot msgs / min / room</label>
-                    <input type="number" id="maxBotMsgsPerMin" value="12" min="1" max="120">
-                </div>
-            </div>
-
             <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">Experiment</div>
+            <p class="hint" style="font-size:0.82rem;color:var(--gray-700);margin:0 0 12px;line-height:1.5;">
+                <strong>Matching:</strong> controls who is placed in the same group while waiting for chat.
+                <strong>Condition On</strong> (default) — only participants with the same Qualtrics <code>condition</code> value are matched; Assignment is locked to stratified.
+                <strong>Condition Off</strong> — <strong>FIFO</strong> = one line for everyone; <strong>Stratified</strong> = separate lines per <code>condition</code> bucket (if you still pass condition in the URL).
+            </p>
             <div class="grid-3" style="margin-bottom:16px;">
                 <div class="form-group">
                     <label>Assignment</label>
                     <select id="assignmentMode">
-                        <option value="fifo" selected>FIFO — first-come queue</option>
-                        <option value="stratified">Stratified — queue per bucket</option>
+                        <option value="fifo" selected>FIFO — one queue (everyone)</option>
+                        <option value="stratified">Stratified — one queue per condition</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Condition</label>
                     <select id="conditionEnabled" onchange="syncConditionAssignmentUI()">
-                        <option value="true" selected>On — match by Qualtrics condition</option>
+                        <option value="true" selected>On — same condition → same group</option>
                         <option value="false">Off — ignore condition</option>
                     </select>
                 </div>
@@ -313,6 +295,22 @@
                     <button type="button" class="btn btn-success" onclick="addBotUI()">+ Add Persona</button>
                 </div>
             </div>
+            <p class="hint" style="font-size:0.82rem;color:var(--gray-700);margin:0 0 10px;line-height:1.5;">
+                <strong>Group chat:</strong> spacing between replies uses each persona’s <em>Delay</em> below (no separate cooldown).
+            </p>
+            <div class="grid-2" style="margin-bottom:16px;">
+                <div class="form-group">
+                    <label>Reply on any message</label>
+                    <select id="botReplyOnAny">
+                        <option value="true" selected>On — human or bot messages</option>
+                        <option value="false">Off — human messages only</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Max chain depth</label>
+                    <input type="number" id="maxChainDepth" value="3" min="1" max="10" title="Bot-to-bot follow-up rounds after one trigger message">
+                </div>
+            </div>
 
             <div id="botListContainer"></div>
 
@@ -362,10 +360,8 @@ const SHARED_PERSONA_PROMPT =
 
 const HUMAN_LIKE_PRESET = {
     sessionMode: 1,
-    botReplyOnAny: false,
+    botReplyOnAny: true,
     maxChainDepth: 3,
-    cooldownPerBot: 12,
-    maxBotMsgsPerMin: 12,
     aiStartsConversation: false,
     styleMimicEnabled: false,
     turnMode: 'none',
@@ -407,8 +403,6 @@ function applyExamplePreset() {
     document.getElementById('sessionMode').value = String(p.sessionMode);
     document.getElementById('botReplyOnAny').value = p.botReplyOnAny ? 'true' : 'false';
     document.getElementById('maxChainDepth').value = p.maxChainDepth;
-    document.getElementById('cooldownPerBot').value = p.cooldownPerBot;
-    document.getElementById('maxBotMsgsPerMin').value = p.maxBotMsgsPerMin;
     document.getElementById('aiStartsConversation').value = p.aiStartsConversation ? 'true' : 'false';
     document.getElementById('styleMimicEnabled').value = p.styleMimicEnabled ? 'true' : 'false';
     document.getElementById('turnMode').value = p.turnMode;
@@ -501,7 +495,7 @@ function renderBots() {
             <div class="section-label">Timing</div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Delay (sec)</label>
+                    <label>Delay (sec) — wait before this persona replies</label>
                     <div class="range-row">
                         <input type="range" min="0" max="15" step="0.5" value="${bot.delay_seconds}"
                                oninput="updateBot(${i},'delay_seconds',Number(this.value)); this.nextElementSibling.textContent=this.value+'s'">
@@ -637,8 +631,6 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         style_mimic_target: document.getElementById('styleMimicTarget').value.trim() || 'c',
         bot_reply_on_any_message: document.getElementById('botReplyOnAny').value === 'true',
         max_chain_depth: parseInt(document.getElementById('maxChainDepth').value, 10),
-        cooldown_per_bot_sec: parseInt(document.getElementById('cooldownPerBot').value, 10),
-        max_bot_msgs_per_minute_per_room: parseInt(document.getElementById('maxBotMsgsPerMin').value, 10),
         participant_names: document.getElementById('participantNames').value
             ? document.getElementById('participantNames').value.split(',').map(s => s.trim()).filter(Boolean)
             : null,
@@ -682,16 +674,6 @@ function syncTurnDurationUI() {
     turnDurationGroup.style.display = turnMode === 'timed' ? '' : 'none';
 }
 
-/** Full spreadsheet column list (study documentation); keep in sync with Manual → Qualtrics. */
-const SPREADSHEET_HEADERS = [
-    'session_id', 'participant_id', 'condition', 'transcript', 'chat_status',
-    'group_size', 'group_chat_duration_minutes', 'survey_open_days', 'session_mode',
-    'bot_reply_on_any_message', 'max_chain_depth', 'cooldown_per_bot_sec',
-    'max_bot_msgs_per_minute_per_room',
-    'bot_enabled', 'participant_names', 'assignment_mode', 'condition_enabled',
-    'style_mimic', 'ai_starts_conversation', 'turn_mode', 'personas'
-];
-
 /** Qualtrics Embedded Data + server settings reference for researchers */
 function buildQualtricsFieldTable(sessionId, payload) {
     const conditionOn = payload.condition_enabled !== false;
@@ -715,9 +697,7 @@ function buildQualtricsFieldTable(sessionId, payload) {
         ['survey_open_days', 'Server', 'Admin', '—', String(payload.survey_open_days ?? 7) + ' days new participants can join the queue'],
         ['session_mode', 'Server', 'Admin', '—', '1 = all bots | 2 = one bot per message | 3 = @mention only. This session: ' + (payload.session_mode ?? 1)],
         ['bot_reply_on_any_message', 'Server', 'Admin', '—', String(payload.bot_reply_on_any_message === true) + ' — if true, bot messages can trigger other bots (with chain limits)'],
-        ['max_chain_depth', 'Server', 'Admin', '—', String(payload.max_chain_depth ?? 3) + ' — bot-to-bot follow-up rounds after one human message'],
-        ['cooldown_per_bot_sec', 'Server', 'Admin', '—', String(payload.cooldown_per_bot_sec ?? 12) + ' seconds before the same persona can send again'],
-        ['max_bot_msgs_per_minute_per_room', 'Server', 'Admin', '—', String(payload.max_bot_msgs_per_minute_per_room ?? 12) + ' cap on total bot messages per minute in one room'],
+        ['max_chain_depth', 'Server', 'Admin', '—', String(payload.max_chain_depth ?? 3) + ' — bot-to-bot follow-up rounds after one trigger message'],
         ['bot_enabled', 'Server', 'Admin', '—', String(payload.bot_enabled !== false)],
         ['participant_names', 'Server', 'Admin', '—', (payload.participant_names || []).join(', ') || '(auto participant IDs)'],
         ['assignment_mode', 'Server', 'Admin', '—', conditionOn ? 'stratified (forced when Condition On)' : (payload.assignment_mode || 'fifo')],
@@ -729,18 +709,12 @@ function buildQualtricsFieldTable(sessionId, payload) {
     ];
     const thead = rows[0].map(h => `<th style="text-align:left;padding:6px 8px;border-bottom:2px solid var(--orange);font-size:0.75rem;">${h}</th>`).join('');
     const body = rows.slice(1).map(r => `<tr>${r.map(c => `<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:0.78rem;vertical-align:top;">${c}</td>`).join('')}</tr>`).join('');
-    const headerLine = SPREADSHEET_HEADERS.join('\t');
     return `
         <div class="setup-block" style="margin-top:16px;">
             <h4>Qualtrics &amp; study field reference</h4>
             <p style="font-size:0.82rem;color:var(--gray-700);margin:8px 0;">Full setup: <a href="/manual#qualtrics">Manual → Qualtrics</a>. <strong>In/Out</strong> rows must exist in Qualtrics Embedded Data when integration is On.</p>
             <div style="overflow-x:auto;margin:10px 0;">
                 <table style="width:100%;border-collapse:collapse;">${thead ? '<thead><tr>' + thead + '</tr></thead>' : ''}<tbody>${body}</tbody></table>
-            </div>
-            <p style="font-size:0.78rem;color:var(--gray-700);margin:8px 0 4px;"><strong>Spreadsheet / import header row (tab-separated):</strong></p>
-            <div class="url-box" style="align-items:flex-start;">
-                <code id="qualtrics-header-row" style="white-space:pre-wrap;font-size:0.8rem;">${headerLine.replace(/</g, '&lt;')}</code>
-                <button type="button" class="btn-copy" onclick="copyText('qualtrics-header-row')">Copy headers</button>
             </div>
         </div>`;
 }

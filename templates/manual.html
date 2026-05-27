@@ -118,7 +118,7 @@
         <a href="#quick-start">Quick start</a>
         <a href="#admin-fields">Admin fields</a>
         <a href="#session-modes">Session modes</a>
-        <a href="#bot-interaction">Bot interaction</a>
+        <a href="#group-chat-flow">Group chat flow</a>
         <a href="#persona-modes">Persona modes</a>
         <a href="#recommended-defaults">Recommended defaults</a>
         <a href="#qualtrics">Qualtrics</a>
@@ -151,7 +151,7 @@
 
         <div class="section" id="admin-fields">
             <h2>Admin fields</h2>
-            <p>Every control on the Admin create form is documented below. After you create a session, the setup panel shows Qualtrics fields and a tab-separated header row for spreadsheets.</p>
+            <p>Every control on the Admin create form is documented below. After you create a session, the setup panel shows Qualtrics fields and server settings in a reference table.</p>
 
             <h3>Session</h3>
             <table class="param-table">
@@ -171,25 +171,14 @@
             <table class="param-table">
                 <thead><tr><th>Field</th><th>What it does</th></tr></thead>
                 <tbody>
-                    <tr><td>Assignment</td><td><strong>FIFO</strong> — one shared waiting queue for the whole session. <strong>Stratified</strong> — separate queue per bucket (e.g. per <code>condition</code> value). Used only when <strong>Condition is Off</strong>. When Condition is <strong>On</strong>, matching is always stratified by <code>condition</code> and this dropdown is ignored.</td></tr>
-                    <tr><td>Condition</td><td><strong>On</strong> (default) — participants only match others with the same Qualtrics <code>condition</code> embedded data value. <strong>Off</strong> — ignore <code>condition</code>; use FIFO or Stratified from Assignment.</td></tr>
+                    <tr><td>Assignment</td><td>How waiting participants are grouped when <strong>Condition is Off</strong>. <strong>FIFO</strong>: everyone waits in one line; the first N people form a group (N = group size). <strong>Stratified</strong>: separate lines per <code>condition</code> value; each line fills its own groups. When <strong>Condition is On</strong> (default), Assignment is ignored — matching is always stratified by <code>condition</code>.</td></tr>
+                    <tr><td>Condition</td><td><strong>On</strong> (default): iframe passes Qualtrics <code>condition</code> (e.g. <code>cond1_a</code>). Only respondents with the <em>same</em> value are matched into one group. <strong>Off</strong>: ignore <code>condition</code>; use Assignment (FIFO or Stratified) instead.</td></tr>
                     <tr><td>Turns</td><td><strong>Off</strong> — free chat. <strong>Round-robin</strong> or <strong>Timed</strong> — restrict when humans may speak.</td></tr>
                     <tr><td>Turn duration</td><td>Seconds per turn when Turns = timed (shown only for timed mode).</td></tr>
                     <tr><td>Style mimic</td><td>When On, non-target personas mimic one teammate’s message length and tone.</td></tr>
                     <tr><td>Style target</td><td>Display name to mimic (often a human, e.g. <code>c</code>).</td></tr>
                     <tr><td>AI opens chat</td><td><strong>No</strong> (preset) — wait for a human message first. <strong>Yes</strong> — one persona sends an opener when the room starts.</td></tr>
                     <tr><td>Qualtrics</td><td><strong>On</strong> — write <code>transcript</code> and <code>chat_status</code> to Qualtrics Embedded Data when the chat ends. <strong>Off</strong> — use Dashboard export only.</td></tr>
-                </tbody>
-            </table>
-
-            <h3>Bot interaction</h3>
-            <table class="param-table">
-                <thead><tr><th>Field</th><th>What it does</th></tr></thead>
-                <tbody>
-                    <tr><td>Reply on any message</td><td><strong>On</strong> — bot messages can trigger other bots (subject to chain depth and rate limits). <strong>Off</strong> (preset) — only human messages start bot orchestration.</td></tr>
-                    <tr><td>Max chain depth</td><td>How many bot-to-bot follow-up rounds after one human message (preset default <strong>3</strong>). Lower values quiet the room; minimum 1.</td></tr>
-                    <tr><td>Bot cooldown (sec)</td><td>Minimum time before the <em>same</em> persona can send again (preset 12 s).</td></tr>
-                    <tr><td>Max bot msgs / min / room</td><td>Hard cap on total bot messages per minute in one group (preset 12).</td></tr>
                 </tbody>
             </table>
 
@@ -201,7 +190,9 @@
                     <tr><td>Avatar</td><td>Bot 🤖 or Human 👤 — cosmetic only in the chat UI.</td></tr>
                     <tr><td>Persona mode</td><td>When <em>this</em> persona speaks — see <a href="#persona-modes">Persona modes</a> (not the same as session mode).</td></tr>
                     <tr><td>Prompt</td><td>System instructions for tone, topic, and deflection rules. Use <strong>Sync prompt to all</strong> to copy persona 1’s prompt to every persona.</td></tr>
-                    <tr><td>Delay (sec)</td><td>Base wait before generating a reply. Persona modes 2–4 add 0.5–2.5 s random jitter.</td></tr>
+                    <tr><td>Reply on any message</td><td>Session-level control above the persona cards. <strong>On</strong> (preset) — bot messages can trigger other bots (within max chain depth). <strong>Off</strong> — only human messages start bot replies.</td></tr>
+                    <tr><td>Max chain depth</td><td>Session-level: bot-to-bot follow-up rounds after one trigger message (preset <strong>3</strong>). Lower values quiet the room.</td></tr>
+                    <tr><td>Delay (sec)</td><td>Per-persona wait before generating a reply (main spacing control; no separate session cooldown). Persona modes 2–4 add 0.5–2.5 s random jitter.</td></tr>
                     <tr><td>Typing (chars/sec)</td><td>Simulated typing delay before the message appears (1–6; preset 3).</td></tr>
                     <tr><td>Silence timeout (sec)</td><td>If the room is quiet this long, a persona may send a nudge (preset 50 s).</td></tr>
                     <tr><td>Length mix</td><td>On — each reply targets a random word count between min and max. Off — always use max words.</td></tr>
@@ -215,7 +206,7 @@
 
         <div class="section" id="session-modes">
             <h2>Session modes</h2>
-            <p>Session mode decides <strong>which personas are allowed to respond</strong> to each incoming message (from a human or, if <a href="#bot-interaction">Reply on any message</a> is On, from another bot).</p>
+            <p>Session mode decides <strong>which personas are allowed to respond</strong> to each incoming message (from a human or, if <a href="#group-chat-flow">Reply on any message</a> is On, from another bot).</p>
             <div class="note"><strong>Do not confuse with persona mode.</strong> Session mode 3 = @mention only. Persona mode 3 = random skip — a different setting on each persona card.</div>
             <ul>
                 <li><strong>Mode 1 — all bots (preset):</strong> Every persona may be queued to reply to each eligible message. Combined with persona mode 3 (skip), not every bot will actually speak every time.</li>
@@ -225,20 +216,17 @@
             <p>A persona never replies to its own message (reduces self-triggered chains).</p>
         </div>
 
-        <div class="section" id="bot-interaction">
-            <h2>Bot interaction</h2>
-            <p>These settings prevent runaway bot traffic while keeping group chat plausible.</p>
-            <h3>How a human message flows</h3>
+        <div class="section" id="group-chat-flow">
+            <h2>Group chat flow</h2>
+            <p>Session-level controls (<strong>Reply on any message</strong>, <strong>Max chain depth</strong>) sit in the AI Personas section on Admin. Per-persona <strong>Delay</strong> spaces replies; there is no separate bot cooldown or per-minute cap.</p>
+            <h3>How a message flows</h3>
             <ol>
-                <li>Human sends a line over WebSocket → saved to history and context.</li>
+                <li>Someone sends a line over WebSocket → saved to history and context.</li>
                 <li>Session mode decides which personas are <em>eligible</em> (all, one, or @mentioned only).</li>
                 <li>Each eligible persona runs its <strong>persona mode</strong> (delay, skip, or probability).</li>
-                <li>If a bot replies, burst limits apply (cooldown, per-minute cap).</li>
-                <li>If <strong>Reply on any message</strong> is On and <strong>max chain depth</strong> &gt; 0, bot replies can trigger further bot rounds until the depth limit is reached.</li>
+                <li>If <strong>Reply on any message</strong> is On and <strong>max chain depth</strong> allows, bot replies can trigger further bot rounds until the depth limit is reached.</li>
             </ol>
-            <h3>Max chain depth (preset default 3)</h3>
-            <p>Counts how many <em>bot-to-bot waves</em> may follow after a human message when Reply on any message is On. With depth <strong>3</strong>, up to three bot follow-up rounds can occur after one human line. With Reply on any message <strong>Off</strong> (preset), bot messages do not start new orchestration.</p>
-            <p>If the room feels noisy, lower chain depth, raise cooldown, or switch to session mode <strong>2</strong>.</p>
+            <p>If the room feels noisy, lower chain depth, increase each persona’s delay, raise skip rate, or switch to session mode <strong>2</strong>.</p>
         </div>
 
         <div class="section" id="persona-modes">
@@ -255,16 +243,14 @@
         <div class="section" id="recommended-defaults">
             <h2>Recommended defaults (★ Example)</h2>
             <p>Applied when you click <strong>★ Example</strong> or create a session without changing fields. Source: <code>human_defaults.py</code> — API: <code>GET /api/admin/human-defaults</code>.</p>
-            <h3>Session and bot interaction</h3>
+            <h3>Session</h3>
             <table class="param-table">
                 <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
                 <tbody>
                     <tr><td>Group size</td><td><strong>1</strong></td><td>One human per group; common layout is 1 human + 2 bots.</td></tr>
                     <tr><td>Session mode</td><td><strong>1</strong></td><td>All bots may respond; persona skip thins traffic.</td></tr>
-                    <tr><td>Reply on any message</td><td><strong>Off</strong></td><td>Human-led turns; bots do not chain off each other.</td></tr>
-                    <tr><td>Max chain depth</td><td><strong>3</strong></td><td>Bot-to-bot follow-up rounds after one human message when Reply on any message is On.</td></tr>
-                    <tr><td>Bot cooldown</td><td><strong>12 s</strong></td><td>Prevents the same name from firing in quick succession.</td></tr>
-                    <tr><td>Max bot msgs / min</td><td><strong>12</strong></td><td>Room-wide safety cap.</td></tr>
+                    <tr><td>Reply on any message</td><td><strong>On</strong></td><td>Bots may react to bot messages within max chain depth.</td></tr>
+                    <tr><td>Max chain depth</td><td><strong>3</strong></td><td>Bot-to-bot follow-up rounds after one trigger message.</td></tr>
                     <tr><td>AI opens chat</td><td><strong>No</strong></td><td>Human sets tone first.</td></tr>
                 </tbody>
             </table>
@@ -303,10 +289,7 @@
                 </tbody>
             </table>
 
-            <h3>Spreadsheet header row (full study reference)</h3>
-            <p>After creating a session, Admin shows a tab-separated header row for documentation or import templates. It includes Qualtrics fields plus server-only settings (for IRB / analysis plans):</p>
-            <p><code>session_id</code>, <code>participant_id</code>, <code>condition</code>, <code>transcript</code>, <code>chat_status</code>, <code>group_size</code>, <code>group_chat_duration_minutes</code>, <code>survey_open_days</code>, <code>session_mode</code>, <code>bot_reply_on_any_message</code>, <code>max_chain_depth</code>, <code>cooldown_per_bot_sec</code>, <code>max_bot_msgs_per_minute_per_room</code>, <code>bot_enabled</code>, <code>participant_names</code>, <code>assignment_mode</code>, <code>condition_enabled</code>, <code>style_mimic</code>, <code>ai_starts_conversation</code>, <code>turn_mode</code>, <code>personas</code></p>
-            <p>Only <code>session_id</code>, <code>participant_id</code>, and (if used) <code>condition</code> are passed in the iframe URL. <code>transcript</code> and <code>chat_status</code> are written back by the app. Other columns describe Admin settings for this session — they are not sent through Qualtrics automatically.</p>
+            <p>Only <code>session_id</code>, <code>participant_id</code>, and (if used) <code>condition</code> are passed in the iframe URL. <code>transcript</code> and <code>chat_status</code> are written back by the app. Server-only settings (group size, session mode, personas, etc.) are documented in the Admin setup table after create — they are not sent through Qualtrics automatically.</p>
 
             <h3>When data is saved</h3>
             <ul>
