@@ -143,3 +143,93 @@ body.has-top-nav {
     box-shadow: var(--shadow-md);
     border: 1px solid var(--gray-300);
 }
+
+/* Admin / Dashboard — unified white fields (selects match text inputs) */
+.card input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.card select,
+.card textarea,
+.form-group input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.form-group select,
+.form-group textarea,
+.bot-card input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+.bot-card select,
+.bot-card textarea {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 2px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: var(--fs-md);
+    font-family: inherit;
+    line-height: 1.4;
+    color: var(--gray-900);
+    background-color: var(--white);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.card select,
+.form-group select,
+.bot-card select {
+    padding-right: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    cursor: pointer;
+}
+
+.card select option,
+.form-group select option,
+.bot-card select option {
+    background-color: var(--white);
+    color: var(--gray-900);
+}
+
+.card input:not([type="range"]):focus,
+.card select:focus,
+.card textarea:focus,
+.form-group input:not([type="range"]):focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.bot-card input:not([type="range"]):focus,
+.bot-card select:focus,
+.bot-card textarea:focus {
+    outline: none;
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+    background-color: var(--white);
+}
+
+.card input:disabled,
+.card select:disabled,
+.card textarea:disabled,
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled,
+.bot-card input:disabled,
+.bot-card select:disabled,
+.bot-card textarea:disabled,
+#sessionDetailForm.readonly input,
+#sessionDetailForm.readonly select,
+#sessionDetailForm.readonly textarea {
+    background-color: var(--gray-100) !important;
+    color: var(--gray-700);
+    border-color: var(--gray-300);
+    cursor: not-allowed;
+    opacity: 1;
+    box-shadow: none;
+}
+
+.field-note {
+    font-size: 0.82rem;
+    color: var(--gray-700);
+    margin: 0 0 12px;
+    line-height: 1.55;
+    padding: 10px 12px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+}

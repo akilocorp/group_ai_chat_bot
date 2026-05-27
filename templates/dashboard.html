@@ -250,14 +250,7 @@
             margin-bottom: 6px;
             color: var(--gray-900);
         }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid rgba(0, 0, 0, 0.12);
-            border-radius: 8px;
-            font-size: var(--fs-md);
-            font-family: inherit;
-        }
+        /* Form fields: see /static/theme.css (white inputs + selects) */
         .form-group textarea.mono {
             font-family: ui-monospace, monospace;
             font-size: var(--fs-sm);
@@ -265,14 +258,6 @@
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         @media (max-width: 700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
-        #sessionDetailForm.readonly input,
-        #sessionDetailForm.readonly select,
-        #sessionDetailForm.readonly textarea {
-            background: #f9fafb;
-            color: var(--gray-700);
-            cursor: not-allowed;
-        }
-
         .rooms-table {
             width: 100%;
             border-collapse: collapse;

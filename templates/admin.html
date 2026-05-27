@@ -36,15 +36,6 @@
         .form-group { margin-bottom: 16px; }
         label { display: block; font-weight: 700; font-size: var(--fs-md); margin-bottom: 6px; color: #333; }
         label .hint { font-weight: 500; color: #aaa; font-size: var(--fs-sm); }
-        input[type=text], input[type=number], select, textarea {
-            display: block;
-            width: 100%;
-            min-width: 0;
-            padding: 10px 12px; border: 2px solid #e8e8e8;
-            border-radius: 8px; font-size: var(--fs-md); font-family: inherit;
-            transition: border-color 0.15s; background: var(--white);
-        }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: var(--white); }
         textarea { resize: vertical; }
 
         /* RANGE SLIDER */
@@ -143,16 +134,6 @@
         .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-modify { background: var(--white); color: var(--orange-dark); border: 2px solid var(--orange); }
         .btn-modify:hover { background: var(--orange-pale); }
-        #sessionDetailForm.readonly input,
-        #sessionDetailForm.readonly select,
-        #sessionDetailForm.readonly textarea {
-            background: #eceff1; color: #546e7a; border-color: #cfd8dc; cursor: not-allowed;
-        }
-        #sessionDetailForm:not(.readonly) input,
-        #sessionDetailForm:not(.readonly) select,
-        #sessionDetailForm:not(.readonly) textarea {
-            background: var(--white); color: #2d3436; cursor: text;
-        }
         .param-section-title {
             font-size: 0.78rem; font-weight: 800; text-transform: uppercase;
             letter-spacing: 0.06em; color: var(--orange-dark); margin: 18px 0 10px;
@@ -227,7 +208,7 @@
             </div>
 
             <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">Experiment</div>
-            <p class="hint" style="font-size:0.82rem;color:var(--gray-700);margin:0 0 12px;line-height:1.5;">
+            <p class="field-note">
                 <strong>Matching:</strong> controls who is placed in the same group while waiting for chat.
                 <strong>Condition On</strong> (default) — only participants with the same Qualtrics <code>condition</code> value are matched; Assignment is locked to stratified.
                 <strong>Condition Off</strong> — <strong>FIFO</strong> = one line for everyone; <strong>Stratified</strong> = separate lines per <code>condition</code> bucket (if you still pass condition in the URL).
@@ -295,7 +276,7 @@
                     <button type="button" class="btn btn-success" onclick="addBotUI()">+ Add Persona</button>
                 </div>
             </div>
-            <p class="hint" style="font-size:0.82rem;color:var(--gray-700);margin:0 0 10px;line-height:1.5;">
+            <p class="field-note" style="margin-bottom:10px;">
                 <strong>Group chat:</strong> spacing between replies uses each persona’s <em>Delay</em> below (no separate cooldown).
             </p>
             <div class="grid-2" style="margin-bottom:16px;">
