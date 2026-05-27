@@ -26,6 +26,11 @@
     --shadow-md: 0 4px 16px rgba(45, 52, 54, 0.1);
     --radius: 12px;
     --font: "Inter", "Avenir Next", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --field-min-height: 48px;
+    --field-padding-y: 12px;
+    --field-padding-x: 14px;
+    --field-textarea-min-height: 108px;
+    --field-prompt-min-height: 200px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -144,25 +149,24 @@ body.has-top-nav {
     border: 1px solid var(--gray-300);
 }
 
-/* Admin / Dashboard — unified white fields (selects match text inputs) */
+/* Admin / Dashboard — unified white fields (same width + height per row) */
 .card input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 .card select,
-.card textarea,
 .form-group input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 .form-group select,
-.form-group textarea,
 .bot-card input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
-.bot-card select,
-.bot-card textarea {
+.bot-card select {
     display: block;
     width: 100%;
     min-width: 0;
-    padding: 10px 12px;
+    box-sizing: border-box;
+    min-height: var(--field-min-height);
+    padding: var(--field-padding-y) var(--field-padding-x);
     border: 2px solid var(--gray-300);
     border-radius: 8px;
     font-size: var(--fs-md);
     font-family: inherit;
-    line-height: 1.4;
+    line-height: 1.45;
     color: var(--gray-900);
     background-color: var(--white);
     transition: border-color 0.15s, box-shadow 0.15s;
@@ -170,15 +174,58 @@ body.has-top-nav {
     appearance: none;
 }
 
+.card textarea.prompt-field,
+.form-group textarea.prompt-field,
+.bot-card textarea.prompt-field {
+    min-height: var(--field-prompt-min-height);
+}
+
+.card textarea,
+.form-group textarea,
+.bot-card textarea {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    min-height: var(--field-textarea-min-height);
+    padding: var(--field-padding-y) var(--field-padding-x);
+    border: 2px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: var(--fs-md);
+    font-family: inherit;
+    line-height: 1.45;
+    color: var(--gray-900);
+    background-color: var(--white);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    resize: vertical;
+}
+
 .card select,
 .form-group select,
 .bot-card select {
-    padding-right: 36px;
+    padding-right: 40px;
+    background-color: var(--white);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 12px center;
+    background-position: right 14px center;
     background-size: 12px;
     cursor: pointer;
+}
+
+.card .grid-2 .form-group,
+.card .grid-3 .form-group,
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.card .grid-2 .form-group > label + input,
+.card .grid-2 .form-group > label + select,
+.card .grid-3 .form-group > label + input,
+.card .grid-3 .form-group > label + select,
+.form-group > label + input,
+.form-group > label + select {
+    flex: 1 1 auto;
 }
 
 .card select option,
@@ -224,12 +271,12 @@ body.has-top-nav {
 }
 
 .field-note {
-    font-size: 0.82rem;
+    font-size: var(--fs-md);
     color: var(--gray-700);
-    margin: 0 0 12px;
+    margin: 0 0 16px;
     line-height: 1.55;
-    padding: 10px 12px;
+    padding: var(--field-padding-y) var(--field-padding-x);
     background: var(--gray-100);
-    border: 1px solid var(--gray-300);
+    border: 2px solid var(--gray-300);
     border-radius: 8px;
 }

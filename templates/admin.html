@@ -51,9 +51,9 @@
         .mode-info strong { display: block; margin-bottom: 3px; color: var(--secondary); }
 
         /* GRIDS */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: start; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
         .grid-2 .form-group,
         .grid-3 .form-group,
         .grid-4 .form-group { margin-bottom: 0; min-width: 0; }
@@ -161,9 +161,9 @@
 
         <form id="newSessionForm">
 
-            <!-- Row 1: Name + Group Size + Bots toggle -->
-            <div class="grid-3">
-                <div class="form-group" style="grid-column: span 2;">
+            <!-- Row 1: Name + bots -->
+            <div class="grid-2">
+                <div class="form-group">
                     <label>Session Name</label>
                     <input type="text" id="sessionName" placeholder="e.g. Pilot study" required>
                 </div>
@@ -213,7 +213,7 @@
                 <strong>Condition On</strong> (default) — only participants with the same Qualtrics <code>condition</code> value are matched; Assignment is locked to stratified.
                 <strong>Condition Off</strong> — <strong>FIFO</strong> = one line for everyone; <strong>Stratified</strong> = separate lines per <code>condition</code> bucket (if you still pass condition in the URL).
             </p>
-            <div class="grid-3" style="margin-bottom:16px;">
+            <div class="grid-2" style="margin-bottom:16px;">
                 <div class="form-group">
                     <label>Assignment</label>
                     <select id="assignmentMode">
@@ -276,9 +276,6 @@
                     <button type="button" class="btn btn-success" onclick="addBotUI()">+ Add Persona</button>
                 </div>
             </div>
-            <p class="field-note" style="margin-bottom:10px;">
-                <strong>Group chat:</strong> spacing between replies uses each persona’s <em>Delay</em> below (no separate cooldown).
-            </p>
             <div class="grid-2" style="margin-bottom:16px;">
                 <div class="form-group">
                     <label>Reply on any message</label>
@@ -470,7 +467,7 @@ function renderBots() {
 
             <div class="form-group">
                 <label>Prompt</label>
-                <textarea rows="3" oninput="updateBot(${i}, 'prompt', this.value)">${bot.prompt}</textarea>
+                <textarea class="prompt-field" rows="5" oninput="updateBot(${i}, 'prompt', this.value)">${bot.prompt}</textarea>
             </div>
 
             <div class="section-label">Timing</div>
