@@ -38,6 +38,9 @@ class SessionConfig:
         self.turn_duration_seconds = 60
         # Matching
         self.assignment_mode = "fifo"  # fifo | stratified
+        # Optional: other personas mimic one teammate's length/tone
+        self.style_mimic_enabled = False
+        self.style_mimic_target = "a"
 
     def to_dict(self) -> Dict:
         return {
@@ -61,6 +64,8 @@ class SessionConfig:
             "turn_mode": self.turn_mode,
             "turn_duration_seconds": self.turn_duration_seconds,
             "assignment_mode": self.assignment_mode,
+            "style_mimic_enabled": self.style_mimic_enabled,
+            "style_mimic_target": self.style_mimic_target,
         }
 
     @classmethod
@@ -91,6 +96,8 @@ class SessionConfig:
         obj.turn_mode = data.get("turn_mode", "none")
         obj.turn_duration_seconds = data.get("turn_duration_seconds", 60)
         obj.assignment_mode = data.get("assignment_mode", "fifo")
+        obj.style_mimic_enabled = bool(data.get("style_mimic_enabled", False))
+        obj.style_mimic_target = str(data.get("style_mimic_target") or "a").strip() or "a"
         if "created_at" in data:
             try:
                 obj.created_at = datetime.fromisoformat(data["created_at"])
@@ -185,6 +192,8 @@ class MatchManager:
         turn_mode: str = "none",
         turn_duration_seconds: int = 60,
         assignment_mode: str = "fifo",
+        style_mimic_enabled: bool = False,
+        style_mimic_target: str = "a",
     ) -> str:
         session_id = f"SES-{uuid.uuid4().hex[:5].upper()}"
         config = SessionConfig(session_id, name, group_size, bot_enabled)
@@ -202,6 +211,8 @@ class MatchManager:
         config.turn_mode = turn_mode if turn_mode in ("none", "round_robin", "timed") else "none"
         config.turn_duration_seconds = max(10, turn_duration_seconds)
         config.assignment_mode = assignment_mode if assignment_mode in ("fifo", "stratified") else "fifo"
+        config.style_mimic_enabled = bool(style_mimic_enabled)
+        config.style_mimic_target = (style_mimic_target or "a").strip() or "a"
 
         self.sessions[session_id] = config
         self.active_rooms[session_id] = {}
@@ -270,6 +281,12 @@ class MatchManager:
         if "assignment_mode" in data:
             am = data["assignment_mode"]
             session.assignment_mode = am if am in ("fifo", "stratified") else "fifo"
+        if "style_mimic_enabled" in data:
+            session.style_mimic_enabled = bool(data["style_mimic_enabled"])
+        if "style_mimic_target" in data:
+            t = str(data["style_mimic_target"] or "").strip()
+            if t:
+                session.style_mimic_target = t
         self.save_all_sessions()
         return True
 

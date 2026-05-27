@@ -138,6 +138,7 @@ class ChatBot:
         temperature: float = 0.75,
         peer_names: Optional[List[str]] = None,
         max_words: int = 45,
+        style_mimic_hint: Optional[str] = None,
     ) -> Optional[str]:
         """
         Generates a response using the full room history provided by the ContextManager.
@@ -162,6 +163,8 @@ class ChatBot:
                     ),
                 },
             ]
+            if style_mimic_hint:
+                messages.insert(2, {"role": "system", "content": style_mimic_hint})
 
             response = await client.chat.completions.create(
                 model="gpt-3.5-turbo",
@@ -235,6 +238,116 @@ async def analyze_intent(user_text: str, bots_config: list, history_text: str) -
         return None
     except:
         return None
+
+
+async def assess_reply_probability(
+    bot_name: str,
+    bot_prompt: str,
+    user_id: str,
+    user_text: str,
+    history_summary: str,
+    peer_names: Optional[List[str]] = None,
+) -> float:
+    """
+    Mode 4: estimate P(reply) from context (0–1). Caller still uses Bernoulli draw so
+    identical situations are not 100% deterministic.
+    """
+    peers = ", ".join(peer_names) if peer_names else "others"
+    orchestrator_prompt = f"""You judge whether "{bot_name}" would naturally send a message in a group chat RIGHT NOW.
+
+Persona:
+{(bot_prompt or '')[:600]}
+
+Recent chat:
+{(history_summary or '(none)')[:2000]}
+
+Latest message from {user_id}: "{user_text}"
+Other participants: {peers}
+
+Guidelines:
+- @mention or clear direct question to {bot_name} → high (0.75–1.0)
+- Topic irrelevant to this persona → low (0.0–0.15)
+- Teammate already answered enough → low (0.1–0.35)
+- Brief ack only ("ok", "thanks", "great") → low unless @mentioned
+- Real humans do not reply to every line
+
+Output ONLY one number from 0 to 1 (examples: 0, 0.25, 0.6, 1). No other text."""
+
+    try:
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": orchestrator_prompt}],
+            max_tokens=12,
+            temperature=0.2,
+        )
+        text = response.choices[0].message.content.strip()
+        match = re.search(r"0?\.\d+|1\.0*|1|0", text)
+        if match:
+            return max(0.0, min(1.0, float(match.group())))
+    except Exception as e:
+        print(f"⚠️ assess_reply_probability failed for {bot_name}: {e}")
+    return 0.45
+
+
+async def build_style_mimic_hint(
+    room_id: str,
+    target_name: str,
+    speaker_bot_name: str,
+) -> str:
+    """
+    Build instructions so speaker_bot_name mimics target_name's length/tone from room history.
+  Returns empty if too few target messages yet.
+    """
+    from context_manager import get_context
+
+    ctx = get_context(room_id)
+    if not ctx or not target_name:
+        return ""
+
+    if speaker_bot_name.lower() == target_name.lower():
+        return ""
+
+    texts = [
+        m["text"].strip()
+        for m in ctx.messages
+        if m.get("sender", "").lower() == target_name.lower() and m.get("text", "").strip()
+    ]
+    if not texts:
+        return ""
+
+    avg_words = sum(len(t.split()) for t in texts) / len(texts)
+    recent = texts[-6:]
+    examples = "\n".join(f"  • {t}" for t in recent)
+
+    summary = f"~{avg_words:.0f} words per message; informal chat."
+    try:
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        f"Summarize how '{target_name}' writes in 2 short bullets: length, tone, "
+                        f"slang/typos/punctuation. Be concrete.\n\nMessages:\n"
+                        + "\n".join(f"- {t}" for t in recent)
+                    ),
+                }
+            ],
+            max_tokens=90,
+            temperature=0.2,
+        )
+        summary = response.choices[0].message.content.strip().replace("\n", " ")
+    except Exception as e:
+        print(f"⚠️ build_style_mimic_hint LLM failed: {e}")
+
+    return (
+        f"[STYLE MIMIC: Match teammate '{target_name}' writing habits. {summary} "
+        f"Aim for similar message length (they average ~{avg_words:.0f} words). "
+        f"Recent lines from them:\n{examples}\n"
+        f"You are still {speaker_bot_name} (same identity); only mimic style, not their name.]"
+    )
+
+
 def compose_bot_prompt(system_prompt: str, disclosed_ai_allowed: bool = False) -> str:
     """Build system prompt; optional note when roster tag “may use AI” is active."""
     base = system_prompt.strip() if system_prompt and system_prompt.strip() else DEFAULT_SYSTEM_PROMPT

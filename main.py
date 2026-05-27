@@ -22,7 +22,14 @@ from dotenv import load_dotenv
 # ============ Internal Modules ============
 from match_manager import match_manager, SessionConfig
 from context_manager import get_or_create_context, get_context
-from bot_manager import analyze_intent, get_or_create_bot, get_or_create_bot_from_cfg, remove_room_bots
+from bot_manager import (
+    analyze_intent,
+    assess_reply_probability,
+    build_style_mimic_hint,
+    get_or_create_bot,
+    get_or_create_bot_from_cfg,
+    remove_room_bots,
+)
 
 # Database Functions
 from db.database import save_message, get_room_history
@@ -42,6 +49,7 @@ from session_runtime import (
     send_ai_opening_message,
     notify_session_ended,
     build_participant_export,
+    compute_chat_status,
     cancel_turn_timer,
     schedule_timed_turn,
 )
@@ -291,6 +299,8 @@ class SessionCreateRequest(BaseModel):
     turn_mode: str = "none"
     turn_duration_seconds: int = 60
     assignment_mode: str = "fifo"
+    style_mimic_enabled: bool = False
+    style_mimic_target: str = "a"
 
 @app.get("/api/sessions")
 async def list_sessions():
@@ -326,6 +336,8 @@ async def create_session(data: SessionCreateRequest):
             turn_mode=data.turn_mode,
             turn_duration_seconds=data.turn_duration_seconds,
             assignment_mode=data.assignment_mode,
+            style_mimic_enabled=data.style_mimic_enabled,
+            style_mimic_target=data.style_mimic_target,
         )
         activity_logger.log_session_started(session_id, data.session_name)
         return {"status": "success", "session_id": session_id}
@@ -382,6 +394,7 @@ async def get_session_config(
         "qualtrics_store_chat": session.qualtrics_store_chat,
         "qualtrics_enabled": bool(session.qualtrics_handoff_enabled and session.qualtrics_store_chat),
         "qualtrics_field_transcript": session.qualtrics_field_transcript,
+        "qualtrics_field_status": session.qualtrics_field_status,
         "ai_starts_conversation": session.ai_starts_conversation,
         "turn_mode": session.turn_mode,
         "turn_duration_seconds": session.turn_duration_seconds,
@@ -409,6 +422,8 @@ class SessionUpdateRequest(BaseModel):
     turn_mode: Optional[str] = None
     turn_duration_seconds: Optional[int] = None
     assignment_mode: Optional[str] = None
+    style_mimic_enabled: Optional[bool] = None
+    style_mimic_target: Optional[str] = None
 
 
 @app.get("/api/sessions/{session_id}/admin")
@@ -459,10 +474,47 @@ async def export_participant_chat(session_id: str, participant_id: str):
     """
     Pull chat transcript for a participant (Qualtrics piped text, web services, or research export).
     """
+    session = match_manager.get_session(session_id)
     data = await build_participant_export(session_id, participant_id)
     if not data.get("group_id"):
         raise HTTPException(status_code=404, detail="No chat found for this participant in this session")
+    if session:
+        group_info = match_manager.get_group_info(session_id, data["group_id"]) or {}
+        data.update(compute_chat_status(session, group_info, participant_id, data, "export"))
     return data
+
+
+class EmbedHandoffRequest(BaseModel):
+    session_id: str
+    participant_id: str
+    reason: str = "page_unload"  # page_unload | ws_close | visibility_hidden
+
+
+@app.post("/api/embed/handoff")
+async def embed_handoff(body: EmbedHandoffRequest):
+    """
+    Qualtrics embed: save transcript + chat_status when participant leaves early
+    (refresh, close tab, WebSocket drop) before group timer ends.
+    """
+    session = match_manager.get_session(body.session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    export = await build_participant_export(body.session_id, body.participant_id)
+    group_info = None
+    if export.get("group_id"):
+        group_info = match_manager.get_group_info(body.session_id, export["group_id"]) or {}
+
+    status = compute_chat_status(session, group_info, body.participant_id, export, body.reason)
+
+    return {
+        **export,
+        **status,
+        "qualtrics_handoff_enabled": session.qualtrics_handoff_enabled,
+        "qualtrics_store_chat": session.qualtrics_store_chat,
+        "qualtrics_field_transcript": session.qualtrics_field_transcript,
+        "qualtrics_field_status": session.qualtrics_field_status,
+    }
 
 @app.get("/api/sessions/{session_id}/activity")
 async def get_session_activity(session_id: str, limit: int = 100):
@@ -928,27 +980,52 @@ async def handle_bot_reply(
 
             print(f"[BOT]    mode={mode} delay={delay}s max_tokens={bot_cfg.get('max_tokens',200)} temp={bot_cfg.get('temperature',0.7)}")
 
-            if mode == 1:
-                await asyncio.sleep(delay)
-            elif mode == 2:
-                await asyncio.sleep(delay + random.uniform(0.5, 2.5))
-            else:
-                if random.random() < bot_cfg.get('skip_rate', 0.2):
-                    activity_logger.log_bot_skipped(session_id, group_id, bot.name)
-                    return
-                natural_delay = max(0.5, min(8.0, len(user_text.split()) * 0.25 + random.uniform(0.5, 2.0)))
-                await asyncio.sleep(natural_delay)
-
-            clean_text = user_text.replace(f"@{bot.name}", "").strip()
-            if not clean_text:
-                clean_text = "Continue the conversation naturally based on prior context."
-
             session_cfg = match_manager.get_session(session_id)
             peer_names = [
                 b["name"] for b in (session_cfg.bots if session_cfg else [])
                 if b.get("name") and b["name"] != bot.name
             ]
+
+            if mode == 1:
+                await asyncio.sleep(delay)
+            elif mode == 2:
+                await asyncio.sleep(delay + random.uniform(0.5, 2.5))
+            elif mode == 3:
+                if random.random() < bot_cfg.get('skip_rate', 0.2):
+                    activity_logger.log_bot_skipped(session_id, group_id, bot.name)
+                    return
+                natural_delay = max(0.5, min(8.0, len(user_text.split()) * 0.25 + random.uniform(0.5, 2.0)))
+                await asyncio.sleep(natural_delay)
+            elif mode == 4:
+                reply_p = await assess_reply_probability(
+                    bot.name,
+                    bot_cfg.get('prompt', ''),
+                    user_id,
+                    user_text,
+                    full_summary,
+                    peer_names=peer_names,
+                )
+                roll = random.random()
+                print(f"[BOT]    Mode 4 {bot.name}: P(reply)={reply_p:.2f} roll={roll:.2f}")
+                if roll >= reply_p:
+                    activity_logger.log_bot_skipped(session_id, group_id, bot.name)
+                    return
+                await asyncio.sleep(delay + random.uniform(0.3, 1.2))
+            else:
+                await asyncio.sleep(delay)
+
+            clean_text = user_text.replace(f"@{bot.name}", "").strip()
+            if not clean_text:
+                clean_text = "Continue the conversation naturally based on prior context."
+
             max_words = int(bot_cfg.get("max_words", 45))
+
+            style_hint = ""
+            if session_cfg and getattr(session_cfg, "style_mimic_enabled", False):
+                target = (getattr(session_cfg, "style_mimic_target", None) or "a").strip()
+                style_hint = await build_style_mimic_hint(group_id, target, bot.name)
+                if style_hint:
+                    print(f"[BOT]    style mimic '{target}' → {bot.name}")
 
             print(f"[BOT] 🔄 Calling generate_response for {bot.name}...")
             reply = await bot.generate_response(
@@ -957,6 +1034,7 @@ async def handle_bot_reply(
                 temperature=bot_cfg.get('temperature', 0.75),
                 peer_names=peer_names,
                 max_words=max_words,
+                style_mimic_hint=style_hint or None,
             )
             if not reply:
                 print(f"[BOT] ⚠️ {bot.name} returned empty reply")

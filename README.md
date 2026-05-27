@@ -16,55 +16,13 @@ python main.py
 
 ---
 
-## Qualtrics: what is `postMessage`?
+## Qualtrics (3 steps)
 
-Your chat runs **inside an iframe** on a Qualtrics page. The iframe cannot call Qualtrics APIs directly. Instead, when chat ends it sends a message **up** to the parent page:
+1. **Admin** — create session, enable **Qualtrics integration**, copy the HTML block from the setup guide.
+2. **Survey Flow → Embedded Data** — add `transcript`, `chat_status`, and `condition` (if you use conditions).
+3. **Chat question → HTML** — paste the block (includes `qualtrics-parent-snippet.js` + iframe). Use your live server (e.g. `https://group.xjhuang.com`).
 
-```javascript
-window.parent.postMessage({ source: 'ACTR_CHAT', event: 'chat_ended', ... }, '*');
-```
-
-The **parent survey page** must listen and then:
-1. **Push** data into Qualtrics Embedded Data (`setEmbeddedData`)
-2. **Pull** is only needed if you did not include the transcript in the message — then the parent calls your server API
-
-### Push (iframe → Qualtrics) — recommended
-
-1. In **Admin**, enable:
-   - **Qualtrics integration** — saves transcript to Embedded Data and auto-advances when chat ends
-2. In Qualtrics, create Embedded Data field (e.g. `transcript`).
-3. Add the parent listener script from `static/qualtrics-parent-snippet.js` to your survey (HTML question or Survey Flow JavaScript).
-
-### Pull (Qualtrics / researcher → server)
-
-Use when you need the transcript later (piped text, offline analysis, or web service):
-
-```
-GET /api/export/participant/{session_id}/{participant_id}
-```
-
-Returns `transcript_text`, `messages[]`, `group_id`, `display_name`.
-
-Example Qualtrics **Web Service** at end of survey: call this URL with `${e://Field/session_id}` and `${e://Field/ResponseID}`.
-
-You do **not** need both push and pull for every study — push is enough for storing chat inside Qualtrics; pull is for server-side archives and Dashboard export.
-
----
-
-## Embed URL parameters
-
-| Param | Qualtrics example | Purpose |
-|-------|-------------------|---------|
-| `session_id` | `${e://Field/session_id}` | Experiment config |
-| `participant_id` | `${e://Field/ResponseID}` | Unique participant key |
-| `condition` | `${e://Field/condition}` | Optional per-participant roster labels and stratified queues |
-| `group_id` | fixed `GRP-XXXX` | Skip queue, join fixed room |
-
-```html
-<iframe
-  src="https://YOUR-SERVER/embed.html?session_id=${e://Field/session_id}&participant_id=${e://Field/ResponseID}&condition=${e://Field/condition}"
-  width="100%" height="600" style="border:none;"></iframe>
-```
+Preview until the chat header shows **Connected**. After the session, see **Data & Analysis** for `transcript` and `chat_status` (`completed_full`, `left_early`, `no_messages`, `never_joined`). Or use **Dashboard → Export**.
 
 ---
 

@@ -4,7 +4,8 @@
  *
  * Listens for messages from ACTR embed (/embed.html) and:
  * 1. Saves chat transcript into Qualtrics Embedded Data
- * 2. Auto-advances to the next survey question when integration is enabled
+ * 2. Saves chat_status (completed_full | left_early | no_messages | never_joined)
+ * 3. Auto-advances only when chat_status is completed_full (full group duration)
  */
 (function () {
   function handleActrMessage(event) {
@@ -14,10 +15,14 @@
     }
 
     var transcriptField = data.qualtrics_field_transcript || 'transcript';
+    var statusField = data.qualtrics_field_status || 'chat_status';
 
     if (typeof Qualtrics !== 'undefined' && Qualtrics.SurveyEngine) {
       if (data.transcript_text) {
         Qualtrics.SurveyEngine.setEmbeddedData(transcriptField, data.transcript_text);
+      }
+      if (data.chat_status) {
+        Qualtrics.SurveyEngine.setEmbeddedData(statusField, data.chat_status);
       }
 
       if (data.auto_advance) {

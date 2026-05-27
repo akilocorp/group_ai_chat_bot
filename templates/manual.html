@@ -395,26 +395,13 @@
 
         <!-- Qualtrics Guide -->
         <div class="section" id="qualtrics-guide">
-            <h2>Qualtrics Integration</h2>
-            <p>ACTR supports iframe embedding in Qualtrics using participant-level identifiers and optional post-chat auto-advance.</p>
-
-            <h3>Recommended setup</h3>
+            <h2>Qualtrics (3 steps)</h2>
             <ol>
-                <li>Create a session in <a href="/admin">Admin</a> and enable <strong>Qualtrics integration</strong> if needed.</li>
-                <li>In Qualtrics Survey Flow, define embedded data: <code>session_id</code>, <code>condition</code>, <code>transcript</code> (or your chosen field name).</li>
-                <li>Embed the chat iframe using <code>participant_id=${e://Field/ResponseID}</code>.</li>
-                <li>Add the parent-page listener script (from <code>/static/qualtrics-parent-snippet.js</code>) so <code>session_ended</code> events write transcript/status and optionally advance to the next page.</li>
+                <li><a href="/admin">Admin</a> — create session, turn <strong>Qualtrics integration</strong> on, copy the HTML block from the setup guide.</li>
+                <li><strong>Qualtrics Survey Flow</strong> — Embedded Data: <code>transcript</code>, <code>chat_status</code>, <code>condition</code> (if needed).</li>
+                <li><strong>Chat question</strong> — Text/Graphic → HTML, paste the copied block. Production server: <code>https://group.xjhuang.com</code></li>
             </ol>
-
-            <div class="info-box">
-                Embed URL pattern: <code>/embed.html?session_id=SES-XXXX&participant_id=${e://Field/ResponseID}&condition=${e://Field/condition}</code>
-            </div>
-
-            <h3>Push vs pull transcript</h3>
-            <ul>
-                <li><strong>Push:</strong> transcript included in <code>postMessage</code> and written to Qualtrics embedded data.</li>
-                <li><strong>Pull:</strong> fetch from API when needed: <code>/api/export/participant/{session_id}/{participant_id}</code>.</li>
-            </ul>
+            <p>Preview until the chat shows <strong>Connected</strong>. Results: Qualtrics <strong>Data &amp; Analysis</strong>, or <a href="/">Dashboard → Export</a>.</p>
         </div>
 
         <!-- Dashboard Guide -->

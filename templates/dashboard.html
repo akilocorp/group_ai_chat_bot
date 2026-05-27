@@ -471,6 +471,10 @@ async function selectSession(sessionId) {
                     <div class="form-group"><label>Turn sec</label><input type="number" id="modTurnDuration" disabled></div>
                     <div class="form-group"><label>AI starts</label><select id="modAiStarts" disabled><option value="false">No</option><option value="true">Yes</option></select></div>
                 </div>
+                <div class="grid-2">
+                    <div class="form-group"><label>Mimic teammate style</label><select id="modStyleMimic" disabled><option value="false">Off</option><option value="true">On</option></select></div>
+                    <div class="form-group"><label>Style target</label><input type="text" id="modStyleMimicTarget" disabled placeholder="a"></div>
+                </div>
                 <div class="form-group"><label>Qualtrics integration</label><select id="modQualtricsIntegration" disabled><option value="false">Off</option><option value="true">On</option></select></div>
                 <div class="form-group"><label>Personas (JSON)</label><textarea id="modBotsJson" rows="6" disabled style="font-family:monospace;font-size:0.78rem;"></textarea></div>
             </form>
@@ -501,6 +505,8 @@ function fillSessionDetailForm(cfg) {
     document.getElementById('modTurnMode').value = cfg.turn_mode || 'none';
     document.getElementById('modTurnDuration').value = cfg.turn_duration_seconds ?? 60;
     document.getElementById('modAiStarts').value = cfg.ai_starts_conversation ? 'true' : 'false';
+    document.getElementById('modStyleMimic').value = cfg.style_mimic_enabled ? 'true' : 'false';
+    document.getElementById('modStyleMimicTarget').value = cfg.style_mimic_target || 'a';
     const qOn = cfg.qualtrics_handoff_enabled && cfg.qualtrics_store_chat;
     document.getElementById('modQualtricsIntegration').value = qOn ? 'true' : 'false';
     document.getElementById('modBotsJson').value = JSON.stringify(cfg.bots || [], null, 2);
@@ -535,6 +541,8 @@ async function confirmModifySession() {
             turn_mode: document.getElementById('modTurnMode').value,
             turn_duration_seconds: parseInt(document.getElementById('modTurnDuration').value, 10),
             ai_starts_conversation: document.getElementById('modAiStarts').value === 'true',
+            style_mimic_enabled: document.getElementById('modStyleMimic').value === 'true',
+            style_mimic_target: document.getElementById('modStyleMimicTarget').value.trim() || 'a',
             qualtrics_handoff_enabled: document.getElementById('modQualtricsIntegration').value === 'true',
             qualtrics_store_chat: document.getElementById('modQualtricsIntegration').value === 'true',
             bots

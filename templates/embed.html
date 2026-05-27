@@ -185,6 +185,9 @@
 
     let activeBots = [];
     let myDisplayName = null;
+    let qualtricsHandoffSent = false;
+    let sessionEndedNormally = false;
+    let handoffInFlight = false;
 
     function formatTeammateLabel(bot) {
         if (!bot || !bot.name) return '';
@@ -301,6 +304,12 @@
             || payload.qualtrics_store_chat
         );
         if (!qualtricsOn) return;
+
+        const chatStatus = payload.chat_status || '';
+        const autoAdvance = payload.auto_advance !== undefined
+            ? !!payload.auto_advance
+            : (qualtricsOn && chatStatus === 'completed_full');
+
         const msg = {
             source: 'ACTR_CHAT',
             event: 'chat_ended',
@@ -308,8 +317,11 @@
             participant_id: participantId,
             group_id: groupId,
             reason: payload.reason || 'ended',
-            auto_advance: qualtricsOn,
+            auto_advance: autoAdvance,
             qualtrics_field_transcript: payload.qualtrics_field_transcript || sessionConfig.qualtrics_field_transcript || 'transcript',
+            qualtrics_field_status: payload.qualtrics_field_status || sessionConfig.qualtrics_field_status || 'chat_status',
+            chat_status: chatStatus,
+            chat_status_detail: payload.chat_status_detail || '',
             transcript_text: payload.transcript_text || '',
             transcript_json: payload.transcript_json || '[]',
         };
@@ -320,7 +332,43 @@
         }
     }
 
+    async function flushQualtricsHandoff(reason, options = {}) {
+        if (qualtricsHandoffSent || sessionEndedNormally || handoffInFlight) return;
+        handoffInFlight = true;
+        const qualtricsOn = !!(
+            sessionConfig.qualtrics_handoff_enabled || sessionConfig.qualtrics_store_chat
+        );
+        if (!qualtricsOn) return;
+
+        try {
+            const res = await fetch('/api/embed/handoff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    participant_id: participantId,
+                    reason: reason,
+                }),
+                keepalive: !!options.keepalive,
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const isComplete = data.chat_status === 'completed_full';
+            notifyQualtricsParent({
+                ...data,
+                reason: reason,
+                auto_advance: isComplete && qualtricsOn,
+            });
+            qualtricsHandoffSent = true;
+        } catch (e) {
+            console.warn('Qualtrics handoff failed', e);
+        } finally {
+            handoffInFlight = false;
+        }
+    }
+
     async function onSessionEnded(payload) {
+        sessionEndedNormally = true;
         setConnected(false);
         if (sessionConfig.qualtrics_store_chat && !payload.transcript_text) {
             try {
@@ -329,10 +377,17 @@
                     const ex = await r.json();
                     payload.transcript_text = ex.transcript_text;
                     payload.transcript_json = JSON.stringify(ex.messages || []);
+                    if (!payload.chat_status) payload.chat_status = ex.chat_status;
+                    if (!payload.chat_status_detail) payload.chat_status_detail = ex.chat_status_detail;
                 }
             } catch (e) { console.warn('Export pull failed', e); }
         }
+        payload.auto_advance = !!(
+            (sessionConfig.qualtrics_handoff_enabled || sessionConfig.qualtrics_store_chat)
+            && (payload.chat_status === 'completed_full' || payload.reason === 'duration_limit')
+        );
         notifyQualtricsParent(payload);
+        qualtricsHandoffSent = true;
         showError(payload.message || 'Session ended.');
     }
 
@@ -437,9 +492,25 @@
             }
         };
 
-        ws.onclose = () => setConnected(false);
+        ws.onclose = () => {
+            setConnected(false);
+            if (!sessionEndedNormally && !qualtricsHandoffSent) {
+                flushQualtricsHandoff('ws_close', { keepalive: true });
+            }
+        };
         window.chatWebSocket = ws;
     }
+
+    window.addEventListener('pagehide', () => {
+        if (!sessionEndedNormally && !qualtricsHandoffSent) {
+            flushQualtricsHandoff('page_unload', { keepalive: true });
+        }
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && !sessionEndedNormally && !qualtricsHandoffSent) {
+            flushQualtricsHandoff('visibility_hidden', { keepalive: true });
+        }
+    });
 
     function sendMessage() {
         const val = msgInput.value.trim();

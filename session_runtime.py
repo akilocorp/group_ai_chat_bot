@@ -153,6 +153,85 @@ async def build_transcript_text(group_id: str) -> str:
     return "\n".join(lines)
 
 
+def _parse_group_started_at(group_info: dict):
+    started = group_info.get("created_at") if group_info else None
+    if not started:
+        return None
+    if isinstance(started, datetime):
+        return started
+    try:
+        return datetime.fromisoformat(str(started).replace("Z", "+00:00").replace("+00:00", ""))
+    except (TypeError, ValueError):
+        return None
+
+
+def _count_participant_messages(messages: list, display_name: str, participant_id: str) -> int:
+    n = 0
+    for m in messages:
+        sender = m.get("sender", "")
+        if sender == display_name or sender == participant_id:
+            n += 1
+    return n
+
+
+def compute_chat_status(
+    session,
+    group_info: Optional[dict],
+    participant_id: str,
+    export: Dict,
+    handoff_reason: str = "unknown",
+) -> Dict[str, str]:
+    """
+    Qualtrics chat_status codes:
+      completed_full — group ran full scheduled duration
+      left_early       — participant left before group timer ended
+      no_messages      — connected but sent no messages
+      never_joined     — never matched to a group
+    """
+    group_id = export.get("group_id")
+    messages = export.get("messages") or []
+    display_name = export.get("display_name") or participant_id
+    human_msgs = _count_participant_messages(messages, display_name, participant_id)
+
+    if not group_id or not group_info:
+        return {
+            "chat_status": "never_joined",
+            "chat_status_detail": "Never matched to a chat group.",
+        }
+
+    planned_sec = max(60, int(getattr(session, "group_chat_duration_minutes", 5) or 5) * 60)
+    started = _parse_group_started_at(group_info)
+    elapsed_sec = int((datetime.now() - started).total_seconds()) if started else 0
+    group_timer_done = elapsed_sec >= planned_sec if started else False
+    chat_min = getattr(session, "group_chat_duration_minutes", 5) or 5
+
+    if handoff_reason in ("duration_limit", "session_ended") or group_timer_done:
+        detail = f"Group chat completed (~{chat_min} min scheduled)."
+        if human_msgs == 0:
+            return {
+                "chat_status": "completed_full",
+                "chat_status_detail": detail + " Participant sent no messages.",
+            }
+        return {"chat_status": "completed_full", "chat_status_detail": detail}
+
+    if human_msgs == 0:
+        return {
+            "chat_status": "no_messages",
+            "chat_status_detail": (
+                f"Left before chat ended (~{max(0, planned_sec - elapsed_sec) // 60} min remaining). "
+                "No messages sent."
+            ),
+        }
+
+    return {
+        "chat_status": "left_early",
+        "chat_status_detail": (
+            f"Left before chat ended (~{max(0, planned_sec - elapsed_sec) // 60} min remaining). "
+            f"Participant sent {human_msgs} message(s)."
+        ),
+    }
+
+
 async def build_participant_export(session_id: str, participant_id: str) -> Dict:
     group_id = match_manager.get_participant_group_id(session_id, participant_id)
     if not group_id:
@@ -189,7 +268,14 @@ async def notify_session_ended(session_id: str, group_id: str, reason: str):
         "qualtrics_handoff": bool(session and session.qualtrics_handoff_enabled),
         "qualtrics_store_chat": bool(session and session.qualtrics_store_chat),
         "qualtrics_field_transcript": getattr(session, "qualtrics_field_transcript", "transcript"),
+        "qualtrics_field_status": getattr(session, "qualtrics_field_status", "chat_status"),
+        "chat_status": "completed_full",
+        "chat_status_detail": "",
     }
+    if session:
+        base["chat_status_detail"] = (
+            f"Group chat completed (~{session.group_chat_duration_minutes} min scheduled)."
+        )
 
     sent = set()
     for uid, conn in _iter_connections(group_info):
@@ -201,6 +287,9 @@ async def notify_session_ended(session_id: str, group_id: str, reason: str):
             export = await build_participant_export(session_id, uid)
             payload["transcript_text"] = export.get("transcript_text", "")
             payload["transcript_json"] = json.dumps(export.get("messages", []))
+            status = compute_chat_status(session, group_info, uid, export, reason or "session_ended")
+            payload["chat_status"] = status["chat_status"]
+            payload["chat_status_detail"] = status["chat_status_detail"]
         try:
             await conn.send_text(json.dumps(payload))
         except Exception:

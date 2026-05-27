@@ -95,6 +95,7 @@
         .mode-tab.active-m1 { border-color: var(--orange); background: #fff7ed; color: var(--orange); }
         .mode-tab.active-m2 { border-color: var(--orange-dark); background: #fff7ed; color: var(--orange-dark); }
         .mode-tab.active-m3 { border-color: var(--orange-light); background: #fff7ed; color: var(--orange-light); }
+        .mode-tab.active-m4 { border-color: #c2410c; background: #fff7ed; color: #c2410c; }
 
         /* SECTION DIVIDER inside bot card */
         .section-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: #aaa; margin: 18px 0 10px; }
@@ -273,7 +274,20 @@
                     <div class="helper">Only when Speaking turns = <strong>Timed</strong>: max seconds per person per turn. Ignore for Off / Round-robin.</div>
                 </div>
             </div>
-            <div class="grid-2">
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Mimic teammate style</label>
+                    <select id="styleMimicEnabled">
+                        <option value="false" selected>Off</option>
+                        <option value="true">On — match target length &amp; tone</option>
+                    </select>
+                    <div class="helper">When on, <strong>other</strong> personas imitate one teammate's chat habits.</div>
+                </div>
+                <div class="form-group">
+                    <label>Style target name</label>
+                    <input type="text" id="styleMimicTarget" value="a" placeholder="a">
+                    <div class="helper">Display name to copy (e.g. <strong>a</strong>). That persona keeps their own voice.</div>
+                </div>
                 <div class="form-group">
                     <label>AI starts conversation?</label>
                     <select id="aiStartsConversation">
@@ -281,13 +295,15 @@
                         <option value="true">Yes — first bot sends opening message</option>
                     </select>
                 </div>
+            </div>
+            <div class="grid-2">
                 <div class="form-group">
                     <label>Qualtrics integration</label>
                     <select id="qualtricsIntegration">
                         <option value="true" selected>On — save transcript &amp; auto-advance</option>
                         <option value="false">Off — export from Dashboard only</option>
                     </select>
-                    <div class="helper">When on: saves transcript and can auto-advance after chat ends. Embedded Data field names are listed in the setup guide after you create the session.</div>
+                    <div class="helper">On: saves <code>transcript</code> + <code>chat_status</code> to Qualtrics. See 3-step guide below after Create Session.</div>
                 </div>
             </div>
 
@@ -312,7 +328,7 @@
     <div id="session-setup-panel" class="card setup-panel">
         <div class="card-title">📋 Session setup guide</div>
         <p style="font-size:0.88rem;color:var(--gray-700);margin-bottom:14px;">
-            After each successful Create Session, copy the Qualtrics content generated here.
+            After Create Session — copy the Qualtrics HTML block below into your survey.
         </p>
         <div id="setup-panel-content">
             <p style="color:#999;font-size:0.9rem;">No session created yet. Fill the form above and click Create Session.</p>
@@ -332,9 +348,10 @@ const SESSION_MODE_INFO = {
 };
 
 const BOT_MODE_INFO = {
-    1: { title: 'Mode 1 — Fixed Delay', desc: 'Bot always responds after exactly the delay you set. Fully predictable and reproducible — best for controlled experiments.' },
-    2: { title: 'Mode 2 — Random Delay', desc: 'Adds a random 0.5–2.5 s jitter on top of the fixed delay. Same response rate as Mode 1 but feels slightly less mechanical.' },
-    3: { title: 'Mode 3 — Natural Mimicry', desc: 'Delay scales with message length. Bot may skip messages based on Skip Rate. Most human-like behavior.' }
+    1: { title: 'Mode 1 — Fixed Delay', desc: 'Always replies after exactly the delay you set. Fully predictable.' },
+    2: { title: 'Mode 2 — Random Delay', desc: 'Always replies; adds 0.5–2.5 s random jitter on top of fixed delay.' },
+    3: { title: 'Mode 3 — Random Skip', desc: 'Each message: skip with fixed probability (Skip Rate). Delay scales with message length. Independent of context.' },
+    4: { title: 'Mode 4 — Contextual reply chance', desc: 'AI estimates P(reply) from chat context (0–1), then one random draw per message. Same situation can differ across runs but is not blind coin-flip.' }
 };
 
 function updateSessionModeInfo(val) {
@@ -449,6 +466,7 @@ function renderBots() {
                         <div class="mode-tab ${m===1?modeClass:''}" onclick="setMode(${i},1)">Mode 1</div>
                         <div class="mode-tab ${m===2?modeClass:''}" onclick="setMode(${i},2)">Mode 2</div>
                         <div class="mode-tab ${m===3?modeClass:''}" onclick="setMode(${i},3)">Mode 3</div>
+                        <div class="mode-tab ${m===4?modeClass:''}" onclick="setMode(${i},4)">Mode 4</div>
                     </div>
                     <div class="mode-info">${BOT_MODE_INFO[m].desc}</div>
                 </div>
@@ -525,9 +543,8 @@ function renderBots() {
                 </div>
             </div>
 
-            <!-- ── MODE 3 ONLY ── -->
             ${m === 3 ? `
-            <div class="section-label">🎲 Mode 3 — Natural Mimicry</div>
+            <div class="section-label">🎲 Mode 3 — Random Skip</div>
             <div class="grid-2">
                 <div class="form-group">
                     <label>Skip Rate</label>
@@ -536,9 +553,13 @@ function renderBots() {
                                oninput="updateBot(${i},'skip_rate',Number(this.value)); this.nextElementSibling.textContent=Math.round(Number(this.value)*100)+'%'">
                         <span class="range-val">${Math.round(bot.skip_rate*100)}%</span>
                     </div>
-                    <div class="helper">Probability of ignoring a message. 0% = always reply · 30% = skips ~1 in 3.</div>
+                    <div class="helper">Fixed P(skip) every message — <strong>not</strong> context-based. P(reply) = 1 − Skip Rate.</div>
                 </div>
             </div>
+            ` : ''}
+            ${m === 4 ? `
+            <div class="section-label">🧠 Mode 4 — Contextual reply chance</div>
+            <p class="helper" style="margin-bottom:8px;">Each message: model outputs P(reply) from context, then one uniform random roll. @mention → usually high P; off-topic → low P.</p>
             ` : ''}
         </div>
         `;
@@ -582,6 +603,8 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         qualtrics_handoff_enabled: document.getElementById('qualtricsIntegration').value === 'true',
         qualtrics_store_chat: document.getElementById('qualtricsIntegration').value === 'true',
         qualtrics_field_transcript: 'transcript',
+        style_mimic_enabled: document.getElementById('styleMimicEnabled').value === 'true',
+        style_mimic_target: document.getElementById('styleMimicTarget').value.trim() || 'a',
         participant_names: document.getElementById('participantNames').value
             ? document.getElementById('participantNames').value.split(',').map(s => s.trim()).filter(Boolean)
             : null,
@@ -613,106 +636,51 @@ function showSessionSetupGuide(sessionId, payload) {
     const content = document.getElementById('setup-panel-content');
     const base = window.location.origin;
     const isLocal = base.includes('localhost') || base.includes('127.0.0.1');
-    const publicBase = isLocal ? 'https://group.xjhuang.com' : base;
+    const publicBase = 'https://group.xjhuang.com';
     const embedUrl = `${publicBase}/embed.html?session_id=${encodeURIComponent(sessionId)}&participant_id=\${e://Field/ResponseID}&condition=\${e://Field/condition}`;
-    const pullUrl = `${publicBase}/api/export/participant/${encodeURIComponent(sessionId)}/{participant_id}`;
     const days = payload.survey_open_days ?? 7;
     const chatMin = payload.group_chat_duration_minutes ?? 5;
 
     const qualtricsOn = payload.qualtrics_handoff_enabled && payload.qualtrics_store_chat;
-    const qualtricsTag = qualtricsOn
-        ? '<span class="tag-on">On</span>'
-        : '<span class="tag-off">Off</span>';
-    const transcriptField = 'transcript';
 
-    const embeddedDataBlock = qualtricsOn ? `
+    const qualtricsGuide = qualtricsOn ? `
         <div class="setup-block">
-            <h4>④ Qualtrics Embedded Data</h4>
-            <p>In Qualtrics: <strong>Survey Flow → Embedded Data → Add a new field</strong> for each name below (exact spelling).</p>
-            <table style="width:100%;font-size:0.84rem;border-collapse:collapse;margin:10px 0;">
-                <tr style="border-bottom:1px solid var(--gray-300);">
-                    <td style="padding:8px 6px;"><code>transcript</code></td>
-                    <td style="padding:8px 6px;">Filled automatically when chat ends (full chat text).</td>
-                </tr>
-                <tr style="border-bottom:1px solid var(--gray-300);">
-                    <td style="padding:8px 6px;"><code>condition</code></td>
-                    <td style="padding:8px 6px;">Optional. You set per respondent (e.g. <code>cond1_a</code>, <code>cond1_b</code>, <code>cond2</code>) before they reach the chat question.</td>
-                </tr>
-                <tr style="border-bottom:1px solid var(--gray-300);">
-                    <td style="padding:8px 6px;"><code>session_id</code></td>
-                    <td style="padding:8px 6px;">Optional if the iframe URL already includes <code>session_id=${sessionId}</code>. Otherwise set to <code>${sessionId}</code> in Survey Flow.</td>
-                </tr>
-            </table>
-            <p style="font-size:0.84rem;color:var(--gray-700);"><code>participant_id</code> uses Qualtrics <strong>ResponseID</strong> in the iframe URL — no extra Embedded Data field required.</p>
-        </div>
-    ` : '';
-
-    content.innerHTML = `
-        ${isLocal ? `<div class="warn-localhost">⚠️ You are on localhost. In Qualtrics use production URL: <strong>${publicBase}</strong></div>` : ''}
-
-        <div class="setup-block">
-            <h4>① Session ID</h4>
-            <p><code>${sessionId}</code> — Use this ID in Dashboard and exports. <a href="/?tab=sessions&session=${sessionId}">View session settings →</a></p>
-            <p>Survey open <strong>${days}</strong> days · <strong>${chatMin}</strong> min per group chat</p>
-        </div>
-
-        <div class="setup-block">
-            <h4>② Qualtrics iframe URL (most important)</h4>
-            <p>In your Qualtrics HTML question, put this in <code>&lt;iframe src="..."&gt;</code>:</p>
-            <div class="url-box">
-                <code id="embed-url-text">${embedUrl}</code>
-                <button type="button" class="btn-copy" onclick="copyText('embed-url-text')">Copy</button>
-            </div>
-            <p style="margin-top:10px;">Participants load the chat; <code>participant_id</code> is usually the survey response ID. Optional <code>condition</code> can be set in embedded data for per-participant roster labels.</p>
-        </div>
-
-        <div class="setup-block">
-            <h4>③ Qualtrics integration</h4>
-            <p><strong>Qualtrics integration</strong> ${qualtricsTag}</p>
-            ${qualtricsOn
-                ? '<p>When chat ends: transcript is saved to Embedded Data and the survey can advance to the next page (with parent script below).</p>'
-                : '<p>Off — use Dashboard export for transcripts.</p>'}
-        </div>
-
-        ${embeddedDataBlock}
-
-        <div class="setup-block">
-            <h4>${qualtricsOn ? '⑤' : '④'} Parent-page script${qualtricsOn ? '' : ' (if integration on)'}</h4>
-            <p>In the <strong>same HTML question</strong>, <strong>above</strong> the iframe:</p>
-            <p><code>${publicBase}/static/qualtrics-parent-snippet.js</code> (or paste file contents into Qualtrics)</p>
-            <p>Receives chat-ended messages, writes Embedded Data, can click Next.</p>
-        </div>
-
-        <div class="setup-block">
-            <h4>${qualtricsOn ? '⑥' : '⑤'} Pull API backup (optional)</h4>
-            <p>If not storing transcript in Qualtrics, call at end of survey:</p>
-            <div class="url-box">
-                <code id="pull-url-text">${pullUrl}</code>
-                <button type="button" class="btn-copy" onclick="copyText('pull-url-text')">Copy</button>
-            </div>
-        </div>
-
-        <div class="setup-block">
-            <h4>${qualtricsOn ? '⑦' : '⑥'} Full HTML for Qualtrics Text/Graphic question</h4>
-            <p>Survey → Add question → <strong>Text / Graphic → HTML</strong>, paste below (Session <code>${sessionId}</code>):</p>
-            <div class="url-box" style="align-items:flex-start;">
+            <h4>Qualtrics — 3 steps</h4>
+            <ol style="font-size:0.88rem;line-height:1.7;padding-left:20px;margin:10px 0;">
+                <li><strong>Survey Flow → Embedded Data</strong> — add fields: <code>transcript</code>, <code>chat_status</code>, <code>condition</code> (if you use study conditions).</li>
+                <li><strong>Chat question → Text/Graphic → HTML</strong> — paste the block below (one copy includes script + iframe). Server: <strong>${publicBase}</strong></li>
+                <li><strong>Preview</strong> — header should say <em>Connected</em>. After chat, check <strong>Data &amp; Analysis</strong> for <code>transcript</code> and <code>chat_status</code>.</li>
+            </ol>
+            <p style="font-size:0.82rem;color:var(--gray-700);">
+                <code>chat_status</code>: <code>completed_full</code> (full ${chatMin} min) · <code>left_early</code> · <code>no_messages</code> · <code>never_joined</code>.
+                Survey auto-advances only on <code>completed_full</code>.
+            </p>
+            <div class="url-box" style="align-items:flex-start;margin-top:12px;">
                 <code id="qualtrics-html-text" style="white-space:pre-wrap;font-size:0.72rem;">&lt;script src="${publicBase}/static/qualtrics-parent-snippet.js"&gt;&lt;/script&gt;
 &lt;iframe
   src="${embedUrl}"
-  style="width:100%;min-height:600px;border:1px solid #ddd;border-radius:8px;"
-  allow="microphone"&gt;
+  style="width:100%;min-height:600px;border:1px solid #ddd;border-radius:8px;"&gt;
 &lt;/iframe&gt;</code>
                 <button type="button" class="btn-copy" onclick="copyText('qualtrics-html-text')">Copy HTML</button>
             </div>
-            <p style="margin-top:10px;"><strong>How to see results in Qualtrics:</strong></p>
-            <ol style="font-size:0.84rem;color:var(--gray-700);padding-left:18px;line-height:1.6;">
-                <li>Confirm <a href="${publicBase}" target="_blank">${publicBase}</a> is live.</li>
-                <li>Session visible on <a href="/?tab=sessions">Dashboard → Sessions</a> as <code>${sessionId}</code>.</li>
-                <li>Publish survey → Preview → HTML question → chat UI appears.</li>
-                <li>After chat ends: if Qualtrics integration is on, check <strong>Data & Analysis → Response → Embedded Data</strong> for <code>${transcriptField}</code>.</li>
-                <li>Or export all chats from <a href="${publicBase}/?tab=export" target="_blank">Dashboard → Export</a>.</li>
-            </ol>
         </div>
+    ` : `
+        <div class="setup-block">
+            <p style="font-size:0.88rem;">Qualtrics integration is <strong>off</strong> — export chats from <a href="/?tab=export">Dashboard → Export</a>.</p>
+        </div>
+    `;
+
+    content.innerHTML = `
+        ${isLocal ? `<div class="warn-localhost">⚠️ Qualtrics must use <strong>${publicBase}</strong> (not localhost).</div>` : ''}
+
+        <div class="setup-block">
+            <p>Session <code>${sessionId}</code> · open <strong>${days}</strong> days · <strong>${chatMin}</strong> min chat
+                · <a href="/?tab=sessions&session=${sessionId}">Settings</a></p>
+        </div>
+
+        ${qualtricsGuide}
+
+        <p style="font-size:0.8rem;color:var(--gray-500);margin-top:8px;">Backup export: <a href="/?tab=export">Dashboard → Export</a></p>
     `;
 
     panel.classList.add('visible');
