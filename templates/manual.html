@@ -14,15 +14,15 @@
         .page {
             display: flex;
             max-width: 1060px;
-            margin: 0 auto;
-            padding: 10px 20px 48px;
+            margin: calc(var(--header-height) + 14px) auto 0;
+            padding: 0 20px 48px;
             gap: 28px;
         }
         .toc {
             width: 200px;
             flex-shrink: 0;
             position: sticky;
-            top: calc(var(--header-height) + 6px);
+            top: calc(var(--header-height) + 10px);
             align-self: flex-start;
         }
         .toc h3 {
@@ -115,7 +115,7 @@
         }
     </style>
 </head>
-<body class="has-top-nav">
+<body>
 
 <header class="nav-header">
     <a href="/" class="nav-logo">ACTR</a>

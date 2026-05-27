@@ -16,7 +16,7 @@
         body { background: var(--bg); color: #2d3436; line-height: 1.6; }
 
         /* LAYOUT */
-        .container { max-width: 1060px; margin: 0 auto 36px; padding: 0 20px; display: flex; flex-direction: column; gap: 18px; }
+        .container { max-width: 1060px; margin: calc(var(--header-height) + 14px) auto 36px; padding: 0 20px; display: flex; flex-direction: column; gap: 18px; }
 
         .card { background: var(--white); border-radius: 14px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--gray-300); }
         .card-title { font-size: var(--fs-lg); font-weight: 700; color: var(--orange-dark); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #f0f2f5; display: flex; align-items: center; gap: 8px; }
@@ -156,7 +156,7 @@
         }
     </style>
 </head>
-<body class="has-top-nav">
+<body>
 
 <header class="nav-header">
     <a href="/" class="nav-logo">ACTR</a>
