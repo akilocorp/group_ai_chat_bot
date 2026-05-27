@@ -285,8 +285,8 @@
                 </div>
                 <div class="form-group">
                     <label>Style target name</label>
-                    <input type="text" id="styleMimicTarget" value="a" placeholder="a">
-                    <div class="helper">Display name to copy (e.g. <strong>a</strong>). That persona keeps their own voice.</div>
+                    <input type="text" id="styleMimicTarget" value="c" placeholder="c">
+                    <div class="helper">Display name to copy (default <strong>c</strong> = human). AI personas <strong>a</strong>, <strong>b</strong> mimic them; <strong>c</strong> is never changed.</div>
                 </div>
                 <div class="form-group">
                     <label>AI starts conversation?</label>
@@ -348,10 +348,10 @@ const SESSION_MODE_INFO = {
 };
 
 const BOT_MODE_INFO = {
-    1: { title: 'Mode 1 — Fixed Delay', desc: 'Always replies after exactly the delay you set. Fully predictable.' },
-    2: { title: 'Mode 2 — Random Delay', desc: 'Always replies; adds 0.5–2.5 s random jitter on top of fixed delay.' },
-    3: { title: 'Mode 3 — Random Skip', desc: 'Each message: skip with fixed probability (Skip Rate). Delay scales with message length. Independent of context.' },
-    4: { title: 'Mode 4 — Contextual reply chance', desc: 'AI estimates P(reply) from chat context (0–1), then one random draw per message. Same situation can differ across runs but is not blind coin-flip.' }
+    1: { title: 'Mode 1 — Fixed Delay', desc: 'Always replies after Response Delay, then typing delay (by message length ÷ Typing Speed).' },
+    2: { title: 'Mode 2 — Random Delay', desc: 'Always replies; adds 0.5–2.5 s jitter on top of Response Delay, then typing delay.' },
+    3: { title: 'Mode 3 — Random Skip', desc: 'Each message: skip with fixed probability (Skip Rate). If replying: Response Delay + 0.5–2.5 s jitter, then typing delay.' },
+    4: { title: 'Mode 4 — Contextual reply chance', desc: 'AI estimates P(reply) from context (0–1), then one random draw. If replying: Response Delay + 0.5–2.5 s jitter, then typing delay.' }
 };
 
 function updateSessionModeInfo(val) {
@@ -391,11 +391,13 @@ function defaultBotTemplate(overrides = {}) {
         disclosed_ai_allowed: false,
         delay_seconds: 3,
         typing_cps: 10,
-        max_tokens: 60,
         temperature: 0.75,
         context_messages: 12,
         idle_threshold: 35,
         skip_rate: 0.1,
+        min_words: 1,
+        max_words: 35,
+        length_variation: true,
         ...overrides
     };
 }
@@ -421,7 +423,16 @@ function addBotUI() {
 }
 
 function removeBotUI(i) { botPersonas.splice(i, 1); renderBots(); }
-function updateBot(i, field, value) { botPersonas[i][field] = value; }
+function updateBot(i, field, value) {
+    botPersonas[i][field] = value;
+    const b = botPersonas[i];
+    const minW = b.min_words ?? 1;
+    const maxW = b.max_words ?? 35;
+    if (minW > maxW) {
+        if (field === 'min_words') b.max_words = minW;
+        else b.min_words = maxW;
+    }
+}
 
 function setMode(i, mode) {
     botPersonas[i].mode = mode;
@@ -481,7 +492,7 @@ function renderBots() {
 
             <!-- ── TIMING ── -->
             <div class="section-label">⏱ Timing</div>
-            <div class="grid-3">
+            <div class="grid-2">
                 <div class="form-group">
                     <label>Response Delay <span class="hint">(seconds)</span></label>
                     <div class="range-row">
@@ -489,8 +500,19 @@ function renderBots() {
                                oninput="updateBot(${i},'delay_seconds',Number(this.value)); this.nextElementSibling.textContent=this.value+'s'">
                         <span class="range-val">${bot.delay_seconds}s</span>
                     </div>
-                    <div class="helper">Exact wait before responding (Mode 1). Recommended: 2–5 s.</div>
+                    <div class="helper">Wait before the model generates a reply. Modes 2–4 add +0.5–2.5 s jitter.</div>
                 </div>
+                <div class="form-group">
+                    <label>Typing Speed <span class="hint">(chars/sec)</span></label>
+                    <div class="range-row">
+                        <input type="range" min="2" max="40" step="1" value="${bot.typing_cps}"
+                               oninput="updateBot(${i},'typing_cps',Number(this.value)); this.nextElementSibling.textContent=this.value">
+                        <span class="range-val">${bot.typing_cps}</span>
+                    </div>
+                    <div class="helper">After the reply is ready: extra wait ≈ message length ÷ speed (0.3–12 s). Every mode.</div>
+                </div>
+            </div>
+            <div class="grid-2">
                 <div class="form-group">
                     <label>Idle Trigger <span class="hint">(seconds)</span></label>
                     <div class="range-row">
@@ -500,29 +522,45 @@ function renderBots() {
                     </div>
                     <div class="helper">If no one speaks for this long, the bot initiates a new message.</div>
                 </div>
+            </div>
+
+            <!-- ── REPLY LENGTH (words) ── -->
+            <div class="section-label">📏 Reply length (words)</div>
+            <p class="helper" style="margin:0 0 10px;padding:8px 10px;background:var(--orange-pale);border-radius:8px;">
+                <strong>Human-like default:</strong> Mix <strong>On</strong>, min <strong>1</strong>, max <strong>35</strong>, creativity ~<strong>0.8</strong>.
+                Mix <strong>On</strong> = each reply picks a random word count from min–max (uniform).
+            </p>
+            <div class="grid-3">
                 <div class="form-group">
-                    <label>Typing Speed <span class="hint">(chars/sec)</span></label>
+                    <label>Reply length mix</label>
+                    <select onchange="updateBot(${i},'length_variation',this.value==='true')">
+                        <option value="true" ${bot.length_variation !== false ? 'selected' : ''}>On — mix short / medium / longer</option>
+                        <option value="false" ${bot.length_variation === false ? 'selected' : ''}>Off — always use max words</option>
+                    </select>
+                    <div class="helper">On (default): “within about N words”, N random in min–max. Off: “within about max words” every time.</div>
+                </div>
+                <div class="form-group">
+                    <label>Min words</label>
                     <div class="range-row">
-                        <input type="range" min="2" max="40" step="1" value="${bot.typing_cps}"
-                               oninput="updateBot(${i},'typing_cps',Number(this.value)); this.nextElementSibling.textContent=this.value">
-                        <span class="range-val">${bot.typing_cps}</span>
+                        <input type="range" min="1" max="35" step="1" value="${bot.min_words ?? 1}"
+                               oninput="updateBot(${i},'min_words',Number(this.value)); this.nextElementSibling.textContent=botPersonas[${i}].min_words">
+                        <span class="range-val">${bot.min_words ?? 1}</span>
                     </div>
-                    <div class="helper">How fast the message appears on screen. 8–15 feels natural.</div>
+                </div>
+                <div class="form-group">
+                    <label>Max words</label>
+                    <div class="range-row">
+                        <input type="range" min="1" max="35" step="1" value="${bot.max_words ?? 35}"
+                               oninput="updateBot(${i},'max_words',Number(this.value)); this.nextElementSibling.textContent=botPersonas[${i}].max_words">
+                        <span class="range-val">${bot.max_words ?? 35}</span>
+                    </div>
+                    <div class="helper">Safety ceiling only if the model writes far too much (not trimmed to each random cap).</div>
                 </div>
             </div>
 
             <!-- ── RESPONSE QUALITY ── -->
             <div class="section-label">🧠 Response Quality</div>
             <div class="grid-3">
-                <div class="form-group">
-                    <label>Max Response Length <span class="hint">(tokens)</span></label>
-                    <div class="range-row">
-                        <input type="range" min="20" max="150" step="5" value="${bot.max_tokens}"
-                               oninput="updateBot(${i},'max_tokens',Number(this.value)); this.nextElementSibling.textContent=this.value">
-                        <span class="range-val">${bot.max_tokens}</span>
-                    </div>
-                    <div class="helper">Human-like chat: <strong>40–70</strong> tokens (~1–2 sentences). Above 100 often sounds robotic.</div>
-                </div>
                 <div class="form-group">
                     <label>Creativity <span class="hint">(temperature)</span></label>
                     <div class="range-row">
@@ -553,13 +591,13 @@ function renderBots() {
                                oninput="updateBot(${i},'skip_rate',Number(this.value)); this.nextElementSibling.textContent=Math.round(Number(this.value)*100)+'%'">
                         <span class="range-val">${Math.round(bot.skip_rate*100)}%</span>
                     </div>
-                    <div class="helper">Fixed P(skip) every message — <strong>not</strong> context-based. P(reply) = 1 − Skip Rate.</div>
+                    <div class="helper">Fixed P(skip) per message. If not skipped: Response Delay + 0.5–2.5 s jitter, then typing delay.</div>
                 </div>
             </div>
             ` : ''}
             ${m === 4 ? `
             <div class="section-label">🧠 Mode 4 — Contextual reply chance</div>
-            <p class="helper" style="margin-bottom:8px;">Each message: model outputs P(reply) from context, then one uniform random roll. @mention → usually high P; off-topic → low P.</p>
+            <p class="helper" style="margin-bottom:8px;">P(reply) from context, then random draw. If replying: Response Delay + 0.5–2.5 s jitter, then typing delay.</p>
             ` : ''}
         </div>
         `;
@@ -581,11 +619,13 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         disclosed_ai_allowed: !!b.disclosed_ai_allowed,
         delay_seconds:    b.delay_seconds,
         typing_cps:       b.typing_cps,
-        max_tokens:       b.max_tokens,
         temperature:      b.temperature,
         context_messages: b.context_messages,
         idle_threshold:   b.idle_threshold,
-        skip_rate:        b.skip_rate
+        skip_rate:        b.skip_rate,
+        min_words:        Math.min(b.min_words ?? 1, b.max_words ?? 35),
+        max_words:        b.max_words ?? 35,
+        length_variation: b.length_variation !== false,
     }));
 
     const payload = {
@@ -604,7 +644,7 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         qualtrics_store_chat: document.getElementById('qualtricsIntegration').value === 'true',
         qualtrics_field_transcript: 'transcript',
         style_mimic_enabled: document.getElementById('styleMimicEnabled').value === 'true',
-        style_mimic_target: document.getElementById('styleMimicTarget').value.trim() || 'a',
+        style_mimic_target: document.getElementById('styleMimicTarget').value.trim() || 'c',
         participant_names: document.getElementById('participantNames').value
             ? document.getElementById('participantNames').value.split(',').map(s => s.trim()).filter(Boolean)
             : null,
@@ -649,18 +689,24 @@ function showSessionSetupGuide(sessionId, payload) {
             <ol style="font-size:0.88rem;line-height:1.7;padding-left:20px;margin:10px 0;">
                 <li><strong>Survey Flow → Embedded Data</strong> — add fields: <code>transcript</code>, <code>chat_status</code>, <code>condition</code> (if you use study conditions).</li>
                 <li><strong>Chat question → Text/Graphic → HTML</strong> — paste the block below (one copy includes script + iframe). Server: <strong>${publicBase}</strong></li>
-                <li><strong>Preview</strong> — header should say <em>Connected</em>. After chat, check <strong>Data &amp; Analysis</strong> for <code>transcript</code> and <code>chat_status</code>.</li>
+                <li><strong>Test with anonymous link</strong> — see <strong>Data &amp; Analysis</strong> for <code>transcript</code> + <code>chat_status</code>.</li>
             </ol>
-            <p style="font-size:0.82rem;color:var(--gray-700);">
-                <code>chat_status</code>: <code>completed_full</code> (full ${chatMin} min) · <code>left_early</code> · <code>no_messages</code> · <code>never_joined</code>.
-                Survey auto-advances only on <code>completed_full</code>.
+            <p style="font-size:0.82rem;color:var(--gray-700);margin-top:8px;">
+                <strong>When data is saved:</strong><br>
+                · Chat full ${chatMin} min → <code>completed_full</code><br>
+                · Click <strong>Next</strong> anytime (even after sitting idle, no need to wait ${chatMin} min) → <code>left_early</code> or <code>no_messages</code><br>
+                · Close/refresh tab → same as Next<br>
+                · Switching browser tabs only does <em>not</em> save (so idle on the page is OK until you click Next)
+            </p>
+            <p style="font-size:0.82rem;color:#b45309;margin-top:8px;">
+                <strong>Important:</strong> Paste the <strong>inline</strong> HTML below (not only <code>script src=</code> — Qualtrics often blocks external scripts).
+                Preview mode may <strong>not</strong> save <code>transcript</code>; test with a real anonymous link.
             </p>
             <div class="url-box" style="align-items:flex-start;margin-top:12px;">
-                <code id="qualtrics-html-text" style="white-space:pre-wrap;font-size:0.72rem;">&lt;script src="${publicBase}/static/qualtrics-parent-snippet.js"&gt;&lt;/script&gt;
-&lt;iframe
-  src="${embedUrl}"
-  style="width:100%;min-height:600px;border:1px solid #ddd;border-radius:8px;"&gt;
-&lt;/iframe&gt;</code>
+                <code id="qualtrics-html-text" style="white-space:pre-wrap;font-size:0.68rem;">&lt;script&gt;
+(function(){var M=12000,B='${publicBase}';function save(d){if(!d||d.source!=='ACTR_CHAT'||d.event!=='chat_ended')return;var se=window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine;if(!se)return;var tf=d.qualtrics_field_transcript||'transcript',sf=d.qualtrics_field_status||'chat_status',t=d.transcript_text!=null?String(d.transcript_text):'';if(t.length&gt;M)t=t.slice(0,M)+'\\n...(truncated)';se.setEmbeddedData(sf,d.chat_status||'unknown');se.setEmbeddedData(tf,t);window.__actrSaved=true;console.log('[ACTR] saved',sf,d.chat_status,t.length);if(d.auto_advance&amp;&amp;se.clickNextButton)se.clickNextButton();}function iframe(){return document.querySelector('iframe[src*=\"embed.html\"]')}function apiBase(){var i=iframe();try{return i?new URL(i.src).origin:B}catch(e){return B}}function iframeParams(){var i=iframe();if(!i)return null;try{var u=new URL(i.src),s=u.searchParams.get('session_id'),p=u.searchParams.get('participant_id');if(!s||!p||p.indexOf('e://Field')&gt;=0)return null;return{session_id:s,participant_id:p}}catch(e){return null}}function handoff(r){if(window.__actrSaved)return;var par=iframeParams();if(!par)return;try{var x=new XMLHttpRequest();x.open('POST',apiBase()+'/api/embed/handoff',false);x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify({session_id:par.session_id,participant_id:par.participant_id,reason:r||'qualtrics_next'}));if(x.status===200){var d=JSON.parse(x.responseText);save({source:'ACTR_CHAT',event:'chat_ended',transcript_text:d.transcript_text,chat_status:d.chat_status,qualtrics_field_transcript:d.qualtrics_field_transcript,qualtrics_field_status:d.qualtrics_field_status,auto_advance:false});}}catch(e){console.warn('[ACTR] handoff',e);}}function init(){window.addEventListener('message',function(e){save(e.data)},false);var n=document.getElementById('NextButton');if(n)n.addEventListener('click',function(){handoff('qualtrics_next_click')},true);if(window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine&amp;&amp;Qualtrics.SurveyEngine.addOnUnload)Qualtrics.SurveyEngine.addOnUnload(function(){handoff('qualtrics_unload')});}if(window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine&amp;&amp;Qualtrics.SurveyEngine.addOnload)Qualtrics.SurveyEngine.addOnload(init);else init();})();
+&lt;/script&gt;
+&lt;iframe src="${embedUrl}" style="width:100%;min-height:600px;border:1px solid #ddd;border-radius:8px;"&gt;&lt;/iframe&gt;</code>
                 <button type="button" class="btn-copy" onclick="copyText('qualtrics-html-text')">Copy HTML</button>
             </div>
         </div>

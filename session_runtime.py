@@ -9,7 +9,7 @@ from typing import Callable, Dict, List, Optional, Set
 
 from match_manager import match_manager, SessionConfig
 from context_manager import get_or_create_context, get_context
-from bot_manager import get_or_create_bot_from_cfg
+from bot_manager import compute_typing_delay_seconds, get_or_create_bot_from_cfg
 from db.database import get_room_history, save_message
 from cache_manager import cache_manager
 from activity_logger import activity_logger
@@ -205,6 +205,14 @@ def compute_chat_status(
     group_timer_done = elapsed_sec >= planned_sec if started else False
     chat_min = getattr(session, "group_chat_duration_minutes", 5) or 5
 
+    early_leave_reasons = (
+        "qualtrics_next_click",
+        "qualtrics_unload",
+        "qualtrics_next",
+        "page_unload",
+        "ws_close",
+        "pagehide",
+    )
     if handoff_reason in ("duration_limit", "session_ended") or group_timer_done:
         detail = f"Group chat completed (~{chat_min} min scheduled)."
         if human_msgs == 0:
@@ -215,13 +223,13 @@ def compute_chat_status(
         return {"chat_status": "completed_full", "chat_status_detail": detail}
 
     if human_msgs == 0:
-        return {
-            "chat_status": "no_messages",
-            "chat_status_detail": (
-                f"Left before chat ended (~{max(0, planned_sec - elapsed_sec) // 60} min remaining). "
-                "No messages sent."
-            ),
-        }
+        detail = (
+            f"Left before chat ended (~{max(0, planned_sec - elapsed_sec) // 60} min remaining). "
+            "No messages sent."
+        )
+        if handoff_reason in early_leave_reasons:
+            detail = f"Clicked Next or left chat without sending messages. {detail}"
+        return {"chat_status": "no_messages", "chat_status_detail": detail}
 
     return {
         "chat_status": "left_early",
@@ -341,13 +349,16 @@ async def send_ai_opening_message(session_id: str, group_id: str, bot_cfg: Dict,
         "system",
         opening_prompt,
         "",
-        max_tokens=bot_cfg.get("max_tokens", 60),
         temperature=bot_cfg.get("temperature", 0.75),
         peer_names=peer_names,
-        max_words=bot_cfg.get("max_words", 45),
+        max_words=bot_cfg.get("max_words", 35),
+        min_words=bot_cfg.get("min_words", 1),
+        length_variation=bot_cfg.get("length_variation", True),
+        max_tokens=bot_cfg.get("max_tokens"),
     )
     if not reply:
         return
+    await asyncio.sleep(compute_typing_delay_seconds(reply, bot_cfg.get("typing_cps", 12)))
     cache_manager.cache_message(group_id, bot.name, reply)
     await save_message(group_id, bot.name, reply)
     if ctx:

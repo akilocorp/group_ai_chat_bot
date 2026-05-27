@@ -506,7 +506,7 @@ function fillSessionDetailForm(cfg) {
     document.getElementById('modTurnDuration').value = cfg.turn_duration_seconds ?? 60;
     document.getElementById('modAiStarts').value = cfg.ai_starts_conversation ? 'true' : 'false';
     document.getElementById('modStyleMimic').value = cfg.style_mimic_enabled ? 'true' : 'false';
-    document.getElementById('modStyleMimicTarget').value = cfg.style_mimic_target || 'a';
+    document.getElementById('modStyleMimicTarget').value = cfg.style_mimic_target || 'c';
     const qOn = cfg.qualtrics_handoff_enabled && cfg.qualtrics_store_chat;
     document.getElementById('modQualtricsIntegration').value = qOn ? 'true' : 'false';
     document.getElementById('modBotsJson').value = JSON.stringify(cfg.bots || [], null, 2);
@@ -542,7 +542,7 @@ async function confirmModifySession() {
             turn_duration_seconds: parseInt(document.getElementById('modTurnDuration').value, 10),
             ai_starts_conversation: document.getElementById('modAiStarts').value === 'true',
             style_mimic_enabled: document.getElementById('modStyleMimic').value === 'true',
-            style_mimic_target: document.getElementById('modStyleMimicTarget').value.trim() || 'a',
+            style_mimic_target: document.getElementById('modStyleMimicTarget').value.trim() || 'c',
             qualtrics_handoff_enabled: document.getElementById('modQualtricsIntegration').value === 'true',
             qualtrics_store_chat: document.getElementById('modQualtricsIntegration').value === 'true',
             bots

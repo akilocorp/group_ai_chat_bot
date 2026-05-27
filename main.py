@@ -26,8 +26,10 @@ from bot_manager import (
     analyze_intent,
     assess_reply_probability,
     build_style_mimic_hint,
+    compute_typing_delay_seconds,
     get_or_create_bot,
     get_or_create_bot_from_cfg,
+    jitter_delay_extra,
     remove_room_bots,
 )
 
@@ -187,13 +189,18 @@ def reset_idle_timer(session_id: str, group_id: str, idle_seconds: int = DEFAULT
         )
         reply = await initiator.generate_response(
             "system", init_prompt, summary,
-            max_tokens=initiator_cfg.get('max_tokens', 60),
             temperature=initiator_cfg.get('temperature', 0.75),
             peer_names=peer_names,
-            max_words=initiator_cfg.get("max_words", 45),
+            max_words=initiator_cfg.get("max_words", 35),
+            min_words=initiator_cfg.get("min_words", 1),
+            length_variation=initiator_cfg.get("length_variation", True),
+            max_tokens=initiator_cfg.get("max_tokens"),
         )
 
         if reply:
+            await asyncio.sleep(
+                compute_typing_delay_seconds(reply, initiator_cfg.get("typing_cps", 12))
+            )
             cache_manager.cache_message(group_id, initiator.name, reply)
             await save_message(group_id, initiator.name, reply)
             ctx.add_message(initiator.name, reply)
@@ -300,7 +307,7 @@ class SessionCreateRequest(BaseModel):
     turn_duration_seconds: int = 60
     assignment_mode: str = "fifo"
     style_mimic_enabled: bool = False
-    style_mimic_target: str = "a"
+    style_mimic_target: str = "c"
 
 @app.get("/api/sessions")
 async def list_sessions():
@@ -986,16 +993,10 @@ async def handle_bot_reply(
                 if b.get("name") and b["name"] != bot.name
             ]
 
-            if mode == 1:
-                await asyncio.sleep(delay)
-            elif mode == 2:
-                await asyncio.sleep(delay + random.uniform(0.5, 2.5))
-            elif mode == 3:
+            if mode == 3:
                 if random.random() < bot_cfg.get('skip_rate', 0.2):
                     activity_logger.log_bot_skipped(session_id, group_id, bot.name)
                     return
-                natural_delay = max(0.5, min(8.0, len(user_text.split()) * 0.25 + random.uniform(0.5, 2.0)))
-                await asyncio.sleep(natural_delay)
             elif mode == 4:
                 reply_p = await assess_reply_probability(
                     bot.name,
@@ -1010,19 +1011,25 @@ async def handle_bot_reply(
                 if roll >= reply_p:
                     activity_logger.log_bot_skipped(session_id, group_id, bot.name)
                     return
-                await asyncio.sleep(delay + random.uniform(0.3, 1.2))
-            else:
-                await asyncio.sleep(delay)
+
+            pre_delay = delay
+            if mode in (2, 3, 4):
+                pre_delay = delay + jitter_delay_extra()
+            await asyncio.sleep(pre_delay)
 
             clean_text = user_text.replace(f"@{bot.name}", "").strip()
             if not clean_text:
                 clean_text = "Continue the conversation naturally based on prior context."
 
-            max_words = int(bot_cfg.get("max_words", 45))
+            max_words = int(bot_cfg.get("max_words", 35))
+            min_words = int(bot_cfg.get("min_words", 1))
+            if min_words > max_words:
+                min_words = max_words
+            length_variation = bool(bot_cfg.get("length_variation", True))
 
             style_hint = ""
             if session_cfg and getattr(session_cfg, "style_mimic_enabled", False):
-                target = (getattr(session_cfg, "style_mimic_target", None) or "a").strip()
+                target = (getattr(session_cfg, "style_mimic_target", None) or "c").strip()
                 style_hint = await build_style_mimic_hint(group_id, target, bot.name)
                 if style_hint:
                     print(f"[BOT]    style mimic '{target}' → {bot.name}")
@@ -1030,18 +1037,21 @@ async def handle_bot_reply(
             print(f"[BOT] 🔄 Calling generate_response for {bot.name}...")
             reply = await bot.generate_response(
                 user_id, clean_text, full_summary,
-                max_tokens=bot_cfg.get('max_tokens', 60),
                 temperature=bot_cfg.get('temperature', 0.75),
                 peer_names=peer_names,
                 max_words=max_words,
+                min_words=min_words,
+                length_variation=length_variation,
                 style_mimic_hint=style_hint or None,
+                max_tokens=bot_cfg.get("max_tokens"),
             )
             if not reply:
                 print(f"[BOT] ⚠️ {bot.name} returned empty reply")
                 return
 
-            print(f"[BOT] ✅ {bot.name} reply: {reply[:80]!r}")
-            # No typing indicators - just send the message directly
+            typing_delay = compute_typing_delay_seconds(reply, typing_cps)
+            print(f"[BOT] ✅ {bot.name} reply: {reply[:80]!r} (typing +{typing_delay:.1f}s)")
+            await asyncio.sleep(typing_delay)
             await broadcast(session_id, group_id, {"type": "message", "sender": bot.name, "text": reply})
             touch_group_activity(session_id, group_id)
 

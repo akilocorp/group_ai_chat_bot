@@ -100,6 +100,43 @@ def sanitize_bot_reply(
     return cleaned
 
 
+def jitter_delay_extra() -> float:
+    """Random add-on used by persona modes 2–4 (seconds)."""
+    return random.uniform(0.5, 2.5)
+
+
+def compute_typing_delay_seconds(text: str, typing_cps: float) -> float:
+    """Simulate time to type the reply before it appears in chat."""
+    cps = max(2.0, float(typing_cps or 12))
+    return max(0.3, min(12.0, len(text or "") / cps))
+
+
+def api_token_cap_for_words(max_words: int) -> int:
+    """OpenAI max_tokens from admin word cap (~1.45 tokens per word)."""
+    mw = max(1, int(max_words))
+    return min(120, max(15, int(mw * 1.45)))
+
+
+def pick_reply_word_cap(
+    min_words: int = 1,
+    max_words: int = 35,
+    length_variation: bool = True,
+) -> tuple[int, str]:
+    """
+    Pick target length for this reply (prompt only; no post-hoc truncate to this value).
+    Mix on: uniform random in [min, max]. Mix off: always max.
+    Returns (target_words, hint for the model).
+    """
+    min_w = max(1, int(min_words))
+    max_w = max(min_w, int(max_words))
+
+    if not length_variation:
+        return max_w, f"within about {max_w} words (casual group chat, 1–2 sentences)"
+
+    target = random.randint(min_w, max_w)
+    return target, f"within about {target} words (casual group chat, 1–2 sentences)"
+
+
 def _cap_sentences(text: str, max_sentences: int = 2) -> str:
     parts = re.split(r"(?<=[.!?])\s+", text.strip())
     if len(parts) <= max_sentences:
@@ -134,18 +171,27 @@ class ChatBot:
         user_id: str,
         user_message: str,
         full_context_summary: str,
-        max_tokens: int = 60,
         temperature: float = 0.75,
         peer_names: Optional[List[str]] = None,
-        max_words: int = 45,
+        max_words: int = 35,
+        min_words: int = 1,
+        length_variation: bool = True,
         style_mimic_hint: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ) -> Optional[str]:
         """
         Generates a response using the full room history provided by the ContextManager.
-        max_tokens and temperature are passed per-call from bot_cfg so admin settings take effect.
+        Length is controlled in words (admin); max_tokens is derived unless legacy max_tokens is set.
         """
         try:
-            cap_tokens = max(20, min(int(max_tokens), 120))
+            target_words, length_hint = pick_reply_word_cap(
+                min_words, max_words, length_variation
+            )
+            cap_tokens = (
+                max(15, min(int(max_tokens), 120))
+                if max_tokens
+                else api_token_cap_for_words(target_words)
+            )
             messages = [
                 {"role": "system", "content": self.system_prompt},
                 {
@@ -159,7 +205,7 @@ class ChatBot:
                     "role": "user",
                     "content": (
                         f"Latest message from {user_id}: {user_message}\n\n"
-                        f"Reply as {self.name} only, in 1–2 short casual sentences."
+                        f"Reply as {self.name} only. {length_hint}. Casual group chat."
                     ),
                 },
             ]
@@ -176,6 +222,7 @@ class ChatBot:
             )
 
             raw = response.choices[0].message.content.strip()
+            # Length target is prompt-only; max_words is a loose safety ceiling if the model runs long.
             reply = sanitize_bot_reply(raw, self.name, peer_names, max_words=max_words)
             return _cap_sentences(reply, 2)
         except Exception as e:
