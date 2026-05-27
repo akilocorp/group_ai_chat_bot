@@ -39,7 +39,7 @@ body {
 }
 
 body.has-top-nav {
-    padding-top: var(--header-height);
+    padding-top: calc(var(--header-height) + 10px) !important;
 }
 
 /* Nav — shared on Dashboard, Admin, Manual, Chat, Wait */
