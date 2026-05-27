@@ -9,7 +9,7 @@ class ConversationContext:
     """Manages conversation context for a single room, optimized for multi-bot sensing"""
 
     # Limit context size to avoid excessive memory usage
-    MAX_MESSAGES_PER_ROOM = 1000  # Maximum 1000 messages stored per chat room
+    MAX_MESSAGES_PER_ROOM = 50000  # Room message store (context budget is char-limited separately)
     MAX_KEYWORDS_PER_USER = 50   # Maximum 50 keywords stored per user
 
     def __init__(self, room_id: str):
@@ -93,24 +93,41 @@ class ConversationContext:
         keywords = [w for w in words if len(w) > 2 and w not in stopwords]
         return list(set(keywords))
 
-    def get_context_summary(self, num_messages: int = 15) -> str:
+    def get_context_summary(
+        self,
+        num_messages: int = None,
+        max_chars: int = 100_000,
+    ) -> str:
         """
-        Generates a summary for the AI bots. 
-        Higher num_messages (15) helps bots 'sense' context better in group chats.
+        Build prompt context from recent messages, capped by character budget (admin setting).
         """
         if not self.messages:
             return f"## Conversation Context (Room: {self.room_id})\nNo messages yet."
 
-        recent = self.messages[-num_messages:]
-
-        context = f"""
-## Conversation Context (Room: {self.room_id})
+        max_chars = max(10_000, min(10_000_000, int(max_chars)))
+        header = f"""## Conversation Context (Room: {self.room_id})
 **Participants**: {', '.join(self.user_profiles.keys()) if self.user_profiles else 'System Only'}
 **Total Turns**: {len(self.messages)}
 **Last Activity**: {self.last_activity.strftime('%Y-%m-%d %H:%M:%S')}
 
-### Recent {len(recent)} Messages:
+### Recent messages (up to {max_chars:,} characters):
 """
+        recent = []
+        used = len(header)
+        for msg in reversed(self.messages):
+            line = f"\n[{msg['turn']}] **{msg['sender']}**: {msg['text']}"
+            if used + len(line) > max_chars:
+                break
+            recent.insert(0, msg)
+            used += len(line)
+
+        if num_messages is not None and num_messages > 0:
+            recent = recent[-int(num_messages) :]
+
+        context = header.replace(
+            f"up to {max_chars:,} characters",
+            f"{len(recent)} messages, ~{used:,} characters",
+        )
         for msg in recent:
             context += f"\n[{msg['turn']}] **{msg['sender']}**: {msg['text']}"
 
@@ -191,6 +208,16 @@ class ConversationContext:
             self.messages = self.messages[-keep_last:]
             return removed
         return 0
+
+
+def resolve_context_max_chars(bot_cfg: dict = None) -> int:
+    """Character budget for bot context (admin: context_max_chars, legacy: context_messages × 80)."""
+    if not bot_cfg:
+        return 100_000
+    if bot_cfg.get("context_max_chars") is not None:
+        return max(10_000, min(10_000_000, int(bot_cfg["context_max_chars"])))
+    legacy_msgs = int(bot_cfg.get("context_messages", 20) or 20)
+    return max(10_000, min(10_000_000, legacy_msgs * 80))
 
 
 # ==========================================

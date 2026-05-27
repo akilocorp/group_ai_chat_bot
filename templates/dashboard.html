@@ -6,194 +6,366 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/theme.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-color);
-            color: var(--gray-900);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             padding-top: 48px;
         }
-        .nav-header {
-            width: 100%;
-            background: rgba(255,255,255,0.97);
-            backdrop-filter: blur(10px);
-            padding: 0 24px;
-            height: 48px;
+        .main-content { padding: 28px 20px 48px; flex: 1; }
+        .page-wrap { max-width: 1100px; margin: 0 auto; }
+
+        .page-hero { margin-bottom: 24px; }
+        .page-hero h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--gray-900);
+        }
+        .page-hero .subtitle {
+            font-size: 1rem;
+            color: var(--gray-700);
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        .metrics {
             display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .metric {
+            flex: 1;
+            min-width: 100px;
+            background: var(--white);
+            border-radius: 12px;
+            padding: 14px 18px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .metric label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--gray-500);
+            margin-bottom: 4px;
+        }
+        .metric span {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--gray-900);
+        }
+
+        .tab-toolbar {
+            display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 20px;
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
         }
-        .nav-logo { font-weight: 800; font-size: 1.2rem; color: var(--orange); text-decoration: none; }
-        .nav-links { display: flex; gap: 4px; }
-        .nav-links a {
-            text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem;
-            padding: 5px 12px; border-radius: 8px; transition: all 0.15s;
-        }
-        .nav-links a:hover { color: var(--orange); background: var(--orange-pale); }
-        .nav-links a.active { color: var(--orange-dark); background: var(--orange-pale); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .main-content { padding: 24px 20px 40px; flex: 1; }
-        .page-wrap { max-width: 1320px; margin: 0 auto; }
+        .tab-lead {
+            font-size: 0.9375rem;
+            color: var(--gray-700);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .section-title {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--gray-500);
+            margin: 24px 0 12px;
+        }
+        .section-title:first-child { margin-top: 0; }
 
-        .page-hero {
-            display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
-            gap: 16px; margin-bottom: 20px;
-        }
-        .page-hero h1 { font-size: 1.65rem; font-weight: 800; color: var(--gray-900); }
-        .page-hero .subtitle { font-size: 0.9rem; color: var(--gray-700); margin-top: 6px; }
-        .uid-pill {
-            background: white; border: 1px solid var(--gray-300); border-radius: 999px;
-            padding: 10px 18px; font-size: 0.85rem; box-shadow: var(--shadow-sm);
-        }
-        .uid-pill strong { color: var(--orange-dark); }
-
-        .panel {
-            background: white; border: 1px solid var(--gray-300); border-radius: 14px;
-            padding: 24px; box-shadow: var(--shadow-md); margin-bottom: 20px;
-        }
-
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 14px; margin-bottom: 20px;
-        }
-        .stat-card {
-            background: white; padding: 16px; border-radius: 12px; text-align: center;
-            border: 1px solid var(--gray-300); box-shadow: var(--shadow-sm);
-        }
-        .stat-card h3 {
-            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
-            color: var(--gray-700); margin-bottom: 6px;
-        }
-        .stat-card .number { font-size: 1.75rem; font-weight: 800; color: var(--orange-dark); }
-
-        .tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-        .tab-btn {
-            padding: 9px 16px; background: var(--gray-100); border: 1px solid var(--gray-300);
-            color: var(--gray-700); cursor: pointer; border-radius: 8px;
-            font-weight: 600; font-size: 0.82rem; transition: 0.15s;
-        }
-        .tab-btn:hover { border-color: #fdba74; color: var(--orange-dark); }
-        .tab-btn.active {
-            background: var(--orange-dark); border-color: var(--orange-dark); color: #fff;
-            box-shadow: 0 4px 12px rgba(211, 84, 0, 0.2);
-        }
-        .tab-content { display: none; animation: fadeIn 0.25s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
-        /* Lobby / join */
         .session-card {
-            border: 1px solid var(--gray-300); border-radius: 12px;
-            margin-bottom: 12px; overflow: hidden; background: white;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: var(--white);
         }
         .session-header {
-            background: var(--gray-100); padding: 14px 18px;
-            display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
         }
-        .session-header:hover { background: #eef1f4; }
-        .session-title { font-weight: 700; font-size: 1rem; }
-        .session-meta { font-size: 0.78rem; color: var(--gray-700); margin-top: 4px; }
-        .session-body { padding: 14px 18px; display: none; border-top: 1px solid var(--gray-300); }
+        .session-header:hover { background: var(--gray-100); }
+        .session-title { font-weight: 600; font-size: 0.9375rem; }
+        .session-meta { font-size: 0.8125rem; color: var(--gray-700); margin-top: 2px; }
+        .session-body { padding: 14px 16px; display: none; border-top: 1px solid rgba(0, 0, 0, 0.06); }
         .group-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
         .group-card {
-            background: var(--orange-pale); color: var(--orange-dark);
-            padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
-            cursor: pointer; border: 1px solid rgba(230,126,34,0.25); transition: 0.15s;
+            background: var(--gray-100);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
         }
-        .group-card:hover { background: var(--orange); color: white; transform: translateY(-1px); }
-        .btn-queue {
-            margin-top: 12px; background: var(--orange); color: white; border: none;
-            padding: 8px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+        .group-card:hover { background: var(--orange-pale); color: var(--orange-dark); }
+        .btn-text {
+            margin-top: 12px;
+            background: none;
+            border: none;
+            color: var(--orange-dark);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            padding: 0;
         }
-        .btn-queue:hover { opacity: 0.92; }
-        .empty-state { padding: 32px; color: var(--gray-500); text-align: center; font-style: italic; }
+        .btn-text:hover { text-decoration: underline; }
+        .empty-state {
+            padding: 32px 16px;
+            color: var(--gray-500);
+            text-align: center;
+            font-size: 0.9375rem;
+        }
 
-        /* Published sessions */
-        .published-layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
-        @media (max-width: 900px) { .published-layout { grid-template-columns: 1fr; } }
-        .session-list { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; }
+        .published-layout {
+            display: grid;
+            grid-template-columns: minmax(260px, 300px) 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+        @media (max-width: 800px) { .published-layout { grid-template-columns: 1fr; } }
+        .session-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 480px;
+            overflow-y: auto;
+        }
         .session-row {
-            padding: 12px 14px; border: 1px solid var(--gray-300); border-radius: 10px;
-            cursor: pointer; transition: 0.15s;
+            padding: 12px 14px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            cursor: pointer;
+            background: var(--white);
+            transition: border-color 0.15s, background 0.15s;
         }
-        .session-row:hover { background: var(--orange-pale); border-color: #fdba74; }
-        .session-row.active { border-color: var(--orange); background: #fff7ed; }
-        .session-row-id { font-weight: 800; color: var(--orange-dark); font-size: 0.88rem; }
+        .session-row:hover { border-color: rgba(230, 126, 34, 0.35); }
+        .session-row.active { border-color: var(--orange); background: #fffaf5; }
+        .session-row-id { font-weight: 600; font-size: 0.875rem; }
         .session-row-meta { font-size: 0.75rem; color: var(--gray-700); margin-top: 4px; }
-        .badge-open { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; float: right; }
-        .badge-closed { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; float: right; }
-        .detail-panel {
-            border: 1px solid var(--gray-300); border-radius: 12px; padding: 20px; background: var(--gray-100);
-            min-height: 200px;
+        .badge-open, .badge-closed {
+            float: right;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 700;
         }
-        .detail-panel.empty { display: flex; align-items: center; justify-content: center; color: var(--gray-500); font-size: 0.9rem; }
+        .badge-open { background: #d1fae5; color: #065f46; }
+        .badge-closed { background: #f3f4f6; color: #6b7280; }
+
+        .detail-panel {
+            border-radius: 12px;
+            padding: 20px;
+            background: var(--gray-100);
+            min-height: 180px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .detail-panel.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+            font-size: 0.9375rem;
+        }
         .detail-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
         .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn-modify { background: white; color: var(--orange-dark); border: 2px solid var(--orange); padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.82rem; }
-        .btn-action { padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.82rem; border: none; }
+        .btn-modify, .btn-action {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8125rem;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-modify { background: var(--white); color: var(--gray-900); border: 1px solid rgba(0, 0, 0, 0.12); }
         .btn-primary { background: var(--orange); color: white; }
-        .btn-danger { background: #fff; color: #b42318; border: 1px solid #f5c2c7; }
+        .btn-danger { background: var(--white); color: #b42318; border: 1px solid #fecaca; }
         .param-section-title {
-            font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.06em; color: var(--orange-dark); margin: 14px 0 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--gray-500);
+            margin: 16px 0 8px;
         }
         .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-weight: 600; font-size: 0.82rem; margin-bottom: 4px; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.8125rem; margin-bottom: 4px; }
         .form-group input, .form-group select, .form-group textarea {
-            width: 100%; padding: 8px 10px; border: 2px solid #e8e8e8; border-radius: 8px; font-size: 0.88rem;
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-family: inherit;
         }
-        .form-group .helper { font-size: 0.75rem; color: #888; margin-top: 4px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         @media (max-width: 700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
         #sessionDetailForm.readonly input,
         #sessionDetailForm.readonly select,
         #sessionDetailForm.readonly textarea {
-            background: #eceff1; color: #546e7a; border-color: #cfd8dc; cursor: not-allowed;
+            background: #f9fafb;
+            color: var(--gray-700);
+            cursor: not-allowed;
         }
 
-        /* Sandbox */
-        .sandbox-box {
-            border: 2px dashed var(--orange); border-radius: 12px; padding: 20px;
-            background: linear-gradient(180deg, #fffbf5, #fff);
+        .rooms-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            margin-bottom: 20px;
         }
+        .rooms-table th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--gray-500);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .rooms-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .badge-bot {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-right: 4px;
+        }
+        .btn-row {
+            border: none;
+            background: var(--gray-100);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        .btn-row:hover { background: var(--gray-300); }
+        .btn-row.danger { color: #b42318; background: #fef2f2; }
 
-        /* Tables & monitor (from old dashboard) */
-        .rooms-table { width: 100%; border-collapse: collapse; border: 1px solid var(--gray-300); border-radius: 10px; overflow: hidden; }
-        .rooms-table th { background: var(--gray-100); padding: 12px; text-align: left; font-size: 0.72rem; text-transform: uppercase; color: var(--gray-700); }
-        .rooms-table td { padding: 12px; border-top: 1px solid var(--gray-300); font-size: 0.86rem; }
-        .badge-bot { background: var(--orange-dark); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; margin-right: 4px; }
-        .chat-monitor-layout { display: grid; grid-template-columns: 220px 1fr; gap: 14px; height: 460px; }
-        .sidebar { background: var(--gray-100); border-radius: 10px; overflow-y: auto; padding: 8px; border: 1px solid var(--gray-300); }
-        .room-item { padding: 10px; margin-bottom: 6px; border-radius: 8px; background: white; cursor: pointer; font-size: 0.82rem; border: 1px solid transparent; }
-        .room-item:hover { border-color: #fdba74; }
+        .chat-monitor-layout {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 12px;
+            height: 420px;
+        }
+        @media (max-width: 700px) { .chat-monitor-layout { grid-template-columns: 1fr; height: auto; } }
+        .sidebar {
+            background: var(--gray-100);
+            border-radius: 12px;
+            overflow-y: auto;
+            padding: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .room-item {
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            background: var(--white);
+            cursor: pointer;
+            font-size: 0.8125rem;
+            border: 1px solid transparent;
+        }
+        .room-item:hover { border-color: rgba(0, 0, 0, 0.08); }
         .room-item.active { background: var(--orange); color: white; }
-        .viewer { background: white; border-radius: 10px; display: flex; flex-direction: column; padding: 14px; border: 1px solid var(--gray-300); }
-        .messages-list { flex: 1; overflow-y: auto; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-        .msg-bubble { background: var(--gray-100); padding: 8px 12px; border-radius: 8px; max-width: 88%; font-size: 0.85rem; border: 1px solid var(--gray-300); }
-        .msg-bubble b { display: block; font-size: 0.7rem; color: var(--orange-dark); margin-bottom: 2px; }
-        .msg-bubble.bot-msg { border-left: 3px solid var(--orange-dark); }
-        .export-section { margin-bottom: 24px; }
-        .export-section h3 { font-size: 0.95rem; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-300); }
-        .export-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-        .export-card { border: 1px solid var(--gray-300); border-radius: 12px; padding: 16px; background: white; }
-        .btn-export { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 0.8rem; background: var(--orange); color: white; margin-top: 8px; display: inline-block; text-decoration: none; }
-        .logs {
-            background: #1d1f24; color: #c8e6c9; padding: 12px; border-radius: 10px;
-            height: 90px; overflow-y: auto; font-family: monospace; font-size: 10px; margin-top: 16px;
+        .viewer {
+            background: var(--white);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
         }
+        .viewer h3 { font-size: 0.875rem; font-weight: 600; color: var(--gray-700); }
+        .messages-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .msg-bubble {
+            background: var(--gray-100);
+            padding: 10px 12px;
+            border-radius: 12px;
+            max-width: 90%;
+            font-size: 0.875rem;
+            line-height: 1.45;
+        }
+        .msg-bubble b {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            margin-bottom: 4px;
+        }
+        .msg-bubble.bot-msg { border-left: 3px solid var(--orange); }
+
+        .export-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+        }
+        .export-card {
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            background: var(--white);
+        }
+        .export-card strong { font-size: 0.9375rem; }
+        .btn-export {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            background: var(--gray-900);
+            color: white;
+            font-weight: 600;
+            font-size: 0.8125rem;
+            text-decoration: none;
+        }
+        .btn-export:hover { opacity: 0.9; }
+
         .notify {
-            position: fixed; top: 56px; right: 20px; padding: 12px 20px; border-radius: 8px;
-            color: white; font-weight: 700; display: none; z-index: 2000;
+            position: fixed;
+            top: 56px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 10px;
+            background: var(--gray-900);
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: none;
+            z-index: 2000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         }
-        .tab-intro { font-size: 0.88rem; color: var(--gray-700); margin-bottom: 16px; }
     </style>
 </head>
 <body>
@@ -213,109 +385,77 @@
     <div class="page-wrap">
 
         <div class="page-hero">
-            <div>
-                <h1>Research Dashboard</h1>
-                <p class="subtitle">Join group chats, manage sessions, monitor rooms, and export data — all in one place.</p>
-            </div>
-            <div class="uid-pill">Your participant ID: <strong id="suggested-id">…</strong></div>
+            <h1>Dashboard</h1>
+            <p class="subtitle">Sessions, live monitoring, and exports.</p>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card"><h3>Active Rooms</h3><div class="number" id="total-rooms">0</div></div>
-            <div class="stat-card"><h3>In Queue</h3><div class="number" id="waiting-count">0</div></div>
-            <div class="stat-card"><h3>Bot Status</h3><div class="number" id="bot-status">--</div></div>
-            <div class="stat-card"><h3>Sessions</h3><div class="number" id="session-count">0</div></div>
+        <div class="metrics">
+            <div class="metric"><label>Active rooms</label><span id="total-rooms">0</span></div>
+            <div class="metric"><label>In queue</label><span id="waiting-count">0</span></div>
+            <div class="metric"><label>Sessions</label><span id="session-count">0</span></div>
+            <div class="metric" title="On if at least one published session has AI bots enabled in Admin (Enable AI Bots = Yes). Off if no sessions or all are human-only.">
+                <label>AI bots</label><span id="bot-status">—</span>
+            </div>
         </div>
 
-        <div class="panel">
-            <div class="tabs">
-                <button class="tab-btn active" id="btn-sessions" onclick="switchTab('sessions')">Sessions</button>
-                <button class="tab-btn" id="btn-rooms" onclick="switchTab('rooms')">Rooms</button>
-                <button class="tab-btn" id="btn-export" onclick="switchTab('export')">Export</button>
-                <button class="tab-btn" id="btn-sandbox" onclick="switchTab('sandbox')">Sandbox</button>
+        <div class="surface">
+            <div class="tab-toolbar">
+                <div class="segmented" role="tablist">
+                    <button type="button" class="active" id="btn-sessions" onclick="switchTab('sessions')">Sessions</button>
+                    <button type="button" id="btn-rooms" onclick="switchTab('rooms')">Monitor</button>
+                    <button type="button" id="btn-export" onclick="switchTab('export')">Export</button>
+                </div>
             </div>
 
-            <!-- Sessions: Join + Published -->
             <div id="sessions-tab" class="tab-content active">
-                <p class="tab-intro">Join active groups or queue into sessions. Click a published session to inspect and modify settings.</p>
+                <p class="tab-lead">Join a study queue or open settings for a published session.</p>
 
-                <h3 style="margin-bottom:8px;color:var(--orange-dark);font-size:0.95rem;">Join & Chat</h3>
-                <div id="session-list" style="margin-bottom:18px;"><div class="empty-state">Loading sessions…</div></div>
+                <p class="section-title">Join</p>
+                <div id="session-list"><div class="empty-state">Loading…</div></div>
 
-                <h3 style="margin-bottom:8px;color:var(--orange-dark);font-size:0.95rem;">Published Sessions</h3>
+                <p class="section-title">Published sessions</p>
                 <div class="published-layout">
-                    <div>
-                        <div id="publishedSessionList" class="session-list">
-                            <p style="color:#999;font-size:0.88rem;">Loading…</p>
-                        </div>
+                    <div id="publishedSessionList" class="session-list">
+                        <p class="empty-state" style="padding:16px;">Loading…</p>
                     </div>
                     <div id="session-detail-panel" class="detail-panel empty">
-                        Select a session to view settings
+                        Select a session
                     </div>
                 </div>
             </div>
 
-            <!-- Rooms: table + live feed -->
             <div id="rooms-tab" class="tab-content">
-                <table class="rooms-table" style="margin-bottom:16px;">
+                <p class="tab-lead">Watch live chats read-only. Choose a room, then view messages below.</p>
+                <table class="rooms-table">
                     <thead>
                         <tr>
-                            <th>Room</th><th>Session</th><th>Participants</th><th>Bots</th><th>Messages</th><th>Actions</th>
+                            <th>Room</th><th>Session</th><th>People</th><th>Bots</th><th>Msgs</th><th></th>
                         </tr>
                     </thead>
                     <tbody id="rooms-body"></tbody>
                 </table>
-
                 <div class="chat-monitor-layout">
                     <div class="sidebar" id="sidebar-list"></div>
                     <div class="viewer">
-                        <h3 id="current-room-name" style="font-size:0.9rem;color:var(--gray-700);">Select a room</h3>
+                        <h3 id="current-room-name">Select a room</h3>
                         <div class="messages-list" id="monitor-messages"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Export -->
             <div id="export-tab" class="tab-content">
-                <div class="export-section">
-                    <h3>Activity logs — by session</h3>
-                    <div class="export-grid" id="export-sessions-list"><p class="empty-state">Loading…</p></div>
-                </div>
-                <div class="export-section">
-                    <h3>Chat history — by room</h3>
-                    <div class="export-grid" id="export-rooms-list"><p class="empty-state">Loading…</p></div>
-                </div>
+                <p class="tab-lead">Download activity logs and chat transcripts as CSV.</p>
+                <p class="section-title">Activity logs</p>
+                <div class="export-grid" id="export-sessions-list"><p class="empty-state">Loading…</p></div>
+                <p class="section-title">Chat history</p>
+                <div class="export-grid" id="export-rooms-list"><p class="empty-state">Loading…</p></div>
             </div>
-
-            <!-- Test Sandbox -->
-            <div id="sandbox-tab" class="tab-content">
-                <div class="sandbox-box">
-                    <h3 style="color:var(--orange-dark);margin-bottom:10px;">Admin Test Sandbox</h3>
-                    <p style="font-size:0.88rem;color:var(--gray-700);margin-bottom:16px;">
-                        Join any group as <strong>ADMIN_TESTER</strong> to verify bots before a real run. Messages are prefixed for filtering in exports.
-                    </p>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Session ID</label>
-                            <input type="text" id="testSessionId" placeholder="e.g. SES-A1B2C">
-                        </div>
-                        <div class="form-group">
-                            <label>Group ID</label>
-                            <input type="text" id="testGroupId" placeholder="e.g. GRP-X9Y8">
-                        </div>
-                    </div>
-                    <button type="button" class="btn-action btn-primary" onclick="joinTestSandbox()">Join as Admin Tester</button>
-                </div>
-            </div>
-
-            <div class="logs" id="system-logs"></div>
         </div>
     </div>
 </div>
 
 <script>
 const uid = 'user_' + Math.floor(Math.random() * 100000);
-document.getElementById('suggested-id').textContent = uid;
 
 let selectedRoomId = null;
 let allRoomsCache = [];
@@ -323,19 +463,11 @@ let allSessionsCache = [];
 let selectedSessionId = null;
 let detailSnapshot = null;
 
-function toast(msg, color = '#27ae60') {
+function toast(msg) {
     const el = document.getElementById('notification');
     el.textContent = msg;
-    el.style.background = color;
     el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 3500);
-}
-
-function log(msg) {
-    const logs = document.getElementById('system-logs');
-    const entry = document.createElement('div');
-    entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-    logs.prepend(entry);
+    setTimeout(() => { el.style.display = 'none'; }, 3200);
 }
 
 function isAdminLoggedIn() {
@@ -343,11 +475,10 @@ function isAdminLoggedIn() {
 }
 
 function switchTab(t) {
-    if (t === 'join' || t === 'published') t = 'sessions';
-    if (t === 'monitor') t = 'rooms';
-    if (!['sessions','rooms','export','sandbox'].includes(t)) t = 'sessions';
+    if (t === 'join' || t === 'published' || t === 'monitor') t = t === 'monitor' ? 'rooms' : 'sessions';
+    if (!['sessions', 'rooms', 'export'].includes(t)) t = 'sessions';
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.segmented button').forEach(b => b.classList.remove('active'));
     const tabEl = document.getElementById(t + '-tab');
     const btnEl = document.getElementById('btn-' + t);
     if (tabEl) tabEl.classList.add('active');
@@ -357,7 +488,6 @@ function switchTab(t) {
     history.replaceState(null, '', t === 'sessions' ? '/' : `/?tab=${t}`);
 }
 
-/* ---- Lobby ---- */
 function toggleSession(id) {
     const el = document.getElementById('body-' + id);
     if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
@@ -374,7 +504,7 @@ function goToWait(sessionId) {
 function renderLobbySessions(sessions) {
     const listEl = document.getElementById('session-list');
     if (!sessions.length) {
-        listEl.innerHTML = '<div class="empty-state">No active sessions. Create one in Admin.</div>';
+        listEl.innerHTML = '<div class="empty-state">No sessions yet. <a href="/admin">Create one in Admin</a>.</div>';
         return;
     }
     listEl.innerHTML = sessions.map(s => `
@@ -382,24 +512,22 @@ function renderLobbySessions(sessions) {
             <div class="session-header" onclick="toggleSession('${s.id}')">
                 <div>
                     <div class="session-title">${s.name || s.id}</div>
-                    <div class="session-meta">ID: ${s.id} · ${s.group_size}/group · ${s.groups.length} active group(s) · ${s.group_chat_duration_minutes ?? 5} min chat</div>
+                    <div class="session-meta">${s.id} · ${s.group_size} per group · ${s.groups.length} active</div>
                 </div>
-                <span style="color:var(--orange-dark);font-weight:700;">▼</span>
+                <span aria-hidden="true">›</span>
             </div>
             <div class="session-body" id="body-${s.id}">
                 ${s.groups.length ? `
-                    <p style="font-size:0.84rem;color:var(--gray-700);margin-bottom:8px;">Active groups — click to enter:</p>
                     <div class="group-grid">${s.groups.map(g => `
                         <div class="group-card" onclick="joinGroup('${s.id}','${g}')">${g}</div>
                     `).join('')}</div>
-                ` : '<p style="color:var(--gray-500);font-size:0.84rem;">No active groups yet.</p>'}
-                <button type="button" class="btn-queue" onclick="goToWait('${s.id}')">Join Matching Queue</button>
+                ` : '<p style="color:var(--gray-500);font-size:0.875rem;">No active groups.</p>'}
+                <button type="button" class="btn-text" onclick="goToWait('${s.id}')">Join matching queue</button>
             </div>
         </div>
     `).join('');
 }
 
-/* ---- Published sessions ---- */
 async function loadPublishedSessions() {
     const list = document.getElementById('publishedSessionList');
     try {
@@ -407,18 +535,18 @@ async function loadPublishedSessions() {
         const data = await res.json();
         const sessions = data.sessions || [];
         if (!sessions.length) {
-            list.innerHTML = '<p style="color:#999;font-size:0.88rem;">No sessions yet. <a href="/admin">Create one in Admin</a>.</p>';
+            list.innerHTML = '<p class="empty-state">No sessions yet.</p>';
             return;
         }
         list.innerHTML = sessions.map(s => `
             <div class="session-row ${s.id === selectedSessionId ? 'active' : ''}" data-id="${s.id}" onclick="selectSession('${s.id}')">
                 <span class="${s.is_open ? 'badge-open' : 'badge-closed'}">${s.is_open ? 'Open' : 'Closed'}</span>
                 <div class="session-row-id">${s.id}</div>
-                <div class="session-row-meta">${s.name || 'Unnamed'} · ${s.group_size}/group · ${s.group_chat_duration_minutes ?? 5} min · ${s.survey_open_days ?? 7} days</div>
+                <div class="session-row-meta">${s.name || 'Unnamed'} · ${s.group_size}/group</div>
             </div>
         `).join('');
     } catch (e) {
-        list.innerHTML = '<p style="color:#c0392b;">Failed to load</p>';
+        list.innerHTML = '<p class="empty-state">Could not load sessions.</p>';
     }
 }
 
@@ -434,17 +562,16 @@ async function selectSession(sessionId) {
         if (!res.ok) throw new Error('Not found');
         const cfg = await res.json();
         detailSnapshot = JSON.parse(JSON.stringify(cfg));
-        const closes = cfg.survey_closes_at ? new Date(cfg.survey_closes_at).toLocaleString() : '—';
-        const status = cfg.is_open ? 'Collecting' : 'Closed';
+        const status = cfg.is_open ? 'Open' : 'Closed';
         panel.innerHTML = `
             <div class="detail-header">
                 <div>
-                    <h3 style="color:var(--orange-dark);">${cfg.session_id}</h3>
-                    <p style="font-size:0.82rem;color:var(--gray-700);margin-top:4px;">${cfg.name} · ${status} · ${cfg.group_chat_duration_minutes} min/group · open ${cfg.survey_open_days} days · ~${closes}</p>
+                    <h3 style="font-size:1.1rem;font-weight:700;">${cfg.session_id}</h3>
+                    <p style="font-size:0.8125rem;color:var(--gray-700);margin-top:4px;">${cfg.name} · ${status}</p>
                 </div>
                 <div class="detail-actions">
-                    <button type="button" class="btn-modify" id="btnUnlockModify">Modify</button>
-                    <button type="button" class="btn-action btn-primary" id="btnConfirmModify" style="display:none;">Confirm</button>
+                    <button type="button" class="btn-modify" id="btnUnlockModify">Edit</button>
+                    <button type="button" class="btn-action btn-primary" id="btnConfirmModify" style="display:none;">Save</button>
                     <button type="button" class="btn-action btn-danger" id="btnCancelModify" style="display:none;">Cancel</button>
                     ${isAdminLoggedIn() ? `<button type="button" class="btn-action btn-danger" id="btnDeleteSession">Delete</button>` : ''}
                 </div>
@@ -452,7 +579,7 @@ async function selectSession(sessionId) {
             <form id="sessionDetailForm" class="readonly">
                 <div class="param-section-title">Basic</div>
                 <div class="grid-2">
-                    <div class="form-group"><label>Session name</label><input type="text" id="modSessionName" disabled></div>
+                    <div class="form-group"><label>Name</label><input type="text" id="modSessionName" disabled></div>
                     <div class="form-group"><label>Group size</label><input type="number" id="modGroupSize" min="1" max="20" disabled></div>
                 </div>
                 <div class="param-section-title">Timing</div>
@@ -463,20 +590,14 @@ async function selectSession(sessionId) {
                 <div class="param-section-title">Experiment</div>
                 <div class="grid-3">
                     <div class="form-group"><label>Mode</label><select id="modSessionMode" disabled><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
-                    <div class="form-group"><label>Bots</label><select id="modBotEnabled" disabled><option value="true">Yes</option><option value="false">No</option></select></div>
+                    <div class="form-group"><label>Bots</label><select id="modBotEnabled" disabled><option value="true">On</option><option value="false">Off</option></select></div>
                     <div class="form-group"><label>Assignment</label><select id="modAssignmentMode" disabled><option value="fifo">FIFO</option><option value="stratified">Stratified</option></select></div>
                 </div>
-                <div class="grid-3">
-                    <div class="form-group"><label>Turns</label><select id="modTurnMode" disabled><option value="none">Off</option><option value="round_robin">Round-robin</option><option value="timed">Timed</option></select></div>
-                    <div class="form-group"><label>Turn sec</label><input type="number" id="modTurnDuration" disabled></div>
-                    <div class="form-group"><label>AI starts</label><select id="modAiStarts" disabled><option value="false">No</option><option value="true">Yes</option></select></div>
-                </div>
                 <div class="grid-2">
-                    <div class="form-group"><label>Mimic teammate style</label><select id="modStyleMimic" disabled><option value="false">Off</option><option value="true">On</option></select></div>
-                    <div class="form-group"><label>Style target</label><input type="text" id="modStyleMimicTarget" disabled placeholder="a"></div>
+                    <div class="form-group"><label>Condition</label><select id="modConditionEnabled" disabled><option value="true">On</option><option value="false">Off</option></select></div>
+                    <div class="form-group"><label>Qualtrics</label><select id="modQualtricsIntegration" disabled><option value="false">Off</option><option value="true">On</option></select></div>
                 </div>
-                <div class="form-group"><label>Qualtrics integration</label><select id="modQualtricsIntegration" disabled><option value="false">Off</option><option value="true">On</option></select></div>
-                <div class="form-group"><label>Personas (JSON)</label><textarea id="modBotsJson" rows="6" disabled style="font-family:monospace;font-size:0.78rem;"></textarea></div>
+                <div class="form-group"><label>Personas (JSON)</label><textarea id="modBotsJson" rows="5" disabled style="font-family:ui-monospace,monospace;font-size:0.78rem;"></textarea></div>
             </form>
         `;
         fillSessionDetailForm(cfg);
@@ -490,7 +611,7 @@ async function selectSession(sessionId) {
         const delBtn = document.getElementById('btnDeleteSession');
         if (delBtn) delBtn.onclick = () => deleteSessionAdmin(sessionId);
     } catch (e) {
-        panel.innerHTML = `<p style="color:#c0392b;">Could not load: ${e.message}</p>`;
+        panel.innerHTML = `<p class="empty-state">Could not load: ${e.message}</p>`;
     }
 }
 
@@ -502,11 +623,7 @@ function fillSessionDetailForm(cfg) {
     document.getElementById('modSessionMode').value = String(cfg.session_mode ?? 1);
     document.getElementById('modBotEnabled').value = cfg.bot_enabled ? 'true' : 'false';
     document.getElementById('modAssignmentMode').value = cfg.assignment_mode || 'fifo';
-    document.getElementById('modTurnMode').value = cfg.turn_mode || 'none';
-    document.getElementById('modTurnDuration').value = cfg.turn_duration_seconds ?? 60;
-    document.getElementById('modAiStarts').value = cfg.ai_starts_conversation ? 'true' : 'false';
-    document.getElementById('modStyleMimic').value = cfg.style_mimic_enabled ? 'true' : 'false';
-    document.getElementById('modStyleMimicTarget').value = cfg.style_mimic_target || 'c';
+    document.getElementById('modConditionEnabled').value = cfg.condition_enabled !== false ? 'true' : 'false';
     const qOn = cfg.qualtrics_handoff_enabled && cfg.qualtrics_store_chat;
     document.getElementById('modQualtricsIntegration').value = qOn ? 'true' : 'false';
     document.getElementById('modBotsJson').value = JSON.stringify(cfg.bots || [], null, 2);
@@ -517,12 +634,9 @@ function setDetailEditMode(editing) {
     if (!form) return;
     form.classList.toggle('readonly', !editing);
     form.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = !editing; });
-    const unlock = document.getElementById('btnUnlockModify');
-    const confirm = document.getElementById('btnConfirmModify');
-    const cancel = document.getElementById('btnCancelModify');
-    if (unlock) unlock.style.display = editing ? 'none' : 'inline-block';
-    if (confirm) confirm.style.display = editing ? 'inline-block' : 'none';
-    if (cancel) cancel.style.display = editing ? 'inline-block' : 'none';
+    document.getElementById('btnUnlockModify').style.display = editing ? 'none' : 'inline-block';
+    document.getElementById('btnConfirmModify').style.display = editing ? 'inline-block' : 'none';
+    document.getElementById('btnCancelModify').style.display = editing ? 'inline-block' : 'none';
 }
 
 async function confirmModifySession() {
@@ -538,17 +652,13 @@ async function confirmModifySession() {
             session_mode: parseInt(document.getElementById('modSessionMode').value, 10),
             bot_enabled: document.getElementById('modBotEnabled').value === 'true',
             assignment_mode: document.getElementById('modAssignmentMode').value,
-            turn_mode: document.getElementById('modTurnMode').value,
-            turn_duration_seconds: parseInt(document.getElementById('modTurnDuration').value, 10),
-            ai_starts_conversation: document.getElementById('modAiStarts').value === 'true',
-            style_mimic_enabled: document.getElementById('modStyleMimic').value === 'true',
-            style_mimic_target: document.getElementById('modStyleMimicTarget').value.trim() || 'c',
+            condition_enabled: document.getElementById('modConditionEnabled').value === 'true',
             qualtrics_handoff_enabled: document.getElementById('modQualtricsIntegration').value === 'true',
             qualtrics_store_chat: document.getElementById('modQualtricsIntegration').value === 'true',
             bots
         };
     } catch (e) {
-        toast('Invalid personas JSON', '#e74c3c');
+        toast('Invalid personas JSON');
         return;
     }
     try {
@@ -559,50 +669,43 @@ async function confirmModifySession() {
         });
         const data = await res.json();
         if (data.status === 'success') {
-            toast('Saved: ' + selectedSessionId);
+            toast('Saved');
             setDetailEditMode(false);
             await updateData();
             await selectSession(selectedSessionId);
         } else {
-            toast('Save failed', '#e74c3c');
+            toast('Save failed');
         }
     } catch (e) {
-        toast('Network error', '#e74c3c');
+        toast('Network error');
     }
 }
 
 async function deleteSessionAdmin(sessionId) {
-    if (!confirm(`Delete session ${sessionId} and all rooms?`)) return;
+    if (!confirm(`Delete session ${sessionId}?`)) return;
     const res = await fetch(`/api/admin/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
     const data = await res.json();
     if (data.status === 'success') {
-        toast('Deleted ' + sessionId);
+        toast('Deleted');
         selectedSessionId = null;
-        document.getElementById('session-detail-panel').classList.add('empty');
-        document.getElementById('session-detail-panel').innerHTML = 'Select a session to view settings';
+        const panel = document.getElementById('session-detail-panel');
+        panel.classList.add('empty');
+        panel.innerHTML = 'Select a session';
         updateData();
     } else {
-        toast('Delete failed', '#e74c3c');
+        toast('Delete failed');
     }
 }
 
-function joinTestSandbox() {
-    const sid = document.getElementById('testSessionId').value.trim();
-    const gid = document.getElementById('testGroupId').value.trim();
-    if (!sid || !gid) { toast('Enter Session ID and Group ID', '#e74c3c'); return; }
-    window.location.href = `/chat/${encodeURIComponent(sid)}/${encodeURIComponent(gid)}?uid=ADMIN_TESTER`;
-}
-
-/* ---- Dashboard data ---- */
 async function updateData() {
     try {
-        const [roomsRes, cfgRes, sessionsRes] = await Promise.all([
+        const [roomsRes, configRes, sessionsRes] = await Promise.all([
             fetch('/api/admin/rooms'),
             fetch('/api/admin/config'),
             fetch('/api/sessions')
         ]);
         const data = await roomsRes.json();
-        const config = await cfgRes.json();
+        const config = await configRes.json();
         const sessData = await sessionsRes.json();
 
         allRoomsCache = data.rooms || [];
@@ -610,8 +713,13 @@ async function updateData() {
 
         document.getElementById('total-rooms').textContent = allRoomsCache.length;
         document.getElementById('waiting-count').textContent = data.waiting_count || 0;
-        document.getElementById('bot-status').textContent = data.bot_enabled ? 'ON' : 'OFF';
         document.getElementById('session-count').textContent = allSessionsCache.length;
+        const botEl = document.getElementById('bot-status');
+        if (botEl) {
+            const on = !!data.bot_enabled;
+            botEl.textContent = on ? 'On' : 'Off';
+            botEl.style.color = on ? 'var(--success)' : 'var(--gray-500)';
+        }
 
         renderLobbySessions(allSessionsCache);
 
@@ -620,24 +728,23 @@ async function updateData() {
             const botsInRoom = r.participants.filter(p => botNames.includes(p));
             const humans = r.participants.length - botsInRoom.length;
             return `<tr>
-                <td><strong>${r.id}</strong><br><small>${new Date(r.created_at).toLocaleTimeString()}</small></td>
+                <td><strong>${r.id}</strong></td>
                 <td>${r.session_name || r.session_id}</td>
                 <td>${humans}</td>
                 <td>${botsInRoom.map(b => `<span class="badge-bot">${b}</span>`).join('') || '—'}</td>
                 <td>${r.message_count}</td>
                 <td>
-                    <button class="tab-btn" style="padding:4px 8px;font-size:0.72rem;" onclick="monitorRoom('${r.id}')">View</button>
-                    <button class="tab-btn" style="padding:4px 8px;font-size:0.72rem;" onclick="pauseRoom('${r.id}')">Pause</button>
-                    <button class="tab-btn" style="padding:4px 8px;font-size:0.72rem;background:#fff1f0;color:#b42318;" onclick="deleteRoom('${r.id}')">Del</button>
+                    <button type="button" class="btn-row" onclick="monitorRoom('${r.id}')">Watch</button>
+                    <button type="button" class="btn-row danger" onclick="deleteRoom('${r.id}')">Delete</button>
                 </td>
             </tr>`;
-        }).join('') || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#999;">No active rooms</td></tr>';
+        }).join('') || '<tr><td colspan="6" class="empty-state">No active rooms</td></tr>';
 
         document.getElementById('sidebar-list').innerHTML = allRoomsCache.map(r => `
             <div class="room-item ${selectedRoomId === r.id ? 'active' : ''}" onclick="selectRoom('${r.id}')">
-                <b>${r.id}</b><br><small>${r.message_count} msgs</small>
+                <b>${r.id}</b><br><small>${r.message_count} messages</small>
             </div>
-        `).join('') || '<p style="padding:8px;color:#999;font-size:0.8rem;">No rooms</p>';
+        `).join('') || '<p class="empty-state" style="padding:8px;">No rooms</p>';
 
         if (selectedRoomId) fetchMessages(selectedRoomId);
         if (document.getElementById('sessions-tab').classList.contains('active')) {
@@ -670,16 +777,9 @@ async function fetchMessages(rid) {
 function monitorRoom(id) { switchTab('rooms'); selectRoom(id); }
 function selectRoom(id) {
     selectedRoomId = id;
-    document.getElementById('current-room-name').textContent = 'Monitoring: ' + id;
+    document.getElementById('current-room-name').textContent = id;
     fetchMessages(id);
     updateData();
-}
-
-async function pauseRoom(id) {
-    if (!confirm(`Pause room ${id}?`)) return;
-    const res = await fetch(`/api/admin/rooms/${id}/pause`, { method: 'POST' });
-    const data = await res.json();
-    if (data.status === 'success') { log(`Paused ${id}`); updateData(); }
 }
 
 async function deleteRoom(id) {
@@ -687,45 +787,37 @@ async function deleteRoom(id) {
     const res = await fetch(`/api/admin/rooms/${id}`, { method: 'DELETE' });
     if ((await res.json()).status === 'success') {
         if (selectedRoomId === id) selectedRoomId = null;
-        log(`Deleted room ${id}`);
         updateData();
     }
 }
 
 function renderExportTab() {
-    const sessContainer = document.getElementById('export-sessions-list');
-    sessContainer.innerHTML = allSessionsCache.length ? allSessionsCache.map(s => `
+    document.getElementById('export-sessions-list').innerHTML = allSessionsCache.length ? allSessionsCache.map(s => `
         <div class="export-card">
-            <strong>${s.name}</strong><br><small>${s.id}</small>
-            <p style="font-size:0.8rem;margin:8px 0;color:var(--gray-700);">Activity log CSV</p>
-            <a href="/api/export/session/${encodeURIComponent(s.id)}/activity" download class="btn-export">Download</a>
+            <strong>${s.name || s.id}</strong><br><small>${s.id}</small>
+            <a href="/api/export/session/${encodeURIComponent(s.id)}/activity" download class="btn-export">Download CSV</a>
         </div>
     `).join('') : '<p class="empty-state">No sessions</p>';
 
-    const roomContainer = document.getElementById('export-rooms-list');
-    roomContainer.innerHTML = allRoomsCache.length ? allRoomsCache.map(r => `
+    document.getElementById('export-rooms-list').innerHTML = allRoomsCache.length ? allRoomsCache.map(r => `
         <div class="export-card">
             <strong>${r.id}</strong><br><small>${r.message_count} messages</small>
-            <a href="/api/export/room/${encodeURIComponent(r.id)}/messages" download class="btn-export">Download</a>
+            <a href="/api/export/room/${encodeURIComponent(r.id)}/messages" download class="btn-export">Download CSV</a>
         </div>
     `).join('') : '<p class="empty-state">No rooms yet</p>';
 }
 
-/* Init */
 (function init() {
     const params = new URLSearchParams(location.search);
-    const tab = params.get('tab') || 'sessions';
-    const session = params.get('session');
+    let tab = params.get('tab') || 'sessions';
+    if (tab === 'sandbox' || tab === 'monitor') tab = tab === 'sandbox' ? 'sessions' : 'rooms';
     switchTab(tab);
+    const session = params.get('session');
     if (session && tab === 'sessions') {
         setTimeout(() => selectSession(session), 500);
     }
-    if (params.get('session') && tab === 'sandbox') {
-        document.getElementById('testSessionId').value = params.get('session');
-    }
     updateData();
     setInterval(updateData, 4000);
-    log('Dashboard ready.');
 })();
 </script>
 </body>

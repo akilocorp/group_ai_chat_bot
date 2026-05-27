@@ -3,7 +3,7 @@
  * Saves transcript + chat_status when chat ends OR when participant clicks Next early.
  */
 (function () {
-  var MAX_TRANSCRIPT_CHARS = 12000;
+  var MAX_TRANSCRIPT_CHARS = 240000;
   var API_BASE = 'https://group.xjhuang.com';
 
   function saveActr(data) {

@@ -37,9 +37,19 @@
             -webkit-overflow-scrolling: touch;
         }
         .message-group {
-            display: flex; align-items: flex-end; gap: 8px;
-            max-width: 85%; animation: fadeIn 0.2s ease-out;
+            display: flex; align-items: flex-start; gap: 10px;
+            max-width: 88%; animation: fadeIn 0.2s ease-out;
         }
+        .msg-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 1.15rem; line-height: 1;
+            background: #eef2ff; border: 1.5px solid #c7d2fe;
+            box-shadow: var(--shadow-sm);
+        }
+        .msg-avatar.human { background: #eef2ff; border-color: #a5b4fc; }
+        .msg-avatar.bot { background: #fff7ed; border-color: #fdba74; }
+        .message-group.own .msg-avatar.human { background: #fff7ed; border-color: #fdba74; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
@@ -53,20 +63,14 @@
             font-weight: 600; margin-bottom: 2px; padding: 0 4px;
         }
         .sender-bot { color: var(--orange-dark); }
-        .message {
-            padding: 10px 14px; border-radius: 16px;
-            font-size: 0.94rem; line-height: 1.4;
-            box-shadow: var(--shadow-sm);
+        .message-body {
+            font-size: 0.94rem;
+            line-height: 1.45;
+            color: var(--gray-900);
+            word-break: break-word;
+            padding: 0 2px;
         }
-        .message.own {
-            background: var(--own-msg); color: white;
-            border-bottom-right-radius: 4px;
-        }
-        .message.other {
-            background: var(--other-msg); color: var(--gray-900);
-            border: 1px solid var(--gray-300);
-            border-bottom-left-radius: 4px;
-        }
+        .message-group.own .message-body { text-align: right; }
         .input-area {
             background: var(--white);
             padding: 10px 16px 12px;
@@ -189,8 +193,8 @@
     <div id="onboarding-overlay" aria-live="polite">
         <div class="onboarding-card" id="onboarding-card">
             <div class="match-spinner" id="onboarding-spinner"></div>
-            <h3 id="onboarding-title">你正在匹配，请稍等</h3>
-            <p class="sub" id="onboarding-sub">正在为你寻找小组…</p>
+            <h3 id="onboarding-title">Matching you to a group…</h3>
+            <p class="sub" id="onboarding-sub">Please wait a moment.</p>
             <p class="sub-en" id="onboarding-sub-en" style="display:none;"></p>
         </div>
     </div>
@@ -267,28 +271,28 @@
     function showMatchingOnboarding() {
         onboardingOverlay.classList.remove('hidden');
         onboardingSpinner.style.display = 'block';
-        onboardingTitle.textContent = '你正在匹配，请稍等';
-        onboardingSub.textContent = '正在为你寻找小组…';
+        onboardingTitle.textContent = 'Matching you to a group…';
+        onboardingSub.textContent = 'Please wait a moment.';
         onboardingSub.style.display = 'block';
         onboardingSubEn.style.display = 'none';
         onboardingCard.classList.remove('pop');
         wsStatus.textContent = 'Matching…';
         statusDot.style.background = 'var(--gray-500)';
         document.getElementById('room-title').textContent = 'Study Chat';
-        teamRoster.textContent = '请稍候';
+        teamRoster.textContent = 'Please wait…';
     }
 
     async function showAssignedOnboarding(displayName) {
         onboardingSpinner.style.display = 'none';
-        onboardingTitle.innerHTML = `你被分配为 <span class="onboarding-name">${displayName}</span>`;
-        onboardingSub.textContent = '即将进入小组讨论';
+        onboardingTitle.innerHTML = `You are assigned as <span class="onboarding-name">${displayName}</span>`;
+        onboardingSub.textContent = 'Entering team chat…';
         onboardingSubEn.textContent = "Let's begin your chat!";
         onboardingSubEn.style.display = 'block';
         onboardingCard.classList.remove('pop');
         void onboardingCard.offsetWidth;
         onboardingCard.classList.add('pop');
         wsStatus.textContent = 'Ready';
-        teamRoster.textContent = `你是 ${displayName}`;
+        teamRoster.textContent = `You are ${displayName}`;
         await sleep(3000);
     }
 
@@ -359,14 +363,30 @@
 
     function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
 
+    function avatarKindForSender(botMatch, isBot) {
+        if (!isBot) return 'human';
+        return botMatch && botMatch.avatar_type === 'human' ? 'human' : 'bot';
+    }
+
+    function createMessageAvatar(kind) {
+        const av = document.createElement('div');
+        av.className = `msg-avatar ${kind}`;
+        av.setAttribute('aria-hidden', 'true');
+        av.textContent = kind === 'bot' ? '🤖' : '👤';
+        return av;
+    }
+
     function renderMessage(sender, text) {
         const botMatch = activeBots.find(b => b.name === sender);
         const isBot = !!botMatch;
         const isOwn = myDisplayName && sender === myDisplayName && !isBot;
         const showAsBot = isBot && (!botMatch.avatar_type || botMatch.avatar_type === 'bot');
+        const avatarKind = avatarKindForSender(botMatch, isBot);
 
         const group = document.createElement('div');
         group.className = `message-group ${isOwn ? 'own' : 'other'}`;
+
+        const avatar = createMessageAvatar(avatarKind);
 
         const content = document.createElement('div');
         content.className = 'message-content';
@@ -375,12 +395,13 @@
         senderEl.className = `message-sender${showAsBot ? ' sender-bot' : ''}`;
         senderEl.textContent = isOwn ? `${sender} (you)` : sender;
 
-        const bubble = document.createElement('div');
-        bubble.className = `message ${isOwn ? 'own' : 'other'}`;
-        bubble.textContent = text;
+        const body = document.createElement('div');
+        body.className = 'message-body';
+        body.textContent = text;
 
         content.appendChild(senderEl);
-        content.appendChild(bubble);
+        content.appendChild(body);
+        group.appendChild(avatar);
         group.appendChild(content);
         chatBox.appendChild(group);
         scrollToBottom();
@@ -544,10 +565,16 @@
         showError(payload.message || 'Session ended.');
     }
 
+    function usesEmbedCondition() {
+        return sessionConfig == null || sessionConfig.condition_enabled !== false;
+    }
+
     async function loadConfig() {
         try {
             let configUrl = `/api/sessions/${encodeURIComponent(sessionId)}/config?participant_id=${encodeURIComponent(participantId)}`;
-            if (condition) configUrl += `&condition=${encodeURIComponent(condition)}`;
+            if (usesEmbedCondition() && condition) {
+                configUrl += `&condition=${encodeURIComponent(condition)}`;
+            }
             const res = await fetch(configUrl);
             if (!res.ok) return;
             sessionConfig = await res.json();
@@ -583,7 +610,9 @@
             const poll = setInterval(async () => {
                 try {
                     let matchUrl = `/api/match?session_id=${encodeURIComponent(sessionId)}&uid=${encodeURIComponent(participantId)}`;
-                    if (condition) matchUrl += `&condition=${encodeURIComponent(condition)}`;
+                    if (usesEmbedCondition() && condition) {
+                        matchUrl += `&condition=${encodeURIComponent(condition)}`;
+                    }
                     const res = await fetch(matchUrl);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();

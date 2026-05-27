@@ -107,7 +107,7 @@ def jitter_delay_extra() -> float:
 
 def compute_typing_delay_seconds(text: str, typing_cps: float) -> float:
     """Simulate time to type the reply before it appears in chat."""
-    cps = max(2.0, float(typing_cps or 12))
+    cps = max(1.0, min(6.0, float(typing_cps or 4)))
     return max(0.3, min(12.0, len(text or "") / cps))
 
 
@@ -306,7 +306,7 @@ Persona:
 {(bot_prompt or '')[:600]}
 
 Recent chat:
-{(history_summary or '(none)')[:2000]}
+{(history_summary or '(none)')[:100000]}
 
 Latest message from {user_id}: "{user_text}"
 Other participants: {peers}

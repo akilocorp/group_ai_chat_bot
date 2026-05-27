@@ -194,16 +194,17 @@
                     <div class="helper">A unique Session ID (e.g. SES-A1B2C) is generated automatically on creation.</div>
                 </div>
                 <div class="form-group">
-                    <label>Enable AI Bots?</label>
+                    <label>Enable AI bots</label>
                     <select id="botEnabled">
-                        <option value="true">Yes — AI personas active</option>
-                        <option value="false">No — human only</option>
+                        <option value="true" selected>On — personas reply in chat</option>
+                        <option value="false">Off — humans only, no AI messages</option>
                     </select>
+                    <div class="helper">Dashboard <strong>AI bots</strong> shows On if any session has this set to On.</div>
                 </div>
             </div>
 
-            <!-- Row 2: Group size, session mode, spy mode -->
-            <div class="grid-3">
+            <!-- Row 2: Group size, session mode -->
+            <div class="grid-2">
                 <div class="form-group">
                     <label>Group Size</label>
                     <input type="number" id="groupSize" value="1" min="1" max="20">
@@ -215,13 +216,6 @@
                         <option value="1" selected>Mode 1 — All bots reply to every message</option>
                         <option value="2">Mode 2 — Smart single bot (one persona per message)</option>
                         <option value="3">Mode 3 — @mention only (bot responds when named)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Spy Mode</label>
-                    <select id="spyModeEnabled">
-                        <option value="false">Disabled</option>
-                        <option value="true">Enabled (admin view)</option>
                     </select>
                 </div>
             </div>
@@ -255,10 +249,18 @@
                 <div class="form-group">
                     <label>Assignment</label>
                     <select id="assignmentMode">
-                        <option value="fifo" selected>FIFO — first-come group formation</option>
-                        <option value="stratified">Stratified — separate queue per <code>condition</code> value</option>
+                        <option value="fifo" selected>FIFO — first-come (one queue)</option>
+                        <option value="stratified">Stratified — separate queue per bucket</option>
                     </select>
-                    <div class="helper">Optional embed param: <code>&amp;condition=…</code> from survey embedded data (e.g. Qualtrics). Used for roster labels and stratified queues.</div>
+                    <div class="helper" id="assignmentModeHelper">Used only when <strong>Condition</strong> is Off. When Condition is On, matching is always stratified by Qualtrics <code>condition</code>.</div>
+                </div>
+                <div class="form-group">
+                    <label>Condition <span class="hint">(Qualtrics / embed)</span></label>
+                    <select id="conditionEnabled" onchange="syncConditionAssignmentUI()">
+                        <option value="true" selected>On — stratified queues by <code>condition</code></option>
+                        <option value="false">Off — ignore <code>condition</code></option>
+                    </select>
+                    <div class="helper">Default <strong>On</strong>: only participants with the same <code>condition</code> value are matched; roster “(may use AI)” follows that value (<code>cond1_a</code>, <code>cond2</code>, etc.).</div>
                 </div>
                 <div class="form-group">
                     <label>Speaking turns</label>
@@ -390,9 +392,9 @@ function defaultBotTemplate(overrides = {}) {
         avatar_type: 'human',
         disclosed_ai_allowed: false,
         delay_seconds: 3,
-        typing_cps: 10,
+        typing_cps: 4,
         temperature: 0.75,
-        context_messages: 12,
+        context_max_chars: 100000,
         idle_threshold: 35,
         skip_rate: 0.1,
         min_words: 1,
@@ -461,7 +463,7 @@ function renderBots() {
                     <label>Display Name</label>
                     <input type="text" placeholder="e.g., Alex" value="${bot.name}"
                            oninput="updateBot(${i}, 'name', this.value)">
-                    <div class="helper">Shown in chat. Participants can @mention this name. “(may use AI)” in the header comes from the embed <code>condition</code> param, not this form.</div>
+                    <div class="helper">Shown in chat. “(may use AI)” appears only when <strong>Condition</strong> is On and Qualtrics passes <code>condition</code>.</div>
                 </div>
                 <div class="form-group">
                     <label>Avatar Type</label>
@@ -469,7 +471,7 @@ function renderBots() {
                         <option value="bot" ${(bot.avatar_type||'bot')==='bot'?'selected':''}>Bot Avatar</option>
                         <option value="human" ${(bot.avatar_type||'human')==='human'?'selected':''}>Human-style avatar</option>
                     </select>
-                    <div class="helper">How the persona appears in the message list.</div>
+                    <div class="helper">Message avatar: <strong>Bot</strong> = 🤖, <strong>Human-style</strong> = 👤. Text shows beside the avatar (no chat bubble).</div>
                 </div>
                 <div class="form-group">
                     <label>Response Mode</label>
@@ -505,11 +507,11 @@ function renderBots() {
                 <div class="form-group">
                     <label>Typing Speed <span class="hint">(chars/sec)</span></label>
                     <div class="range-row">
-                        <input type="range" min="2" max="40" step="1" value="${bot.typing_cps}"
+                        <input type="range" min="1" max="6" step="1" value="${bot.typing_cps ?? 4}"
                                oninput="updateBot(${i},'typing_cps',Number(this.value)); this.nextElementSibling.textContent=this.value">
-                        <span class="range-val">${bot.typing_cps}</span>
+                        <span class="range-val">${bot.typing_cps ?? 4}</span>
                     </div>
-                    <div class="helper">After the reply is ready: extra wait ≈ message length ÷ speed (0.3–12 s). Every mode.</div>
+                    <div class="helper">Typical human typing: 1–6 chars/sec. Extra wait ≈ length ÷ speed (0.3–12 s). Every mode.</div>
                 </div>
             </div>
             <div class="grid-2">
@@ -571,13 +573,11 @@ function renderBots() {
                     <div class="helper">0.0 = deterministic · 0.7 = balanced · 1.0 = highly varied.</div>
                 </div>
                 <div class="form-group">
-                    <label>Context Window <span class="hint">(messages)</span></label>
-                    <div class="range-row">
-                        <input type="range" min="3" max="50" step="1" value="${bot.context_messages}"
-                               oninput="updateBot(${i},'context_messages',Number(this.value)); this.nextElementSibling.textContent=this.value">
-                        <span class="range-val">${bot.context_messages}</span>
-                    </div>
-                    <div class="helper">How many recent messages the bot reads before replying. More = smarter but slower.</div>
+                    <label>Context budget <span class="hint">(characters)</span></label>
+                    <input type="number" min="10000" max="10000000" step="1000"
+                           value="${bot.context_max_chars ?? 100000}"
+                           oninput="updateBot(${i},'context_max_chars',Number(this.value))">
+                    <div class="helper">Recent chat included in the prompt (10,000–10,000,000 chars). Default 100,000.</div>
                 </div>
             </div>
 
@@ -618,9 +618,9 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         avatar_type:      b.avatar_type || 'human',
         disclosed_ai_allowed: !!b.disclosed_ai_allowed,
         delay_seconds:    b.delay_seconds,
-        typing_cps:       b.typing_cps,
+        typing_cps:       b.typing_cps ?? 4,
         temperature:      b.temperature,
-        context_messages: b.context_messages,
+        context_max_chars: Math.min(10000000, Math.max(10000, Number(b.context_max_chars) || 100000)),
         idle_threshold:   b.idle_threshold,
         skip_rate:        b.skip_rate,
         min_words:        Math.min(b.min_words ?? 1, b.max_words ?? 35),
@@ -635,14 +635,17 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         survey_open_days: parseInt(document.getElementById('surveyOpenDays').value, 10),
         group_chat_duration_minutes: parseInt(document.getElementById('groupChatDuration').value, 10),
         session_mode:     parseInt(document.getElementById('sessionMode').value),
-        spy_mode_enabled: document.getElementById('spyModeEnabled').value === 'true',
-        assignment_mode: document.getElementById('assignmentMode').value,
+        condition_enabled: document.getElementById('conditionEnabled').value === 'true',
+        assignment_mode: document.getElementById('conditionEnabled').value === 'true'
+            ? 'stratified'
+            : document.getElementById('assignmentMode').value,
         turn_mode: document.getElementById('turnMode').value,
         turn_duration_seconds: parseInt(document.getElementById('turnDuration').value, 10),
         ai_starts_conversation: document.getElementById('aiStartsConversation').value === 'true',
         qualtrics_handoff_enabled: document.getElementById('qualtricsIntegration').value === 'true',
         qualtrics_store_chat: document.getElementById('qualtricsIntegration').value === 'true',
         qualtrics_field_transcript: 'transcript',
+        qualtrics_field_status: 'chat_status',
         style_mimic_enabled: document.getElementById('styleMimicEnabled').value === 'true',
         style_mimic_target: document.getElementById('styleMimicTarget').value.trim() || 'c',
         participant_names: document.getElementById('participantNames').value
@@ -662,7 +665,6 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
             showSessionSetupGuide(data.session_id, payload);
             toast('Session created: ' + data.session_id);
             document.getElementById('sessionName').value = '';
-            loadDefaultPersonas();
         } else {
             toast('Error: ' + (data.message || 'Unknown'), '#e74c3c');
         }
@@ -671,13 +673,82 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
     }
 };
 
+function syncConditionAssignmentUI() {
+    const condOn = document.getElementById('conditionEnabled').value === 'true';
+    const assign = document.getElementById('assignmentMode');
+    const helper = document.getElementById('assignmentModeHelper');
+    if (condOn) {
+        assign.value = 'stratified';
+        assign.disabled = true;
+        if (helper) helper.style.fontWeight = '600';
+    } else {
+        assign.disabled = false;
+        if (helper) helper.style.fontWeight = '';
+    }
+}
+
+/** Qualtrics Embedded Data + iframe URL reference for researchers */
+function buildQualtricsFieldTable(sessionId, payload) {
+    const conditionOn = payload.condition_enabled !== false;
+    const qOn = payload.qualtrics_handoff_enabled && payload.qualtrics_store_chat;
+    const transcriptField = payload.qualtrics_field_transcript || 'transcript';
+    const statusField = payload.qualtrics_field_status || 'chat_status';
+    const rows = [
+        ['Field name', 'In / Out', 'Set by', 'Required', 'Description / example'],
+        ['session_id', 'In (iframe URL)', 'You (Admin)', 'Yes', sessionId + ' — fixed in HTML for this study'],
+        ['participant_id', 'In (iframe URL)', 'Qualtrics', 'Yes', '${e://Field/ResponseID} — one row per respondent'],
+    ];
+    if (conditionOn) {
+        rows.push(['condition', 'In (iframe URL)', 'Qualtrics', 'Yes', '${e://Field/condition} — e.g. cond1_a, cond1_b, cond2; same value → same match queue']);
+    }
+    if (qOn) {
+        rows.push([transcriptField, 'Out (saved)', 'Chat app', 'Yes', 'Full group transcript text (up to ~240k chars)']);
+        rows.push([statusField, 'Out (saved)', 'Chat app', 'Yes', 'completed_full | left_early | no_messages | never_joined']);
+    }
+    rows.push(['—', '—', '—', '—', 'Settings below are configured in Admin only (not passed through Qualtrics):']);
+    rows.push(['group_size', 'Server', 'Admin', '—', String(payload.group_size ?? '') + ' humans per group']);
+    rows.push(['group_chat_duration_minutes', 'Server', 'Admin', '—', String(payload.group_chat_duration_minutes ?? 5) + ' min per group']);
+    rows.push(['survey_open_days', 'Server', 'Admin', '—', String(payload.survey_open_days ?? 7) + ' days collection window']);
+    rows.push(['session_mode', 'Server', 'Admin', '—', 'Mode ' + (payload.session_mode ?? 1) + ' (bot reply rules)']);
+    rows.push(['bot_enabled', 'Server', 'Admin', '—', String(payload.bot_enabled)]);
+    rows.push(['participant_names', 'Server', 'Admin', '—', (payload.participant_names || []).join(', ') || '(auto IDs)']);
+    rows.push(['assignment_mode', 'Server', 'Admin', '—', conditionOn ? 'stratified (forced when Condition On)' : (payload.assignment_mode || 'fifo')]);
+    rows.push(['condition_enabled', 'Server', 'Admin', '—', String(conditionOn)]);
+    rows.push(['style_mimic', 'Server', 'Admin', '—', (payload.style_mimic_enabled ? 'On → ' + (payload.style_mimic_target || 'c') : 'Off')]);
+    rows.push(['ai_starts_conversation', 'Server', 'Admin', '—', String(payload.ai_starts_conversation)]);
+    rows.push(['turn_mode', 'Server', 'Admin', '—', payload.turn_mode || 'none']);
+    rows.push(['personas', 'Server', 'Admin', '—', (payload.bots || []).map(b => b.name).filter(Boolean).join(', ') || '—']);
+    const thead = rows[0].map(h => `<th style="text-align:left;padding:6px 8px;border-bottom:2px solid var(--orange);font-size:0.75rem;">${h}</th>`).join('');
+    const body = rows.slice(1).map(r => `<tr>${r.map(c => `<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:0.78rem;vertical-align:top;">${c}</td>`).join('')}</tr>`).join('');
+    const headerLine = rows.slice(1).filter(r => r[1] !== '—').map(r => r[0]).join('\t');
+    return `
+        <div class="setup-block" style="margin-top:16px;">
+            <h4>Qualtrics Embedded Data — field reference</h4>
+            <p style="font-size:0.82rem;color:var(--gray-700);margin:8px 0;">
+                In <strong>Survey Flow → Embedded Data</strong>, create the <strong>In</strong> and <strong>Out</strong> fields below.
+                Paste the tab-separated header row into a spreadsheet if you track study metadata alongside exports.
+            </p>
+            <div style="overflow-x:auto;margin:10px 0;">
+                <table style="width:100%;border-collapse:collapse;">${thead ? '<thead><tr>' + thead + '</tr></thead>' : ''}<tbody>${body}</tbody></table>
+            </div>
+            <p style="font-size:0.78rem;color:var(--gray-700);margin:8px 0 4px;"><strong>Spreadsheet / import header row (In + Out fields only):</strong></p>
+            <div class="url-box" style="align-items:flex-start;">
+                <code id="qualtrics-header-row" style="white-space:pre-wrap;font-size:0.8rem;">${headerLine.replace(/</g, '&lt;')}</code>
+                <button type="button" class="btn-copy" onclick="copyText('qualtrics-header-row')">Copy headers</button>
+            </div>
+        </div>`;
+}
+
 function showSessionSetupGuide(sessionId, payload) {
     const panel = document.getElementById('session-setup-panel');
     const content = document.getElementById('setup-panel-content');
     const base = window.location.origin;
     const isLocal = base.includes('localhost') || base.includes('127.0.0.1');
     const publicBase = 'https://group.xjhuang.com';
-    const embedUrl = `${publicBase}/embed.html?session_id=${encodeURIComponent(sessionId)}&participant_id=\${e://Field/ResponseID}&condition=\${e://Field/condition}`;
+    const conditionOn = payload.condition_enabled !== false;
+    const embedUrl = conditionOn
+        ? `${publicBase}/embed.html?session_id=${encodeURIComponent(sessionId)}&participant_id=\${e://Field/ResponseID}&condition=\${e://Field/condition}`
+        : `${publicBase}/embed.html?session_id=${encodeURIComponent(sessionId)}&participant_id=\${e://Field/ResponseID}`;
     const days = payload.survey_open_days ?? 7;
     const chatMin = payload.group_chat_duration_minutes ?? 5;
 
@@ -687,7 +758,7 @@ function showSessionSetupGuide(sessionId, payload) {
         <div class="setup-block">
             <h4>Qualtrics — 3 steps</h4>
             <ol style="font-size:0.88rem;line-height:1.7;padding-left:20px;margin:10px 0;">
-                <li><strong>Survey Flow → Embedded Data</strong> — add fields: <code>transcript</code>, <code>chat_status</code>, <code>condition</code> (if you use study conditions).</li>
+                <li><strong>Survey Flow → Embedded Data</strong> — create fields from the table below (at minimum the <strong>In</strong> and <strong>Out</strong> rows).</li>
                 <li><strong>Chat question → Text/Graphic → HTML</strong> — paste the block below (one copy includes script + iframe). Server: <strong>${publicBase}</strong></li>
                 <li><strong>Test with anonymous link</strong> — see <strong>Data &amp; Analysis</strong> for <code>transcript</code> + <code>chat_status</code>.</li>
             </ol>
@@ -704,7 +775,7 @@ function showSessionSetupGuide(sessionId, payload) {
             </p>
             <div class="url-box" style="align-items:flex-start;margin-top:12px;">
                 <code id="qualtrics-html-text" style="white-space:pre-wrap;font-size:0.68rem;">&lt;script&gt;
-(function(){var M=12000,B='${publicBase}';function save(d){if(!d||d.source!=='ACTR_CHAT'||d.event!=='chat_ended')return;var se=window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine;if(!se)return;var tf=d.qualtrics_field_transcript||'transcript',sf=d.qualtrics_field_status||'chat_status',t=d.transcript_text!=null?String(d.transcript_text):'';if(t.length&gt;M)t=t.slice(0,M)+'\\n...(truncated)';se.setEmbeddedData(sf,d.chat_status||'unknown');se.setEmbeddedData(tf,t);window.__actrSaved=true;console.log('[ACTR] saved',sf,d.chat_status,t.length);if(d.auto_advance&amp;&amp;se.clickNextButton)se.clickNextButton();}function iframe(){return document.querySelector('iframe[src*=\"embed.html\"]')}function apiBase(){var i=iframe();try{return i?new URL(i.src).origin:B}catch(e){return B}}function iframeParams(){var i=iframe();if(!i)return null;try{var u=new URL(i.src),s=u.searchParams.get('session_id'),p=u.searchParams.get('participant_id');if(!s||!p||p.indexOf('e://Field')&gt;=0)return null;return{session_id:s,participant_id:p}}catch(e){return null}}function handoff(r){if(window.__actrSaved)return;var par=iframeParams();if(!par)return;try{var x=new XMLHttpRequest();x.open('POST',apiBase()+'/api/embed/handoff',false);x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify({session_id:par.session_id,participant_id:par.participant_id,reason:r||'qualtrics_next'}));if(x.status===200){var d=JSON.parse(x.responseText);save({source:'ACTR_CHAT',event:'chat_ended',transcript_text:d.transcript_text,chat_status:d.chat_status,qualtrics_field_transcript:d.qualtrics_field_transcript,qualtrics_field_status:d.qualtrics_field_status,auto_advance:false});}}catch(e){console.warn('[ACTR] handoff',e);}}function init(){window.addEventListener('message',function(e){save(e.data)},false);var n=document.getElementById('NextButton');if(n)n.addEventListener('click',function(){handoff('qualtrics_next_click')},true);if(window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine&amp;&amp;Qualtrics.SurveyEngine.addOnUnload)Qualtrics.SurveyEngine.addOnUnload(function(){handoff('qualtrics_unload')});}if(window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine&amp;&amp;Qualtrics.SurveyEngine.addOnload)Qualtrics.SurveyEngine.addOnload(init);else init();})();
+(function(){var M=240000,B='${publicBase}';function save(d){if(!d||d.source!=='ACTR_CHAT'||d.event!=='chat_ended')return;var se=window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine;if(!se)return;var tf=d.qualtrics_field_transcript||'transcript',sf=d.qualtrics_field_status||'chat_status',t=d.transcript_text!=null?String(d.transcript_text):'';if(t.length&gt;M)t=t.slice(0,M)+'\\n...(truncated)';se.setEmbeddedData(sf,d.chat_status||'unknown');se.setEmbeddedData(tf,t);window.__actrSaved=true;console.log('[ACTR] saved',sf,d.chat_status,t.length);if(d.auto_advance&amp;&amp;se.clickNextButton)se.clickNextButton();}function iframe(){return document.querySelector('iframe[src*=\"embed.html\"]')}function apiBase(){var i=iframe();try{return i?new URL(i.src).origin:B}catch(e){return B}}function iframeParams(){var i=iframe();if(!i)return null;try{var u=new URL(i.src),s=u.searchParams.get('session_id'),p=u.searchParams.get('participant_id');if(!s||!p||p.indexOf('e://Field')&gt;=0)return null;return{session_id:s,participant_id:p}}catch(e){return null}}function handoff(r){if(window.__actrSaved)return;var par=iframeParams();if(!par)return;try{var x=new XMLHttpRequest();x.open('POST',apiBase()+'/api/embed/handoff',false);x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify({session_id:par.session_id,participant_id:par.participant_id,reason:r||'qualtrics_next'}));if(x.status===200){var d=JSON.parse(x.responseText);save({source:'ACTR_CHAT',event:'chat_ended',transcript_text:d.transcript_text,chat_status:d.chat_status,qualtrics_field_transcript:d.qualtrics_field_transcript,qualtrics_field_status:d.qualtrics_field_status,auto_advance:false});}}catch(e){console.warn('[ACTR] handoff',e);}}function init(){window.addEventListener('message',function(e){save(e.data)},false);var n=document.getElementById('NextButton');if(n)n.addEventListener('click',function(){handoff('qualtrics_next_click')},true);if(window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine&amp;&amp;Qualtrics.SurveyEngine.addOnUnload)Qualtrics.SurveyEngine.addOnUnload(function(){handoff('qualtrics_unload')});}if(window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine&amp;&amp;Qualtrics.SurveyEngine.addOnload)Qualtrics.SurveyEngine.addOnload(init);else init();})();
 &lt;/script&gt;
 &lt;iframe src="${embedUrl}" style="width:100%;min-height:600px;border:1px solid #ddd;border-radius:8px;"&gt;&lt;/iframe&gt;</code>
                 <button type="button" class="btn-copy" onclick="copyText('qualtrics-html-text')">Copy HTML</button>
@@ -725,6 +796,7 @@ function showSessionSetupGuide(sessionId, payload) {
         </div>
 
         ${qualtricsGuide}
+        ${buildQualtricsFieldTable(sessionId, payload)}
 
         <p style="font-size:0.8rem;color:var(--gray-500);margin-top:8px;">Backup export: <a href="/?tab=export">Dashboard → Export</a></p>
     `;
@@ -749,6 +821,7 @@ function copyText(elementId) {
 
 // Init
 updateSessionModeInfo('1');
+syncConditionAssignmentUI();
 loadDefaultPersonas();
 </script>
 </body>

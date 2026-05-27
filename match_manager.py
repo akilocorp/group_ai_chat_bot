@@ -38,6 +38,8 @@ class SessionConfig:
         self.turn_duration_seconds = 60
         # Matching
         self.assignment_mode = "fifo"  # fifo | stratified
+        # Qualtrics embed `condition` param: disclosure labels + stratified queues
+        self.condition_enabled = True
         # Optional: other personas mimic one teammate's length/tone
         self.style_mimic_enabled = False
         self.style_mimic_target = "c"
@@ -64,6 +66,7 @@ class SessionConfig:
             "turn_mode": self.turn_mode,
             "turn_duration_seconds": self.turn_duration_seconds,
             "assignment_mode": self.assignment_mode,
+            "condition_enabled": self.condition_enabled,
             "style_mimic_enabled": self.style_mimic_enabled,
             "style_mimic_target": self.style_mimic_target,
         }
@@ -96,6 +99,7 @@ class SessionConfig:
         obj.turn_mode = data.get("turn_mode", "none")
         obj.turn_duration_seconds = data.get("turn_duration_seconds", 60)
         obj.assignment_mode = data.get("assignment_mode", "fifo")
+        obj.condition_enabled = bool(data.get("condition_enabled", True))
         obj.style_mimic_enabled = bool(data.get("style_mimic_enabled", False))
         obj.style_mimic_target = str(data.get("style_mimic_target") or "c").strip() or "c"
         if "created_at" in data:
@@ -192,6 +196,7 @@ class MatchManager:
         turn_mode: str = "none",
         turn_duration_seconds: int = 60,
         assignment_mode: str = "fifo",
+        condition_enabled: bool = True,
         style_mimic_enabled: bool = False,
         style_mimic_target: str = "c",
     ) -> str:
@@ -210,7 +215,11 @@ class MatchManager:
         config.ai_starts_conversation = ai_starts_conversation
         config.turn_mode = turn_mode if turn_mode in ("none", "round_robin", "timed") else "none"
         config.turn_duration_seconds = max(10, turn_duration_seconds)
-        config.assignment_mode = assignment_mode if assignment_mode in ("fifo", "stratified") else "fifo"
+        config.condition_enabled = bool(condition_enabled)
+        if config.condition_enabled:
+            config.assignment_mode = "stratified"
+        else:
+            config.assignment_mode = assignment_mode if assignment_mode in ("fifo", "stratified") else "fifo"
         config.style_mimic_enabled = bool(style_mimic_enabled)
         config.style_mimic_target = (style_mimic_target or "c").strip() or "c"
 
@@ -278,9 +287,13 @@ class MatchManager:
             session.turn_mode = tm if tm in ("none", "round_robin", "timed") else "none"
         if "turn_duration_seconds" in data:
             session.turn_duration_seconds = max(10, int(data["turn_duration_seconds"]))
+        if "condition_enabled" in data:
+            session.condition_enabled = bool(data["condition_enabled"])
         if "assignment_mode" in data:
             am = data["assignment_mode"]
             session.assignment_mode = am if am in ("fifo", "stratified") else "fifo"
+        if getattr(session, "condition_enabled", True):
+            session.assignment_mode = "stratified"
         if "style_mimic_enabled" in data:
             session.style_mimic_enabled = bool(data["style_mimic_enabled"])
         if "style_mimic_target" in data:
@@ -321,15 +334,20 @@ class MatchManager:
             print(f"🚫 Session {session_id} is closed (survey collection ended).")
             return None
 
+        if not getattr(session_config, "condition_enabled", True):
+            condition = None
+
         if uid in self.user_locations:
             return self.user_locations[uid].get("group_id")
 
+        if getattr(session_config, "condition_enabled", True):
+            return self._add_to_stratified_queue(session_id, uid, condition, session_config)
         if session_config.assignment_mode == "stratified":
             return self._add_to_stratified_queue(session_id, uid, condition, session_config)
-        return self._add_to_fifo_queue(session_id, uid, session_config, condition)
+        return self._add_to_fifo_queue(session_id, uid, session_config)
 
     def _add_to_fifo_queue(
-        self, session_id: str, uid: str, session_config: SessionConfig, condition: Optional[str] = None
+        self, session_id: str, uid: str, session_config: SessionConfig,
     ) -> Optional[str]:
         queue = self.queues[session_id]
         if uid not in queue:
@@ -340,7 +358,7 @@ class MatchManager:
             matched_members = queue[: session_config.group_size]
             self.queues[session_id] = queue[session_config.group_size :]
             group_id = f"GRP-{uuid.uuid4().hex[:4].upper()}"
-            self.create_group(session_id, group_id, matched_members, condition=condition)
+            self.create_group(session_id, group_id, matched_members, condition=None)
             return group_id
         return None
 
@@ -392,7 +410,7 @@ class MatchManager:
                 "opening_sent": False,
                 "turn_initialized": False,
             }
-            if session_config and session_config.bots:
+            if session_config and session_config.bots and getattr(session_config, "condition_enabled", True):
                 assign_group_disclosure(session_config.bots, condition, group_info)
             self.active_rooms[session_id][group_id] = group_info
             if members:

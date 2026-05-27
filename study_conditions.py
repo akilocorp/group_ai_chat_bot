@@ -6,7 +6,8 @@ Supported values (bot display names a, b are examples — matching is by name):
   cond2, control    — no roster tags
   cond1             — pick one persona at random for the tag (server-side)
 
-Pass via embed URL: …&condition=${e://Field/condition}
+Pass via embed URL when session Condition is On: …&condition=${e://Field/condition}
+Matching uses stratified queues (same condition value → same group). Not used with FIFO.
 """
 
 from __future__ import annotations

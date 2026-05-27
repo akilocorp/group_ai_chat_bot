@@ -59,7 +59,7 @@ class ExportService:
                 bot.get("name", ""),
                 bot.get("mode", 1),
                 bot.get("delay_seconds", 0),
-                bot.get("typing_cps", 12),
+                bot.get("typing_cps", 4),
                 bot.get("idle_threshold", 20)
             ])
         writer.writerow([])

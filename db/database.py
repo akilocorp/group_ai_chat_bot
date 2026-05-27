@@ -21,33 +21,33 @@ if not USE_MONGO:
             json.dump({"rooms": [], "messages": [], "bot_stats": []}, f, ensure_ascii=False, indent=2)
     
     def _read_local_db():
-        """读取JSON数据库，如果文件为空或损坏则返回默认结构"""
+        """Read JSON database; return default structure if empty or corrupt."""
         try:
             with open(LOCAL_DB_PATH, 'r', encoding='utf-8') as f:
                 content = f.read().strip()
                 if not content:
-                    # 文件为空，返回默认结构并重新写入
+                    # Empty file — reset to default structure
                     default_db = {"rooms": [], "messages": [], "bot_stats": []}
                     _write_local_db(default_db)
                     return default_db
                 return json.loads(content)
         except json.JSONDecodeError:
-            # JSON损坏，重置为默认结构
+            # Corrupt JSON — reset to default structure
             default_db = {"rooms": [], "messages": [], "bot_stats": []}
             _write_local_db(default_db)
             return default_db
         except Exception as e:
-            print(f"❌ 读取本地数据库失败: {e}")
+            print(f"❌ Failed to read local database: {e}")
             return {"rooms": [], "messages": [], "bot_stats": []}
 
     def _write_local_db(data):
-        """写入JSON数据库，确保目录存在"""
+        """Write JSON database; ensure parent directory exists."""
         try:
             os.makedirs(os.path.dirname(LOCAL_DB_PATH), exist_ok=True)
             with open(LOCAL_DB_PATH, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"❌ 写入本地数据库失败: {e}")
+            print(f"❌ Failed to write local database: {e}")
 
 else:
     client = AsyncIOMotorClient(MONGO_DETAILS)

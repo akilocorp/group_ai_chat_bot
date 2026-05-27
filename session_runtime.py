@@ -358,7 +358,7 @@ async def send_ai_opening_message(session_id: str, group_id: str, bot_cfg: Dict,
     )
     if not reply:
         return
-    await asyncio.sleep(compute_typing_delay_seconds(reply, bot_cfg.get("typing_cps", 12)))
+    await asyncio.sleep(compute_typing_delay_seconds(reply, bot_cfg.get("typing_cps", 4)))
     cache_manager.cache_message(group_id, bot.name, reply)
     await save_message(group_id, bot.name, reply)
     if ctx:
