@@ -37,7 +37,10 @@
         label { display: block; font-weight: 700; font-size: var(--fs-md); margin-bottom: 6px; color: #333; }
         label .hint { font-weight: 500; color: #aaa; font-size: var(--fs-sm); }
         input[type=text], input[type=number], select, textarea {
-            width: 100%; padding: 10px 12px; border: 2px solid #e8e8e8;
+            display: block;
+            width: 100%;
+            min-width: 0;
+            padding: 10px 12px; border: 2px solid #e8e8e8;
             border-radius: 8px; font-size: var(--fs-md); font-family: inherit;
             transition: border-color 0.15s; background: var(--white);
         }
