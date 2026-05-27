@@ -129,11 +129,71 @@
         }
         #turn-banner.active { display: block; }
         #turn-banner.your-turn { background: var(--orange-pale); color: var(--orange-dark); font-weight: 600; }
+        #onboarding-overlay {
+            position: fixed; inset: 0; z-index: 2000;
+            background: var(--primary-gradient);
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px;
+            transition: opacity 0.35s ease;
+        }
+        #onboarding-overlay.hidden {
+            opacity: 0; pointer-events: none;
+        }
+        .onboarding-card {
+            background: white; border-radius: 20px;
+            padding: 36px 28px; max-width: 360px; width: 100%;
+            text-align: center; box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+        }
+        .onboarding-card h3 {
+            font-size: 1.15rem; color: var(--gray-900);
+            margin-bottom: 10px; font-weight: 700; line-height: 1.45;
+        }
+        .onboarding-card p.sub {
+            font-size: 0.9rem; color: var(--gray-700); line-height: 1.5;
+        }
+        .onboarding-card p.sub-en {
+            font-size: 0.88rem; color: var(--orange-dark);
+            margin-top: 14px; font-weight: 600;
+        }
+        .onboarding-name {
+            display: inline-block;
+            font-size: 1.35rem; font-weight: 800;
+            color: var(--orange); margin: 8px 0 4px;
+        }
+        .match-spinner {
+            width: 44px; height: 44px; margin: 0 auto 20px;
+            border: 4px solid var(--gray-300);
+            border-top-color: var(--orange);
+            border-radius: 50%;
+            animation: spin 0.85s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes onboardingPop {
+            0% { opacity: 0; transform: scale(0.88) translateY(12px); }
+            55% { opacity: 1; transform: scale(1.04) translateY(-4px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .onboarding-card.pop {
+            animation: onboardingPop 0.55s cubic-bezier(0.34, 1.4, 0.64, 1);
+        }
+        .main-chat-hidden .chat-container,
+        .main-chat-hidden .input-area,
+        .main-chat-hidden #turn-banner {
+            visibility: hidden;
+        }
     </style>
 </head>
 <body>
 
-<div class="app-wrapper">
+<div class="app-wrapper main-chat-hidden" id="app-wrapper">
+    <div id="onboarding-overlay" aria-live="polite">
+        <div class="onboarding-card" id="onboarding-card">
+            <div class="match-spinner" id="onboarding-spinner"></div>
+            <h3 id="onboarding-title">你正在匹配，请稍等</h3>
+            <p class="sub" id="onboarding-sub">正在为你寻找小组…</p>
+            <p class="sub-en" id="onboarding-sub-en" style="display:none;"></p>
+        </div>
+    </div>
     <div class="header">
         <h2 id="room-title">Study Chat</h2>
         <div id="team-roster" class="team-roster">Loading group…</div>
@@ -188,6 +248,61 @@
     let qualtricsHandoffSent = false;
     let sessionEndedNormally = false;
     let handoffInFlight = false;
+    let hadConnectedChat = false;
+    let chatUiRevealed = false;
+    const pendingChatMessages = [];
+
+    const onboardingOverlay = document.getElementById('onboarding-overlay');
+    const onboardingCard = document.getElementById('onboarding-card');
+    const onboardingSpinner = document.getElementById('onboarding-spinner');
+    const onboardingTitle = document.getElementById('onboarding-title');
+    const onboardingSub = document.getElementById('onboarding-sub');
+    const onboardingSubEn = document.getElementById('onboarding-sub-en');
+    const appWrapper = document.getElementById('app-wrapper');
+
+    function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function showMatchingOnboarding() {
+        onboardingOverlay.classList.remove('hidden');
+        onboardingSpinner.style.display = 'block';
+        onboardingTitle.textContent = '你正在匹配，请稍等';
+        onboardingSub.textContent = '正在为你寻找小组…';
+        onboardingSub.style.display = 'block';
+        onboardingSubEn.style.display = 'none';
+        onboardingCard.classList.remove('pop');
+        wsStatus.textContent = 'Matching…';
+        statusDot.style.background = 'var(--gray-500)';
+        document.getElementById('room-title').textContent = 'Study Chat';
+        teamRoster.textContent = '请稍候';
+    }
+
+    async function showAssignedOnboarding(displayName) {
+        onboardingSpinner.style.display = 'none';
+        onboardingTitle.innerHTML = `你被分配为 <span class="onboarding-name">${displayName}</span>`;
+        onboardingSub.textContent = '即将进入小组讨论';
+        onboardingSubEn.textContent = "Let's begin your chat!";
+        onboardingSubEn.style.display = 'block';
+        onboardingCard.classList.remove('pop');
+        void onboardingCard.offsetWidth;
+        onboardingCard.classList.add('pop');
+        wsStatus.textContent = 'Ready';
+        teamRoster.textContent = `你是 ${displayName}`;
+        await sleep(3000);
+    }
+
+    function revealMainChat(displayName) {
+        chatUiRevealed = true;
+        appWrapper.classList.remove('main-chat-hidden');
+        onboardingOverlay.classList.add('hidden');
+        inputArea.style.display = 'block';
+        document.getElementById('room-title').textContent = 'Team Discussion';
+        updateGroupRoster();
+        pendingChatMessages.forEach((m) => renderMessage(m.sender, m.text));
+        pendingChatMessages.length = 0;
+        setConnected(window.chatWebSocket && window.chatWebSocket.readyState === WebSocket.OPEN);
+    }
 
     function formatTeammateLabel(bot) {
         if (!bot || !bot.name) return '';
@@ -229,6 +344,7 @@
     }
 
     function setConnected(online) {
+        if (!chatUiRevealed) return;
         wsStatus.textContent = online ? 'Connected' : 'Disconnected';
         wsStatusDetail.textContent = online ? 'You can send messages' : 'Please refresh if disconnected';
         statusDot.style.background = online ? 'var(--success)' : 'var(--danger)';
@@ -327,13 +443,51 @@
         };
         try {
             window.parent.postMessage(msg, '*');
+            if (window.top && window.top !== window.parent) {
+                window.top.postMessage(msg, '*');
+            }
         } catch (e) {
             console.warn('postMessage failed', e);
+        }
+        console.log('[ACTR] chat_ended → parent', msg.chat_status, (msg.transcript_text || '').length, 'chars');
+    }
+
+    function flushQualtricsHandoffSync(reason) {
+        if (qualtricsHandoffSent || sessionEndedNormally) return false;
+        const qualtricsOn = !!(
+            sessionConfig.qualtrics_handoff_enabled || sessionConfig.qualtrics_store_chat
+        );
+        if (!qualtricsOn || !sessionId || !participantId) return false;
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/embed/handoff', false);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify({
+                session_id: sessionId,
+                participant_id: participantId,
+                reason: reason,
+            }));
+            if (xhr.status !== 200) return false;
+            const data = JSON.parse(xhr.responseText);
+            notifyQualtricsParent({
+                ...data,
+                reason,
+                auto_advance: data.chat_status === 'completed_full' && qualtricsOn,
+            });
+            qualtricsHandoffSent = true;
+            return true;
+        } catch (e) {
+            console.warn('Qualtrics sync handoff failed', e);
+            return false;
         }
     }
 
     async function flushQualtricsHandoff(reason, options = {}) {
         if (qualtricsHandoffSent || sessionEndedNormally || handoffInFlight) return;
+        if (options.sync) {
+            flushQualtricsHandoffSync(reason);
+            return;
+        }
         handoffInFlight = true;
         const qualtricsOn = !!(
             sessionConfig.qualtrics_handoff_enabled || sessionConfig.qualtrics_store_chat
@@ -353,11 +507,10 @@
             });
             if (!res.ok) return;
             const data = await res.json();
-            const isComplete = data.chat_status === 'completed_full';
             notifyQualtricsParent({
                 ...data,
                 reason: reason,
-                auto_advance: isComplete && qualtricsOn,
+                auto_advance: data.chat_status === 'completed_full' && qualtricsOn,
             });
             qualtricsHandoffSent = true;
         } catch (e) {
@@ -452,13 +605,21 @@
     }
 
     function connectWebSocket(gid) {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/chat/${encodeURIComponent(sessionId)}/${encodeURIComponent(gid)}/${encodeURIComponent(participantId)}`;
-        const ws = new WebSocket(wsUrl);
+        return new Promise((resolve, reject) => {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/chat/${encodeURIComponent(sessionId)}/${encodeURIComponent(gid)}/${encodeURIComponent(participantId)}`;
+            const ws = new WebSocket(wsUrl);
+            let nameResolved = false;
 
-        ws.onopen = () => setConnected(true);
+            const failTimer = setTimeout(() => {
+                if (!nameResolved) reject(new Error('Connection timed out'));
+            }, 45000);
 
-        ws.onmessage = (event) => {
+            ws.onopen = () => {
+                hadConnectedChat = true;
+            };
+
+            ws.onmessage = (event) => {
             let payload;
             try { payload = JSON.parse(event.data); } catch { return; }
 
@@ -466,9 +627,15 @@
 
             if (payload.type === 'display_name') {
                 myDisplayName = payload.name;
-                updateGroupRoster();
-                setConnected(true);
-                showWelcomeBanner(myDisplayName);
+                if (!nameResolved) {
+                    nameResolved = true;
+                    clearTimeout(failTimer);
+                    resolve(myDisplayName);
+                }
+                if (chatUiRevealed) {
+                    updateGroupRoster();
+                    setConnected(true);
+                }
                 return;
             }
             if (payload.type === 'session_ended') {
@@ -488,27 +655,41 @@
                 return;
             }
             if (payload.type === 'message') {
-                renderMessage(payload.sender, payload.text);
+                if (chatUiRevealed) {
+                    renderMessage(payload.sender, payload.text);
+                } else {
+                    pendingChatMessages.push({ sender: payload.sender, text: payload.text });
+                }
+                return;
             }
-        };
+            };
 
-        ws.onclose = () => {
-            setConnected(false);
-            if (!sessionEndedNormally && !qualtricsHandoffSent) {
-                flushQualtricsHandoff('ws_close', { keepalive: true });
-            }
-        };
-        window.chatWebSocket = ws;
+            ws.onerror = () => {
+                if (!nameResolved) {
+                    clearTimeout(failTimer);
+                    reject(new Error('WebSocket error'));
+                }
+            };
+
+            ws.onclose = () => {
+                setConnected(false);
+                if (!nameResolved) {
+                    clearTimeout(failTimer);
+                    reject(new Error('Disconnected before assignment'));
+                }
+                if (!sessionEndedNormally && !qualtricsHandoffSent && hadConnectedChat) {
+                    flushQualtricsHandoffSync('ws_close') || flushQualtricsHandoff('ws_close', { keepalive: true });
+                }
+            };
+            window.chatWebSocket = ws;
+        });
     }
 
     window.addEventListener('pagehide', () => {
-        if (!sessionEndedNormally && !qualtricsHandoffSent) {
-            flushQualtricsHandoff('page_unload', { keepalive: true });
-        }
-    });
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden' && !sessionEndedNormally && !qualtricsHandoffSent) {
-            flushQualtricsHandoff('visibility_hidden', { keepalive: true });
+        if (!sessionEndedNormally && !qualtricsHandoffSent && hadConnectedChat) {
+            if (!flushQualtricsHandoffSync('page_unload')) {
+                flushQualtricsHandoff('page_unload', { keepalive: true });
+            }
         }
     });
 
@@ -528,23 +709,28 @@
 
     (async () => {
         try {
-            chatBox.innerHTML = '<div class="loading">Connecting to your session...</div>';
+            showMatchingOnboarding();
+            chatBox.innerHTML = '';
 
+            const matchStarted = Date.now();
             if (!groupId) {
-                chatBox.innerHTML = '<div class="loading">Finding your chat group...</div>';
                 groupId = await waitForGroup();
             }
-
-            chatBox.className = '';
-            chatBox.innerHTML = '';
-            inputArea.style.display = 'block';
-            document.getElementById('room-title').textContent = 'Team Discussion';
+            const matchWait = Math.max(0, 1200 - (Date.now() - matchStarted));
+            if (matchWait > 0) await sleep(matchWait);
 
             await loadConfig();
-            connectWebSocket(groupId);
-            // Refresh roster after match (applies embed condition assignment)
-            setTimeout(() => loadConfig().then(() => updateGroupRoster()), 800);
+
+            const displayName = await connectWebSocket(groupId);
+            await showAssignedOnboarding(displayName);
+
+            chatBox.className = '';
+            revealMainChat(displayName);
+
+            setTimeout(() => loadConfig().then(() => updateGroupRoster()), 400);
         } catch (err) {
+            onboardingOverlay.classList.add('hidden');
+            appWrapper.classList.remove('main-chat-hidden');
             showError('Could not start chat: ' + err.message);
         }
     })();
