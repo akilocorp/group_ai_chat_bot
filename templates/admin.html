@@ -71,9 +71,15 @@
         .mode-info strong { display: block; margin-bottom: 3px; color: var(--secondary); }
 
         /* GRIDS */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: start; }
+        .grid-2 .form-group,
+        .grid-3 .form-group,
+        .grid-4 .form-group { margin-bottom: 0; min-width: 0; }
+        .grid-2 input, .grid-2 select,
+        .grid-3 input, .grid-3 select,
+        .grid-4 input, .grid-4 select { width: 100%; }
 
         /* BUTTONS */
         .btn { padding: 9px 18px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-size: 0.88rem; }
@@ -182,7 +188,6 @@
     <!-- ===== CREATE SESSION ===== -->
     <div class="card">
         <div class="card-title">New Session</div>
-        <p class="intro">Field descriptions: <a href="/manual#admin-fields">Manual</a></p>
 
         <form id="newSessionForm">
 
@@ -233,40 +238,38 @@
             </div>
 
             <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">Experiment</div>
-            <div class="grid-3">
+            <div class="grid-3" style="margin-bottom:16px;">
                 <div class="form-group">
                     <label>Assignment</label>
                     <select id="assignmentMode">
-                        <option value="fifo" selected>FIFO</option>
-                        <option value="stratified">Stratified</option>
+                        <option value="fifo" selected>FIFO — first-come queue</option>
+                        <option value="stratified">Stratified — queue per bucket</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Condition</label>
                     <select id="conditionEnabled" onchange="syncConditionAssignmentUI()">
-                        <option value="true" selected>On</option>
-                        <option value="false">Off</option>
+                        <option value="true" selected>On — match by Qualtrics condition</option>
+                        <option value="false">Off — ignore condition</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Turns</label>
                     <select id="turnMode">
-                        <option value="none">Off</option>
-                        <option value="round_robin">Round-robin</option>
-                        <option value="timed">Timed</option>
+                        <option value="none">Off — free chat</option>
+                        <option value="round_robin">Round-robin — fixed order</option>
+                        <option value="timed">Timed — seconds per turn</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Turn duration (sec)</label>
                     <input type="number" id="turnDuration" value="60" min="10" max="600">
                 </div>
-            </div>
-            <div class="grid-3">
                 <div class="form-group">
                     <label>Style mimic</label>
                     <select id="styleMimicEnabled">
                         <option value="false" selected>Off</option>
-                        <option value="true">On</option>
+                        <option value="true">On — copy target style</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -276,17 +279,15 @@
                 <div class="form-group">
                     <label>AI opens chat</label>
                     <select id="aiStartsConversation">
-                        <option value="false">No</option>
-                        <option value="true">Yes</option>
+                        <option value="false">No — wait for human</option>
+                        <option value="true">Yes — bot sends first</option>
                     </select>
                 </div>
-            </div>
-            <div class="grid-2">
                 <div class="form-group">
                     <label>Qualtrics</label>
                     <select id="qualtricsIntegration">
-                        <option value="true" selected>On</option>
-                        <option value="false">Off</option>
+                        <option value="true" selected>On — save transcript to survey</option>
+                        <option value="false">Off — export from Dashboard</option>
                     </select>
                 </div>
             </div>
@@ -409,7 +410,6 @@ function renderBots() {
     }
     container.innerHTML = botPersonas.map((bot, i) => {
         const m = bot.mode || 1;
-        const modeClass = `active-m${m}`;
         return `
         <div class="bot-card">
             <div class="bot-card-header">
@@ -417,8 +417,7 @@ function renderBots() {
                 <button type="button" class="btn btn-danger" onclick="removeBotUI(${i})">Remove</button>
             </div>
 
-            <!-- Name + Avatar + Mode -->
-            <div class="grid-3">
+            <div class="grid-2">
                 <div class="form-group">
                     <label>Name</label>
                     <input type="text" placeholder="a" value="${bot.name}"
@@ -427,19 +426,19 @@ function renderBots() {
                 <div class="form-group">
                     <label>Avatar</label>
                     <select onchange="updateBot(${i}, 'avatar_type', this.value)">
-                        <option value="bot" ${(bot.avatar_type||'bot')==='bot'?'selected':''}>Bot</option>
-                        <option value="human" ${(bot.avatar_type||'human')==='human'?'selected':''}>Human</option>
+                        <option value="bot" ${(bot.avatar_type||'bot')==='bot'?'selected':''}>Bot — 🤖</option>
+                        <option value="human" ${(bot.avatar_type||'human')==='human'?'selected':''}>Human — 👤</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Persona mode</label>
-                    <div class="mode-tabs">
-                        <div class="mode-tab ${m===1?modeClass:''}" onclick="setMode(${i},1)">1</div>
-                        <div class="mode-tab ${m===2?modeClass:''}" onclick="setMode(${i},2)">2</div>
-                        <div class="mode-tab ${m===3?modeClass:''}" onclick="setMode(${i},3)">3</div>
-                        <div class="mode-tab ${m===4?modeClass:''}" onclick="setMode(${i},4)">4</div>
-                    </div>
-                </div>
+            </div>
+            <div class="form-group">
+                <label>Persona mode</label>
+                <select onchange="setMode(${i}, Number(this.value))">
+                    <option value="1" ${m===1?'selected':''}>Mode 1 — fixed delay</option>
+                    <option value="2" ${m===2?'selected':''}>Mode 2 — random delay (+0.5–2.5 s)</option>
+                    <option value="3" ${m===3?'selected':''}>Mode 3 — random skip</option>
+                    <option value="4" ${m===4?'selected':''}>Mode 4 — context reply chance</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -468,7 +467,7 @@ function renderBots() {
             </div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Idle (sec)</label>
+                    <label>Silence timeout (sec)</label>
                     <div class="range-row">
                         <input type="range" min="5" max="120" step="5" value="${bot.idle_threshold}"
                                oninput="updateBot(${i},'idle_threshold',Number(this.value)); this.nextElementSibling.textContent=this.value+'s'">

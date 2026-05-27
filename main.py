@@ -683,7 +683,7 @@ async def export_session_activity(session_id: str):
         writer.writerow([])
         writer.writerow(["=== BOT CONFIGURATION ==="])
         writer.writerow(["Bot Name", "Prompt", "Mode", "Delay (s)", "Max Tokens", "Temperature",
-                         "Typing CPS", "Context Max Chars", "Idle Threshold", "Avatar Type"])
+                         "Typing CPS", "Context Max Chars", "Silence Timeout (s)", "Avatar Type"])
         for bot in (session_cfg.bots or []):
             writer.writerow([
                 bot.get("name", ""),

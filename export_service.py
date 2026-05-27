@@ -53,7 +53,7 @@ class ExportService:
         writer.writerow([])
 
         writer.writerow(["Bot Configuration"])
-        writer.writerow(["Bot Name", "Mode", "Delay (s)", "Typing CPS", "Idle Threshold"])
+        writer.writerow(["Bot Name", "Mode", "Delay (s)", "Typing CPS", "Silence Timeout (s)"])
         for bot in session.bots:
             writer.writerow([
                 bot.get("name", ""),
