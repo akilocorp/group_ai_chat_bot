@@ -686,7 +686,7 @@ function fillSessionDetailForm(cfg) {
         if (el) el.value = val ?? fallback;
     };
     setIf('modBotReplyOnAny', cfg.bot_reply_on_any_message === true ? 'true' : 'false', 'true');
-    setIf('modMaxChainDepth', cfg.max_chain_depth, 3);
+    setIf('modMaxChainDepth', cfg.max_chain_depth, 10);
 }
 
 function setDetailEditMode(editing) {

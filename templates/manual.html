@@ -240,7 +240,7 @@
                     <tr><td>Persona mode</td><td>When <em>this</em> persona speaks — see <a href="#persona-modes">Persona modes</a> (not the same as session mode).</td></tr>
                     <tr><td>Prompt</td><td>System instructions for tone, topic, and deflection rules. Use <strong>Sync prompt to all</strong> to copy persona 1’s prompt to every persona.</td></tr>
                     <tr><td>Reply on any message</td><td>Session-level control above the persona cards. <strong>On</strong> (preset) — bot messages can trigger other bots (within max chain depth). <strong>Off</strong> — only human messages start bot replies.</td></tr>
-                    <tr><td>Max chain depth</td><td>Session-level: bot-to-bot follow-up rounds after one trigger message (preset <strong>3</strong>). Lower values quiet the room.</td></tr>
+                    <tr><td>Max chain depth</td><td>Session-level: bot-to-bot follow-up rounds after one trigger message (preset <strong>10</strong>). Lower values quiet the room.</td></tr>
                     <tr><td>Delay (sec)</td><td>Per-persona wait before generating a reply (main spacing control; no separate session cooldown). Persona modes 2–4 add 0.5–2.5 s random jitter.</td></tr>
                     <tr><td>Typing (chars/sec)</td><td>Simulated typing delay before the message appears (1–6; preset 2).</td></tr>
                     <tr><td>Silence timeout (sec)</td><td>If the room is quiet this long, a persona may send a nudge (preset 50 s).</td></tr>
@@ -300,7 +300,7 @@
                     <tr><td>Group size</td><td><strong>1</strong></td><td>One human per group; common layout is 1 human + 2 bots.</td></tr>
                     <tr><td>Session mode</td><td><strong>1</strong></td><td>All bots may respond; persona skip thins traffic.</td></tr>
                     <tr><td>Reply on any message</td><td><strong>On</strong></td><td>Bots may react to bot messages within max chain depth.</td></tr>
-                    <tr><td>Max chain depth</td><td><strong>3</strong></td><td>Bot-to-bot follow-up rounds after one trigger message.</td></tr>
+                    <tr><td>Max chain depth</td><td><strong>10</strong></td><td>Bot-to-bot follow-up rounds after one trigger message.</td></tr>
                     <tr><td>AI opens chat</td><td><strong>Yes</strong></td><td>A random persona opens with a short first line.</td></tr>
                     <tr><td>Condition (Admin)</td><td><strong>On</strong></td><td>Match by Qualtrics <code>condition</code>; see <a href="#example-condition">Example condition</a>.</td></tr>
                     <tr><td>Qualtrics <code>condition</code></td><td><em>You set in survey</em></td><td>Not fixed by ★ Example — e.g. <code>pilot</code> for everyone, or <code>cond1_a</code> / <code>cond2</code> for disclosure.</td></tr>

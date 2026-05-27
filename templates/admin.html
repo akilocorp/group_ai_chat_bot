@@ -281,7 +281,7 @@
                 </div>
                 <div class="form-group">
                     <label>Max chain depth</label>
-                    <input type="number" id="maxChainDepth" value="3" min="1" max="10" title="Bot-to-bot follow-up rounds after one trigger message">
+                    <input type="number" id="maxChainDepth" value="10" min="1" max="10" title="Bot-to-bot follow-up rounds after one trigger message">
                 </div>
             </div>
 
@@ -343,7 +343,7 @@ const EXAMPLE_CONDITION_HELP =
 const HUMAN_LIKE_PRESET = {
     sessionMode: 1,
     botReplyOnAny: true,
-    maxChainDepth: 3,
+    maxChainDepth: 10,
     aiStartsConversation: true,
     styleMimicEnabled: false,
     turnMode: 'none',
@@ -692,7 +692,7 @@ function buildQualtricsFieldTable(sessionId, payload) {
         ['survey_open_days', 'Server', 'Admin', '—', String(payload.survey_open_days ?? 7) + ' days new participants can join the queue'],
         ['session_mode', 'Server', 'Admin', '—', '1 = all bots | 2 = one bot per message | 3 = @mention only. This session: ' + (payload.session_mode ?? 1)],
         ['bot_reply_on_any_message', 'Server', 'Admin', '—', String(payload.bot_reply_on_any_message === true) + ' — if true, bot messages can trigger other bots (with chain limits)'],
-        ['max_chain_depth', 'Server', 'Admin', '—', String(payload.max_chain_depth ?? 3) + ' — bot-to-bot follow-up rounds after one trigger message'],
+        ['max_chain_depth', 'Server', 'Admin', '—', String(payload.max_chain_depth ?? 10) + ' — bot-to-bot follow-up rounds after one trigger message'],
         ['bot_enabled', 'Server', 'Admin', '—', String(payload.bot_enabled !== false)],
         ['participant_names', 'Server', 'Admin', '—', (payload.participant_names || []).join(', ') || '(auto participant IDs)'],
         ['assignment_mode', 'Server', 'Admin', '—', conditionOn ? 'stratified (forced when Condition On)' : (payload.assignment_mode || 'fifo')],
