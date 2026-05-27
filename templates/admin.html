@@ -181,8 +181,8 @@
 
     <!-- ===== CREATE SESSION ===== -->
     <div class="card">
-        <div class="card-title">🎛️ Create New Session</div>
-        <p class="intro">Create a session template. Participants are matched into groups that share these settings. Pass optional URL parameters (e.g. <code>condition</code>) from your survey embed to vary the experience per participant.</p>
+        <div class="card-title">New Session</div>
+        <p class="intro">Field descriptions: <a href="/manual#admin-fields">Manual</a></p>
 
         <form id="newSessionForm">
 
@@ -190,16 +190,14 @@
             <div class="grid-3">
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Session Name</label>
-                    <input type="text" id="sessionName" placeholder="e.g., Group Chat Session 1" required>
-                    <div class="helper">A unique Session ID (e.g. SES-A1B2C) is generated automatically on creation.</div>
+                    <input type="text" id="sessionName" placeholder="e.g. Pilot study" required>
                 </div>
                 <div class="form-group">
-                    <label>Enable AI bots</label>
+                    <label>AI bots</label>
                     <select id="botEnabled">
-                        <option value="true" selected>On — personas reply in chat</option>
-                        <option value="false">Off — humans only, no AI messages</option>
+                        <option value="true" selected>On</option>
+                        <option value="false">Off</option>
                     </select>
-                    <div class="helper">Dashboard <strong>AI bots</strong> shows On if any session has this set to On.</div>
                 </div>
             </div>
 
@@ -207,15 +205,14 @@
             <div class="grid-2">
                 <div class="form-group">
                     <label>Group Size</label>
-                    <input type="number" id="groupSize" value="1" min="1" max="20">
-                    <div class="helper">Number of human participants matched into each group (AI personas are not counted).</div>
+                    <input type="number" id="groupSize" value="2" min="1" max="20">
                 </div>
                 <div class="form-group">
-                    <label>Session Mode</label>
-                    <select id="sessionMode" onchange="updateSessionModeInfo(this.value)">
-                        <option value="1" selected>Mode 1 — All bots reply to every message</option>
-                        <option value="2">Mode 2 — Smart single bot (one persona per message)</option>
-                        <option value="3">Mode 3 — @mention only (bot responds when named)</option>
+                    <label>Session mode</label>
+                    <select id="sessionMode">
+                        <option value="1" selected>Mode 1 — all bots</option>
+                        <option value="2">Mode 2 — one bot</option>
+                        <option value="3">Mode 3 — @mention</option>
                     </select>
                 </div>
             </div>
@@ -223,89 +220,74 @@
                 <div class="form-group">
                     <label>Survey open (days)</label>
                     <input type="number" id="surveyOpenDays" value="7" min="1" max="90">
-                    <div class="helper">During the survey period, participants can join the queue anytime; new groups form as people arrive.</div>
                 </div>
                 <div class="form-group">
-                    <label>Group chat duration (minutes)</label>
+                    <label>Chat duration (min)</label>
                     <input type="number" id="groupChatDuration" value="5" min="1" max="180">
-                    <div class="helper">Each group ends this many minutes after it is formed (default 5).</div>
                 </div>
             </div>
 
-            <div class="mode-info" id="session-mode-info">
-                <strong>Mode 1 — All bots reply to every message</strong> Every persona responds to each message (independently).
-            </div>
-
-            <!-- Row 3: Participant names -->
             <div class="form-group" style="margin-top:16px;">
-                <label>Participant Display Names <span class="hint">(optional)</span></label>
-                <input type="text" id="participantNames" value="c" placeholder="e.g. c">
-                <div class="helper">Comma-separated display names for humans, assigned in join order. Names must be unique from persona display names below.</div>
+                <label>Participant names <span class="hint">(optional)</span></label>
+                <input type="text" id="participantNames" value="c" placeholder="c,d">
             </div>
 
-            <!-- Experiment options -->
-            <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">⚙️ Experiment Options</div>
+            <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">Experiment</div>
             <div class="grid-3">
                 <div class="form-group">
                     <label>Assignment</label>
                     <select id="assignmentMode">
-                        <option value="fifo" selected>FIFO — first-come (one queue)</option>
-                        <option value="stratified">Stratified — separate queue per bucket</option>
+                        <option value="fifo" selected>FIFO</option>
+                        <option value="stratified">Stratified</option>
                     </select>
-                    <div class="helper" id="assignmentModeHelper">Used only when <strong>Condition</strong> is Off. When Condition is On, matching is always stratified by Qualtrics <code>condition</code>.</div>
                 </div>
                 <div class="form-group">
-                    <label>Condition <span class="hint">(Qualtrics / embed)</span></label>
+                    <label>Condition</label>
                     <select id="conditionEnabled" onchange="syncConditionAssignmentUI()">
-                        <option value="true" selected>On — stratified queues by <code>condition</code></option>
-                        <option value="false">Off — ignore <code>condition</code></option>
+                        <option value="true" selected>On</option>
+                        <option value="false">Off</option>
                     </select>
-                    <div class="helper">Default <strong>On</strong>: only participants with the same <code>condition</code> value are matched; roster “(may use AI)” follows that value (<code>cond1_a</code>, <code>cond2</code>, etc.).</div>
                 </div>
                 <div class="form-group">
-                    <label>Speaking turns</label>
+                    <label>Turns</label>
                     <select id="turnMode">
-                        <option value="none">Off — anyone can speak anytime</option>
-                        <option value="round_robin">Round-robin — humans take fixed turns</option>
-                        <option value="timed">Timed — each turn lasts N seconds</option>
+                        <option value="none">Off</option>
+                        <option value="round_robin">Round-robin</option>
+                        <option value="timed">Timed</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label><span>Turn duration (seconds)</span> <span class="hint">Timed mode only</span></label>
+                    <label>Turn duration (sec)</label>
                     <input type="number" id="turnDuration" value="60" min="10" max="600">
-                    <div class="helper">Only when Speaking turns = <strong>Timed</strong>: max seconds per person per turn. Ignore for Off / Round-robin.</div>
                 </div>
             </div>
             <div class="grid-3">
                 <div class="form-group">
-                    <label>Mimic teammate style</label>
+                    <label>Style mimic</label>
                     <select id="styleMimicEnabled">
                         <option value="false" selected>Off</option>
-                        <option value="true">On — match target length &amp; tone</option>
+                        <option value="true">On</option>
                     </select>
-                    <div class="helper">When on, <strong>other</strong> personas imitate one teammate's chat habits.</div>
                 </div>
                 <div class="form-group">
-                    <label>Style target name</label>
+                    <label>Style target</label>
                     <input type="text" id="styleMimicTarget" value="c" placeholder="c">
-                    <div class="helper">Display name to copy (default <strong>c</strong> = human). AI personas <strong>a</strong>, <strong>b</strong> mimic them; <strong>c</strong> is never changed.</div>
                 </div>
                 <div class="form-group">
-                    <label>AI starts conversation?</label>
+                    <label>AI opens chat</label>
                     <select id="aiStartsConversation">
-                        <option value="false">No — wait for human first</option>
-                        <option value="true">Yes — first bot sends opening message</option>
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
                     </select>
                 </div>
             </div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Qualtrics integration</label>
+                    <label>Qualtrics</label>
                     <select id="qualtricsIntegration">
-                        <option value="true" selected>On — save transcript &amp; auto-advance</option>
-                        <option value="false">Off — export from Dashboard only</option>
+                        <option value="true" selected>On</option>
+                        <option value="false">Off</option>
                     </select>
-                    <div class="helper">On: saves <code>transcript</code> + <code>chat_status</code> to Qualtrics. See 3-step guide below after Create Session.</div>
                 </div>
             </div>
 
@@ -321,19 +303,16 @@
             <div id="botListContainer"></div>
 
             <div class="sticky-actions">
-                <button type="submit" class="btn btn-primary btn-lg">🚀 Create Session</button>
+                <button type="submit" class="btn btn-primary btn-lg">Create Session</button>
             </div>
         </form>
     </div>
 
     <!-- ===== Qualtrics setup guide (after create) ===== -->
     <div id="session-setup-panel" class="card setup-panel">
-        <div class="card-title">📋 Session setup guide</div>
-        <p style="font-size:0.88rem;color:var(--gray-700);margin-bottom:14px;">
-            After Create Session — copy the Qualtrics HTML block below into your survey.
-        </p>
+        <div class="card-title">Qualtrics setup</div>
         <div id="setup-panel-content">
-            <p style="color:#999;font-size:0.9rem;">No session created yet. Fill the form above and click Create Session.</p>
+            <p style="color:#999;font-size:0.9rem;">Create a session to get the embed HTML.</p>
         </div>
     </div>
 
@@ -343,25 +322,6 @@
 /* ============================================================
    MODE DESCRIPTIONS
    ============================================================ */
-const SESSION_MODE_INFO = {
-    '1': { title: 'Mode 1 — All bots reply to every message', desc: 'Every bot responds to every message. All bots are always active in the conversation.' },
-    '2': { title: 'Mode 2 — Smart single bot', desc: 'AI analyzes the message and picks the most relevant bot to respond. Only one bot speaks per message. Falls back to a random bot if intent is unclear.' },
-    '3': { title: 'Mode 3 — @mention only', desc: 'A bot only responds when its name is mentioned in the message (e.g. "@Alice what do you think?"). Bots stay silent otherwise.' }
-};
-
-const BOT_MODE_INFO = {
-    1: { title: 'Mode 1 — Fixed Delay', desc: 'Always replies after Response Delay, then typing delay (by message length ÷ Typing Speed).' },
-    2: { title: 'Mode 2 — Random Delay', desc: 'Always replies; adds 0.5–2.5 s jitter on top of Response Delay, then typing delay.' },
-    3: { title: 'Mode 3 — Random Skip', desc: 'Each message: skip with fixed probability (Skip Rate). If replying: Response Delay + 0.5–2.5 s jitter, then typing delay.' },
-    4: { title: 'Mode 4 — Contextual reply chance', desc: 'AI estimates P(reply) from context (0–1), then one random draw. If replying: Response Delay + 0.5–2.5 s jitter, then typing delay.' }
-};
-
-function updateSessionModeInfo(val) {
-    const el = document.getElementById('session-mode-info');
-    const info = SESSION_MODE_INFO[val];
-    if (info) el.innerHTML = `<strong>${info.title}</strong>${info.desc}`;
-}
-
 /* ============================================================
    TOAST
    ============================================================ */
@@ -460,86 +420,71 @@ function renderBots() {
             <!-- Name + Avatar + Mode -->
             <div class="grid-3">
                 <div class="form-group">
-                    <label>Display Name</label>
-                    <input type="text" placeholder="e.g., Alex" value="${bot.name}"
+                    <label>Name</label>
+                    <input type="text" placeholder="a" value="${bot.name}"
                            oninput="updateBot(${i}, 'name', this.value)">
-                    <div class="helper">Shown in chat. “(may use AI)” appears only when <strong>Condition</strong> is On and Qualtrics passes <code>condition</code>.</div>
                 </div>
                 <div class="form-group">
-                    <label>Avatar Type</label>
+                    <label>Avatar</label>
                     <select onchange="updateBot(${i}, 'avatar_type', this.value)">
-                        <option value="bot" ${(bot.avatar_type||'bot')==='bot'?'selected':''}>Bot Avatar</option>
-                        <option value="human" ${(bot.avatar_type||'human')==='human'?'selected':''}>Human-style avatar</option>
+                        <option value="bot" ${(bot.avatar_type||'bot')==='bot'?'selected':''}>Bot</option>
+                        <option value="human" ${(bot.avatar_type||'human')==='human'?'selected':''}>Human</option>
                     </select>
-                    <div class="helper">Message avatar: <strong>Bot</strong> = 🤖, <strong>Human-style</strong> = 👤. Text shows beside the avatar (no chat bubble).</div>
                 </div>
                 <div class="form-group">
-                    <label>Response Mode</label>
+                    <label>Persona mode</label>
                     <div class="mode-tabs">
-                        <div class="mode-tab ${m===1?modeClass:''}" onclick="setMode(${i},1)">Mode 1</div>
-                        <div class="mode-tab ${m===2?modeClass:''}" onclick="setMode(${i},2)">Mode 2</div>
-                        <div class="mode-tab ${m===3?modeClass:''}" onclick="setMode(${i},3)">Mode 3</div>
-                        <div class="mode-tab ${m===4?modeClass:''}" onclick="setMode(${i},4)">Mode 4</div>
+                        <div class="mode-tab ${m===1?modeClass:''}" onclick="setMode(${i},1)">1</div>
+                        <div class="mode-tab ${m===2?modeClass:''}" onclick="setMode(${i},2)">2</div>
+                        <div class="mode-tab ${m===3?modeClass:''}" onclick="setMode(${i},3)">3</div>
+                        <div class="mode-tab ${m===4?modeClass:''}" onclick="setMode(${i},4)">4</div>
                     </div>
-                    <div class="mode-info">${BOT_MODE_INFO[m].desc}</div>
                 </div>
             </div>
 
-            <!-- Personality Prompt -->
             <div class="form-group">
-                <label>Personality Prompt</label>
+                <label>Prompt</label>
                 <textarea rows="3" oninput="updateBot(${i}, 'prompt', this.value)">${bot.prompt}</textarea>
-                <div class="helper">Defines tone and behavior. Shorter prompts with “one idea per message” work best. Platform-wide brevity rules also apply.</div>
             </div>
 
-            <!-- ── TIMING ── -->
-            <div class="section-label">⏱ Timing</div>
+            <div class="section-label">Timing</div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Response Delay <span class="hint">(seconds)</span></label>
+                    <label>Delay (sec)</label>
                     <div class="range-row">
                         <input type="range" min="0" max="15" step="0.5" value="${bot.delay_seconds}"
                                oninput="updateBot(${i},'delay_seconds',Number(this.value)); this.nextElementSibling.textContent=this.value+'s'">
                         <span class="range-val">${bot.delay_seconds}s</span>
                     </div>
-                    <div class="helper">Wait before the model generates a reply. Modes 2–4 add +0.5–2.5 s jitter.</div>
                 </div>
                 <div class="form-group">
-                    <label>Typing Speed <span class="hint">(chars/sec)</span></label>
+                    <label>Typing (chars/sec)</label>
                     <div class="range-row">
                         <input type="range" min="1" max="6" step="1" value="${bot.typing_cps ?? 4}"
                                oninput="updateBot(${i},'typing_cps',Number(this.value)); this.nextElementSibling.textContent=this.value">
                         <span class="range-val">${bot.typing_cps ?? 4}</span>
                     </div>
-                    <div class="helper">Typical human typing: 1–6 chars/sec. Extra wait ≈ length ÷ speed (0.3–12 s). Every mode.</div>
                 </div>
             </div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Idle Trigger <span class="hint">(seconds)</span></label>
+                    <label>Idle (sec)</label>
                     <div class="range-row">
                         <input type="range" min="5" max="120" step="5" value="${bot.idle_threshold}"
                                oninput="updateBot(${i},'idle_threshold',Number(this.value)); this.nextElementSibling.textContent=this.value+'s'">
                         <span class="range-val">${bot.idle_threshold}s</span>
                     </div>
-                    <div class="helper">If no one speaks for this long, the bot initiates a new message.</div>
                 </div>
             </div>
 
-            <!-- ── REPLY LENGTH (words) ── -->
-            <div class="section-label">📏 Reply length (words)</div>
-            <p class="helper" style="margin:0 0 10px;padding:8px 10px;background:var(--orange-pale);border-radius:8px;">
-                <strong>Human-like default:</strong> Mix <strong>On</strong>, min <strong>1</strong>, max <strong>35</strong>, creativity ~<strong>0.8</strong>.
-                Mix <strong>On</strong> = each reply picks a random word count from min–max (uniform).
-            </p>
+            <div class="section-label">Reply length (words)</div>
             <div class="grid-3">
                 <div class="form-group">
-                    <label>Reply length mix</label>
+                    <label>Length mix</label>
                     <select onchange="updateBot(${i},'length_variation',this.value==='true')">
-                        <option value="true" ${bot.length_variation !== false ? 'selected' : ''}>On — mix short / medium / longer</option>
-                        <option value="false" ${bot.length_variation === false ? 'selected' : ''}>Off — always use max words</option>
+                        <option value="true" ${bot.length_variation !== false ? 'selected' : ''}>On</option>
+                        <option value="false" ${bot.length_variation === false ? 'selected' : ''}>Off</option>
                     </select>
-                    <div class="helper">On (default): “within about N words”, N random in min–max. Off: “within about max words” every time.</div>
                 </div>
                 <div class="form-group">
                     <label>Min words</label>
@@ -556,48 +501,39 @@ function renderBots() {
                                oninput="updateBot(${i},'max_words',Number(this.value)); this.nextElementSibling.textContent=botPersonas[${i}].max_words">
                         <span class="range-val">${bot.max_words ?? 35}</span>
                     </div>
-                    <div class="helper">Safety ceiling only if the model writes far too much (not trimmed to each random cap).</div>
                 </div>
             </div>
 
-            <!-- ── RESPONSE QUALITY ── -->
-            <div class="section-label">🧠 Response Quality</div>
+            <div class="section-label">Quality</div>
             <div class="grid-3">
                 <div class="form-group">
-                    <label>Creativity <span class="hint">(temperature)</span></label>
+                    <label>Temperature</label>
                     <div class="range-row">
                         <input type="range" min="0" max="1" step="0.05" value="${bot.temperature}"
                                oninput="updateBot(${i},'temperature',Number(this.value)); this.nextElementSibling.textContent=Number(this.value).toFixed(2)">
                         <span class="range-val">${Number(bot.temperature).toFixed(2)}</span>
                     </div>
-                    <div class="helper">0.0 = deterministic · 0.7 = balanced · 1.0 = highly varied.</div>
                 </div>
                 <div class="form-group">
-                    <label>Context budget <span class="hint">(characters)</span></label>
+                    <label>Context (chars)</label>
                     <input type="number" min="10000" max="10000000" step="1000"
                            value="${bot.context_max_chars ?? 100000}"
                            oninput="updateBot(${i},'context_max_chars',Number(this.value))">
-                    <div class="helper">Recent chat included in the prompt (10,000–10,000,000 chars). Default 100,000.</div>
                 </div>
             </div>
 
             ${m === 3 ? `
-            <div class="section-label">🎲 Mode 3 — Random Skip</div>
+            <div class="section-label">Mode 3 — skip rate</div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Skip Rate</label>
+                    <label>Skip rate</label>
                     <div class="range-row">
                         <input type="range" min="0" max="0.8" step="0.05" value="${bot.skip_rate}"
                                oninput="updateBot(${i},'skip_rate',Number(this.value)); this.nextElementSibling.textContent=Math.round(Number(this.value)*100)+'%'">
                         <span class="range-val">${Math.round(bot.skip_rate*100)}%</span>
                     </div>
-                    <div class="helper">Fixed P(skip) per message. If not skipped: Response Delay + 0.5–2.5 s jitter, then typing delay.</div>
                 </div>
             </div>
-            ` : ''}
-            ${m === 4 ? `
-            <div class="section-label">🧠 Mode 4 — Contextual reply chance</div>
-            <p class="helper" style="margin-bottom:8px;">P(reply) from context, then random draw. If replying: Response Delay + 0.5–2.5 s jitter, then typing delay.</p>
             ` : ''}
         </div>
         `;
@@ -676,14 +612,11 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
 function syncConditionAssignmentUI() {
     const condOn = document.getElementById('conditionEnabled').value === 'true';
     const assign = document.getElementById('assignmentMode');
-    const helper = document.getElementById('assignmentModeHelper');
     if (condOn) {
         assign.value = 'stratified';
         assign.disabled = true;
-        if (helper) helper.style.fontWeight = '600';
     } else {
         assign.disabled = false;
-        if (helper) helper.style.fontWeight = '';
     }
 }
 
@@ -724,10 +657,7 @@ function buildQualtricsFieldTable(sessionId, payload) {
     return `
         <div class="setup-block" style="margin-top:16px;">
             <h4>Qualtrics Embedded Data — field reference</h4>
-            <p style="font-size:0.82rem;color:var(--gray-700);margin:8px 0;">
-                In <strong>Survey Flow → Embedded Data</strong>, create the <strong>In</strong> and <strong>Out</strong> fields below.
-                Paste the tab-separated header row into a spreadsheet if you track study metadata alongside exports.
-            </p>
+            <p style="font-size:0.82rem;color:var(--gray-700);margin:8px 0;">See <a href="/manual#qualtrics">Manual → Qualtrics</a> for setup steps.</p>
             <div style="overflow-x:auto;margin:10px 0;">
                 <table style="width:100%;border-collapse:collapse;">${thead ? '<thead><tr>' + thead + '</tr></thead>' : ''}<tbody>${body}</tbody></table>
             </div>
@@ -756,23 +686,8 @@ function showSessionSetupGuide(sessionId, payload) {
 
     const qualtricsGuide = qualtricsOn ? `
         <div class="setup-block">
-            <h4>Qualtrics — 3 steps</h4>
-            <ol style="font-size:0.88rem;line-height:1.7;padding-left:20px;margin:10px 0;">
-                <li><strong>Survey Flow → Embedded Data</strong> — create fields from the table below (at minimum the <strong>In</strong> and <strong>Out</strong> rows).</li>
-                <li><strong>Chat question → Text/Graphic → HTML</strong> — paste the block below (one copy includes script + iframe). Server: <strong>${publicBase}</strong></li>
-                <li><strong>Test with anonymous link</strong> — see <strong>Data &amp; Analysis</strong> for <code>transcript</code> + <code>chat_status</code>.</li>
-            </ol>
-            <p style="font-size:0.82rem;color:var(--gray-700);margin-top:8px;">
-                <strong>When data is saved:</strong><br>
-                · Chat full ${chatMin} min → <code>completed_full</code><br>
-                · Click <strong>Next</strong> anytime (even after sitting idle, no need to wait ${chatMin} min) → <code>left_early</code> or <code>no_messages</code><br>
-                · Close/refresh tab → same as Next<br>
-                · Switching browser tabs only does <em>not</em> save (so idle on the page is OK until you click Next)
-            </p>
-            <p style="font-size:0.82rem;color:#b45309;margin-top:8px;">
-                <strong>Important:</strong> Paste the <strong>inline</strong> HTML below (not only <code>script src=</code> — Qualtrics often blocks external scripts).
-                Preview mode may <strong>not</strong> save <code>transcript</code>; test with a real anonymous link.
-            </p>
+            <h4>Qualtrics embed</h4>
+            <p style="font-size:0.84rem;color:var(--gray-700);">Copy the HTML below into your survey question. Details: <a href="/manual#qualtrics">Manual</a>. Server: <strong>${publicBase}</strong></p>
             <div class="url-box" style="align-items:flex-start;margin-top:12px;">
                 <code id="qualtrics-html-text" style="white-space:pre-wrap;font-size:0.68rem;">&lt;script&gt;
 (function(){var M=240000,B='${publicBase}';function save(d){if(!d||d.source!=='ACTR_CHAT'||d.event!=='chat_ended')return;var se=window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine;if(!se)return;var tf=d.qualtrics_field_transcript||'transcript',sf=d.qualtrics_field_status||'chat_status',t=d.transcript_text!=null?String(d.transcript_text):'';if(t.length&gt;M)t=t.slice(0,M)+'\\n...(truncated)';se.setEmbeddedData(sf,d.chat_status||'unknown');se.setEmbeddedData(tf,t);window.__actrSaved=true;console.log('[ACTR] saved',sf,d.chat_status,t.length);if(d.auto_advance&amp;&amp;se.clickNextButton)se.clickNextButton();}function iframe(){return document.querySelector('iframe[src*=\"embed.html\"]')}function apiBase(){var i=iframe();try{return i?new URL(i.src).origin:B}catch(e){return B}}function iframeParams(){var i=iframe();if(!i)return null;try{var u=new URL(i.src),s=u.searchParams.get('session_id'),p=u.searchParams.get('participant_id');if(!s||!p||p.indexOf('e://Field')&gt;=0)return null;return{session_id:s,participant_id:p}}catch(e){return null}}function handoff(r){if(window.__actrSaved)return;var par=iframeParams();if(!par)return;try{var x=new XMLHttpRequest();x.open('POST',apiBase()+'/api/embed/handoff',false);x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify({session_id:par.session_id,participant_id:par.participant_id,reason:r||'qualtrics_next'}));if(x.status===200){var d=JSON.parse(x.responseText);save({source:'ACTR_CHAT',event:'chat_ended',transcript_text:d.transcript_text,chat_status:d.chat_status,qualtrics_field_transcript:d.qualtrics_field_transcript,qualtrics_field_status:d.qualtrics_field_status,auto_advance:false});}}catch(e){console.warn('[ACTR] handoff',e);}}function init(){window.addEventListener('message',function(e){save(e.data)},false);var n=document.getElementById('NextButton');if(n)n.addEventListener('click',function(){handoff('qualtrics_next_click')},true);if(window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine&amp;&amp;Qualtrics.SurveyEngine.addOnUnload)Qualtrics.SurveyEngine.addOnUnload(function(){handoff('qualtrics_unload')});}if(window.Qualtrics&amp;&amp;Qualtrics.SurveyEngine&amp;&amp;Qualtrics.SurveyEngine.addOnload)Qualtrics.SurveyEngine.addOnload(init);else init();})();
@@ -820,7 +735,6 @@ function copyText(elementId) {
 }
 
 // Init
-updateSessionModeInfo('1');
 syncConditionAssignmentUI();
 loadDefaultPersonas();
 </script>

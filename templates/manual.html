@@ -3,145 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Manual — ACTR</title>
+    <title>Manual — ACTR</title>
     <link rel="stylesheet" href="/static/theme.css">
     <style>
-        :root {
-            --gradient: var(--primary-gradient);
-            --bg: var(--bg-color);
-        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-color);
             color: #2d3436;
+            line-height: 1.65;
             padding-top: 48px;
-            line-height: 1.7;
         }
-
-        /* NAV */
         .nav-header {
-            background: rgba(255,255,255,0.97);
-            backdrop-filter: blur(10px);
+            width: 100%;
+            background: #fff;
             padding: 0 24px;
             height: 48px;
-            display: flex; align-items: center; gap: 20px;
-            position: fixed; top: 0; left: 0; right: 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 100;
             box-shadow: 0 1px 8px rgba(0,0,0,0.08);
         }
         .nav-logo {
-            font-weight: 800; font-size: 1.2rem;
+            font-weight: 800;
+            font-size: 1.2rem;
             color: var(--orange);
-            text-decoration: none; flex-shrink: 0;
+            text-decoration: none;
         }
         .nav-links { display: flex; gap: 4px; }
         .nav-links a {
-            text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem;
-            padding: 5px 12px; border-radius: 8px; transition: all 0.15s;
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 5px 12px;
+            border-radius: 8px;
         }
         .nav-links a:hover { color: var(--orange); background: var(--orange-pale); }
         .nav-links a.active { color: var(--orange-dark); background: var(--orange-pale); }
 
-        /* LAYOUT */
-        .page { display: flex; max-width: 1100px; margin: 0 auto; padding: 40px 20px; gap: 32px; }
-
-        /* SIDEBAR TOC */
-        .toc {
-            width: 220px; flex-shrink: 0;
-            position: sticky; top: 68px; align-self: flex-start;
+        .page {
+            display: flex;
+            max-width: 1060px;
+            margin: 0 auto;
+            padding: 28px 20px 48px;
+            gap: 28px;
         }
-        .toc h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #aaa; margin-bottom: 10px; }
+        .toc {
+            width: 200px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 68px;
+            align-self: flex-start;
+        }
+        .toc h3 {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #999;
+            margin-bottom: 8px;
+        }
         .toc a {
-            display: block; padding: 6px 10px; border-radius: 6px;
-            text-decoration: none; font-size: 0.85rem; color: #555; font-weight: 500;
-            transition: all 0.15s;
+            display: block;
+            padding: 5px 8px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.84rem;
+            color: #555;
         }
         .toc a:hover { color: var(--orange); background: var(--orange-pale); }
-        .toc a.sub { padding-left: 20px; font-size: 0.8rem; color: #888; }
 
-        /* CONTENT */
         .content { flex: 1; min-width: 0; }
-
-        .section { background: white; border-radius: 14px; padding: 32px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); border: 1px solid var(--gray-300); }
-
-        h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px;
-             background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .lead { font-size: 1rem; color: #666; margin-bottom: 0; }
-
-        h2 { font-size: 1.2rem; font-weight: 700; color: #2d3436; margin-bottom: 16px;
-             padding-bottom: 10px; border-bottom: 2px solid #f0f2f5; }
-        h3 { font-size: 1rem; font-weight: 700; color: var(--orange-dark); margin: 20px 0 8px; }
-
-        p { color: #444; margin-bottom: 12px; font-size: 0.93rem; }
-        ul, ol { padding-left: 20px; margin-bottom: 12px; }
-        li { color: #444; font-size: 0.93rem; margin-bottom: 5px; }
-
-        /* MODE CARDS */
-        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
-        .mode-card {
-            border-radius: 12px; padding: 20px;
-            border: 2px solid transparent;
+        .section {
+            background: white;
+            border-radius: 14px;
+            padding: 24px 28px;
+            margin-bottom: 18px;
+            border: 1px solid var(--gray-300);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
-        .mode-card.m1 { background: #fff7ed; border-color: #fed7aa; }
-        .mode-card.m2 { background: #fff7ed; border-color: #fdba74; }
-        .mode-card.m3 { background: #fff7ed; border-color: #fb923c; }
-        .mode-card .badge {
-            display: inline-block; padding: 3px 10px; border-radius: 20px;
-            font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.05em; margin-bottom: 10px;
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--orange-dark);
+            margin-bottom: 8px;
         }
-        .m1 .badge { background: var(--orange); color: white; }
-        .m2 .badge { background: var(--orange-dark); color: white; }
-        .m3 .badge { background: var(--orange-light); color: white; }
-        .mode-card h3 { margin: 0 0 8px; font-size: 0.95rem; color: var(--gray-900); }
-        .mode-card p { font-size: 0.83rem; color: #555; margin: 0 0 10px; }
-        .mode-card ul { padding-left: 16px; }
-        .mode-card li { font-size: 0.82rem; color: #555; margin-bottom: 3px; }
-
-        /* PARAM TABLE */
-        .param-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.87rem; }
+        h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--orange-dark);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+        h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #333;
+            margin: 16px 0 8px;
+        }
+        p, li { font-size: 0.9rem; color: #444; margin-bottom: 8px; }
+        ul, ol { padding-left: 20px; margin-bottom: 10px; }
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
         .param-table th {
-            background: #f8fafc; text-align: left; padding: 10px 14px;
-            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
-            color: #888; border-bottom: 2px solid #e2e8f0;
+            text-align: left;
+            padding: 8px 10px;
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            color: #888;
         }
-        .param-table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
-        .param-table tr:last-child td { border-bottom: none; }
-        .param-table td:first-child { font-weight: 700; color: #2d3436; white-space: nowrap; }
-        .param-table td:nth-child(2) { color: var(--orange-dark); font-family: monospace; font-size: 0.82rem; }
-        .param-table td:nth-child(3) { color: #555; }
-
-        /* FLOW STEPS */
-        .flow { display: flex; flex-direction: column; gap: 0; margin-top: 16px; }
-        .flow-step { display: flex; gap: 16px; align-items: flex-start; }
-        .flow-step:not(:last-child) .step-line { flex: 1; width: 2px; background: #e2e8f0; margin: 4px auto 0; min-height: 28px; }
-        .step-num {
-            width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-            background: var(--gradient); color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 0.85rem;
+        .param-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f0f2f5;
+            vertical-align: top;
         }
-        .step-col { display: flex; flex-direction: column; align-items: center; }
-        .step-body { padding-bottom: 24px; }
-        .step-body strong { display: block; font-size: 0.93rem; margin-bottom: 3px; }
-        .step-body span { font-size: 0.85rem; color: #666; }
-
-        /* TIP BOX */
-        .tip {
-            background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px;
-            padding: 12px 16px; font-size: 0.85rem; color: #9a3412; margin-top: 12px;
-        }
-        .tip strong { color: #7c2d12; }
-
-        .info-box {
-            background: #f8fafc; border: 1px solid var(--gray-300); border-radius: 8px;
-            padding: 12px 16px; font-size: 0.85rem; color: var(--gray-700); margin-top: 12px;
-        }
-
+        .param-table td:first-child { font-weight: 700; white-space: nowrap; }
         code {
-            background: #f1f5f9; padding: 2px 6px; border-radius: 4px;
-            font-family: monospace; font-size: 0.85em; color: var(--orange-dark);
+            background: #f1f5f9;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--orange-dark);
+        }
+        .note {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.86rem;
+            color: #7c2d12;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -157,296 +160,149 @@
 </header>
 
 <div class="page">
-
-    <!-- Table of Contents -->
     <aside class="toc">
         <h3>Contents</h3>
-        <a href="#overview">Overview</a>
-        <a href="#workflow">How It Works</a>
-        <a href="#modes">Response Modes</a>
-        <a class="sub" href="#mode1">Mode 1 — Fixed Delay</a>
-        <a class="sub" href="#mode2">Mode 2 — Random Delay</a>
-        <a class="sub" href="#mode3">Mode 3 — Natural Mimicry</a>
-        <a href="#mode1-guide">Mode 1 Deep Dive</a>
-        <a href="#admin-guide">Admin Guide</a>
-        <a href="#qualtrics-guide">Qualtrics Integration</a>
-        <a href="#dashboard-guide">Dashboard & Export</a>
+        <a href="#quick-start">Quick start</a>
+        <a href="#admin-fields">Admin fields</a>
+        <a href="#session-modes">Session modes</a>
+        <a href="#persona-modes">Persona modes</a>
+        <a href="#qualtrics">Qualtrics</a>
+        <a href="#dashboard">Dashboard</a>
         <a href="#faq">FAQ</a>
     </aside>
 
-    <!-- Main Content -->
     <div class="content">
 
-        <!-- Hero -->
-        <div class="section" id="overview">
-            <h1>ACTR User Manual</h1>
-            <p class="lead">A multi-session group chat platform with configurable AI personas. Designed for research experiments where human participants interact in small groups — with or without AI bots present.</p>
+        <div class="section" id="quick-start">
+            <h1>ACTR Manual</h1>
+            <p>Group chat for research. Humans join from a survey or the Dashboard. Optional AI personas reply in the room.</p>
+
+            <h2>Quick start</h2>
+            <ol>
+                <li>Open <a href="/admin">Admin</a>. Set group size, bots, and personas. Click <strong>Create Session</strong>.</li>
+                <li>Copy the Qualtrics HTML (if Qualtrics is On) or share the session on the <a href="/">Dashboard</a>.</li>
+                <li>Participants chat. You watch in <strong>Monitor</strong> and export CSVs from <strong>Export</strong>.</li>
+            </ol>
+            <p>Example: 2 humans + 1 bot → set <strong>Group size</strong> to 2, add <strong>one</strong> persona, set participant names (e.g. <code>c,d</code>) so they do not clash with the bot name.</p>
         </div>
 
-        <!-- Workflow -->
-        <div class="section" id="workflow">
-            <h2>How It Works</h2>
-            <div class="flow">
-                <div class="flow-step">
-                    <div class="step-col"><div class="step-num">1</div><div class="step-line"></div></div>
-                    <div class="step-body"><strong>Admin creates a session</strong><span>Set group size, enable bots, configure personas and their behavior on the <a href="/admin">Admin</a> page.</span></div>
-                </div>
-                <div class="flow-step">
-                    <div class="step-col"><div class="step-num">2</div><div class="step-line"></div></div>
-                    <div class="step-body"><strong>Participants join a session</strong><span>Users visit the <a href="/">Dashboard</a> → <em>Join & Chat</em>, pick a session, and click <em>Join Matching Queue</em>.</span></div>
-                </div>
-                <div class="flow-step">
-                    <div class="step-col"><div class="step-num">3</div><div class="step-line"></div></div>
-                    <div class="step-body"><strong>Auto-matching</strong><span>Once enough participants are queued (equal to Group Size), they are automatically matched into a small group and redirected to the chat room.</span></div>
-                </div>
-                <div class="flow-step">
-                    <div class="step-col"><div class="step-num">4</div><div class="step-line"></div></div>
-                    <div class="step-body"><strong>Group chat begins</strong><span>Participants chat in real time. If bots are enabled, they respond according to the configured mode and persona prompt.</span></div>
-                </div>
-                <div class="flow-step">
-                    <div class="step-col"><div class="step-num">5</div></div>
-                    <div class="step-body"><strong>Admin monitors & exports</strong><span>The <a href="/">Dashboard</a> shows live activity. Full chat logs and activity history can be exported as CSV for analysis.</span></div>
-                </div>
-            </div>
-        </div>
+        <div class="section" id="admin-fields">
+            <h2>Admin fields</h2>
+            <p>Short labels on the Admin page map to these settings.</p>
 
-        <!-- Mode Overview -->
-        <div class="section" id="modes">
-            <h2>Bot Response Modes</h2>
-            <p>Each AI persona in a session has its own <strong>Response Mode</strong> that controls <em>when</em> and <em>whether</em> it replies. Choose the mode that best matches your experimental design.</p>
-
-            <div class="mode-grid">
-                <div class="mode-card m1">
-                    <span class="badge">Mode 1</span>
-                    <h3>Fixed Delay</h3>
-                    <p>The bot always responds after a fixed number of seconds. Predictable and controlled.</p>
-                    <ul>
-                        <li>Always replies</li>
-                        <li>Exact delay you set</li>
-                        <li>Best for controlled experiments</li>
-                    </ul>
-                </div>
-                <div class="mode-card m2">
-                    <span class="badge">Mode 2</span>
-                    <h3>Random Delay</h3>
-                    <p>Adds a random 0.5–2.5 s jitter on top of the fixed delay. Feels slightly less robotic.</p>
-                    <ul>
-                        <li>Always replies</li>
-                        <li>Delay = fixed + random</li>
-                        <li>Good for realism studies</li>
-                    </ul>
-                </div>
-                <div class="mode-card m3">
-                    <span class="badge">Mode 3</span>
-                    <h3>Natural Mimicry</h3>
-                    <p>Delay scales with message length. Bot may skip messages based on Skip Rate.</p>
-                    <ul>
-                        <li>May skip messages</li>
-                        <li>Delay ∝ message length</li>
-                        <li>Most human-like</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mode 1 Detail -->
-        <div class="section" id="mode1">
-            <h2>Mode 1 — Fixed Delay (Detailed)</h2>
-            <p>Mode 1 is the most transparent and reproducible mode. The bot waits exactly <code>delay_seconds</code> after a human message is received, then generates and sends a response. Every message gets a reply.</p>
-
-            <h3>When to use Mode 1</h3>
-            <ul>
-                <li>You need consistent, reproducible bot behavior across all participants</li>
-                <li>You are studying the effect of response timing on human perception</li>
-                <li>You want to isolate the content of bot responses from timing variability</li>
-                <li>Pilot testing — Mode 1 is the easiest to debug and verify</li>
-            </ul>
-
-            <h3>How the delay works</h3>
-            <p>After a human sends a message, the server waits exactly <code>delay_seconds</code>, then calls the OpenAI API and streams the response back. The typing animation plays while the response is being delivered. The total visible latency is <code>delay_seconds + API response time + typing animation duration</code>.</p>
-
-            <div class="tip">
-                <strong>Tip:</strong> Set <code>delay_seconds</code> to 2–4 s for most experiments. Very short delays (&lt;1 s) can feel unnatural; very long delays (&gt;10 s) may frustrate participants.
-            </div>
-        </div>
-
-        <!-- Mode 2 Detail -->
-        <div class="section" id="mode2">
-            <h2>Mode 2 — Random Delay</h2>
-            <p>Identical to Mode 1 except the actual wait time is <code>delay_seconds + uniform(0.5, 2.5)</code> seconds. The extra jitter makes the bot feel slightly less mechanical without changing its response rate.</p>
-            <div class="info-box">Use Mode 2 when you want Mode 1 behavior but with reduced suspicion that the responder is a bot.</div>
-        </div>
-
-        <!-- Mode 3 Detail -->
-        <div class="section" id="mode3">
-            <h2>Mode 3 — Natural Mimicry</h2>
-            <p>The bot simulates a human reader: delay scales with the length of the incoming message (<code>words × 0.25 s + random 0.5–2.0 s</code>, capped at 8 s), and it may skip responding entirely based on <code>skip_rate</code>.</p>
-            <ul>
-                <li><strong>Skip Rate 0.0</strong> — always replies (same as Mode 2 with dynamic delay)</li>
-                <li><strong>Skip Rate 0.2</strong> — skips ~20% of messages</li>
-                <li><strong>Skip Rate 0.5</strong> — skips half of all messages</li>
-            </ul>
-            <div class="tip"><strong>Tip:</strong> Keep Skip Rate below 0.3 to avoid participants feeling ignored.</div>
-        </div>
-
-        <!-- Mode 1 Deep Dive -->
-        <div class="section" id="mode1-guide">
-            <h2>Mode 1 — All Configurable Parameters</h2>
-            <p>These are all the variables you can set per-persona when using Mode 1. All are set in the Admin page under <em>AI Personas</em>.</p>
-
+            <h3>Session</h3>
             <table class="param-table">
-                <thead>
-                    <tr><th>Parameter</th><th>Default</th><th>What it controls</th></tr>
-                </thead>
+                <thead><tr><th>Field</th><th>What it does</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td>Delay (sec)</td>
-                        <td>3</td>
-                        <td>Exact seconds the bot waits before responding. This is the primary timing variable in Mode 1.</td>
-                    </tr>
-                    <tr>
-                        <td>Typing Speed (CPS)</td>
-                        <td>10</td>
-                        <td>Characters per second for the typing animation. Higher = faster reveal. Does not affect when the response is generated, only how fast it appears on screen.</td>
-                    </tr>
-                    <tr>
-                        <td>Max Tokens</td>
-                        <td>150</td>
-                        <td>Maximum length of the bot's response in tokens (~¾ of a word each). Lower values produce shorter, more concise replies.</td>
-                    </tr>
-                    <tr>
-                        <td>Temperature</td>
-                        <td>0.7</td>
-                        <td>Controls response creativity. 0.0 = deterministic and repetitive; 1.0 = highly varied and creative. For research consistency, values between 0.3–0.7 are recommended.</td>
-                    </tr>
-                    <tr>
-                        <td>Context Window</td>
-                        <td>15</td>
-                        <td>Number of recent messages the bot reads before generating a reply. Higher = more context-aware but slower and more expensive.</td>
-                    </tr>
-                    <tr>
-                        <td>Idle Threshold (sec)</td>
-                        <td>20</td>
-                        <td>If no one speaks for this many seconds, the bot initiates a new message to restart the conversation.</td>
-                    </tr>
-                    <tr>
-                        <td>Personality Prompt</td>
-                        <td>—</td>
-                        <td>The system instruction that defines the bot's persona, tone, and role. This is the most important variable for shaping what the bot says.</td>
-                    </tr>
-                    <tr>
-                        <td>Bot Name</td>
-                        <td>—</td>
-                        <td>The display name shown in the chat. Participants can @mention this name to direct a message at the bot.</td>
-                    </tr>
-                    <tr>
-                        <td>Session Mode</td>
-                        <td>1</td>
-                        <td>Controls which bots respond per message. Mode 1: all bots reply to every message. Mode 2: AI picks the single most relevant bot. Mode 3: bots only respond when @mentioned by name.</td>
-                    </tr>
-                    <tr>
-                        <td>Survey open (days)</td>
-                        <td>7</td>
-                        <td>How many days the session accepts new participants (questionnaire collection window).</td>
-                    </tr>
-                    <tr>
-                        <td>Group chat duration (min)</td>
-                        <td>5</td>
-                        <td>Each group chat ends this many minutes after the group is formed (from match time).</td>
-                    </tr>
-                    <tr>
-                        <td>Group Size</td>
-                        <td>2</td>
-                        <td>Number of human participants matched into each group. Does not include bots.</td>
-                    </tr>
-                    <tr>
-                        <td>Participant Names</td>
-                        <td>—</td>
-                        <td>Optional comma-separated list of display names assigned to participants in order (e.g. <code>Alice, Bob</code>). If blank, UIDs are used.</td>
-                    </tr>
+                    <tr><td>Session name</td><td>Label for you. A session ID (e.g. <code>SES-…</code>) is created automatically.</td></tr>
+                    <tr><td>AI bots</td><td>On = personas can send messages. Off = humans only.</td></tr>
+                    <tr><td>Group size</td><td>How many <em>humans</em> are matched into each group. Bots are extra.</td></tr>
+                    <tr><td>Session mode</td><td>Who replies per message — see <a href="#session-modes">Session modes</a>.</td></tr>
+                    <tr><td>Survey open (days)</td><td>How long new people can join the queue.</td></tr>
+                    <tr><td>Chat duration (min)</td><td>Each group ends this many minutes after it starts (default 5).</td></tr>
+                    <tr><td>Participant names</td><td>Optional comma-separated chat names for humans, in join order (e.g. <code>c,d</code>). Must not match persona names.</td></tr>
                 </tbody>
             </table>
 
-            <div class="info-box" style="margin-top: 16px;">
-                <strong>Recommended Mode 1 starting config:</strong> Delay = 3 s · Typing CPS = 10 · Max Tokens = 150 · Temperature = 0.5 · Context = 15 messages
-            </div>
+            <h3>Experiment</h3>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>What it does</th></tr></thead>
+                <tbody>
+                    <tr><td>Assignment</td><td><strong>FIFO</strong> = one queue. <strong>Stratified</strong> = separate queues per bucket. Used when Condition is Off.</td></tr>
+                    <tr><td>Condition</td><td><strong>On</strong> (default): match only people with the same Qualtrics <code>condition</code> value; assignment is always stratified. <strong>Off</strong>: ignore <code>condition</code>.</td></tr>
+                    <tr><td>Turns</td><td>Off = free chat. Round-robin or timed = structured human turns.</td></tr>
+                    <tr><td>Turn duration</td><td>Seconds per turn when Turns = timed.</td></tr>
+                    <tr><td>Style mimic</td><td>When On, other personas copy one teammate’s length and tone.</td></tr>
+                    <tr><td>Style target</td><td>Display name to mimic (often a human, e.g. <code>c</code>).</td></tr>
+                    <tr><td>AI opens chat</td><td>Yes = a bot sends the first message. No = wait for a human.</td></tr>
+                    <tr><td>Qualtrics</td><td>On = save <code>transcript</code> and <code>chat_status</code> to Qualtrics when the chat ends.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>AI persona</h3>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>What it does</th></tr></thead>
+                <tbody>
+                    <tr><td>Name</td><td>Shown in chat. With Condition On, “(may use AI)” can show for some conditions.</td></tr>
+                    <tr><td>Avatar</td><td>Bot = 🤖, Human = 👤 (display only, not an uploaded image).</td></tr>
+                    <tr><td>Persona mode</td><td>When this bot replies — see <a href="#persona-modes">Persona modes</a>.</td></tr>
+                    <tr><td>Prompt</td><td>System instructions for tone and behavior.</td></tr>
+                    <tr><td>Delay (sec)</td><td>Wait before generating a reply. Modes 2–4 add 0.5–2.5 s jitter.</td></tr>
+                    <tr><td>Typing (chars/sec)</td><td>1–6. Extra wait ≈ message length ÷ speed before text appears.</td></tr>
+                    <tr><td>Idle (sec)</td><td>If nobody speaks this long, the bot may start a new message.</td></tr>
+                    <tr><td>Length mix</td><td>On = each reply targets a random word count between min and max. Off = always use max words.</td></tr>
+                    <tr><td>Min / max words</td><td>Target reply length (words). Max is also a safety ceiling if the model runs long.</td></tr>
+                    <tr><td>Temperature</td><td>0 = steady, 1 = more varied.</td></tr>
+                    <tr><td>Context (chars)</td><td>How much recent chat is sent to the model (10,000–10,000,000; default 100,000).</td></tr>
+                    <tr><td>Skip rate</td><td>Persona mode 3 only: chance to skip a message (0–80%).</td></tr>
+                </tbody>
+            </table>
         </div>
 
-        <!-- Admin Guide -->
-        <div class="section" id="admin-guide">
-            <h2>Admin Guide</h2>
-
-            <h3>Creating a session</h3>
-            <ol>
-                <li>Go to <a href="/admin">Admin</a>.</li>
-                <li>Fill in Session Name, Group Size, and whether bots are enabled.</li>
-                <li>Select Session Mode (who replies), and tune Assignment / Turns / AI opening in Experiment Options.</li>
-                <li>Click <strong>+ Add Persona</strong> to add one or more bots.</li>
-                <li>For each persona: set a name, choose Mode 1, write a personality prompt, and tune the parameters.</li>
-                <li>Click <strong>Create Session</strong>. A Session ID (e.g. <code>SES-A1B2C</code>) is generated.</li>
-                <li>Share the Dashboard URL with participants. They open <em>Join & Chat</em>, select the session, and join the queue.</li>
-            </ol>
-
-            <h3>Test before you run</h3>
-            <p>Create a short pilot session in <a href="/admin">Admin</a>, then use <a href="/">Dashboard → Monitor</a> to watch live chats read-only. For a manual test message, join a group from <strong>Sessions → Join</strong> on the Dashboard.</p>
-
-            <div class="tip"><strong>Tip:</strong> Use Qualtrics preview with an anonymous link after you verify bots in Monitor.</div>
-        </div>
-
-        <!-- Qualtrics Guide -->
-        <div class="section" id="qualtrics-guide">
-            <h2>Qualtrics (3 steps)</h2>
-            <ol>
-                <li><a href="/admin">Admin</a> — create session, turn <strong>Qualtrics integration</strong> on, copy the HTML block from the setup guide.</li>
-                <li><strong>Qualtrics Survey Flow</strong> — Embedded Data: <code>transcript</code>, <code>chat_status</code>, <code>condition</code> (if needed).</li>
-                <li><strong>Chat question</strong> — Text/Graphic → HTML, paste the copied block. Production server: <code>https://group.xjhuang.com</code></li>
-            </ol>
-            <p>Preview until the chat shows <strong>Connected</strong>. Results: Qualtrics <strong>Data &amp; Analysis</strong>, or <a href="/">Dashboard → Export</a>.</p>
-        </div>
-
-        <!-- Dashboard Guide -->
-        <div class="section" id="dashboard-guide">
-            <h2>Dashboard &amp; Export</h2>
-
-            <h3>Live monitoring</h3>
-            <p>The <a href="/">Dashboard</a> <strong>Monitor</strong> tab shows active rooms and live messages (refreshes every 4 s). This replaces a separate “spy mode” — researchers watch without joining the chat.</p>
-
-            <h3>Exporting data</h3>
-            <p>Go to the <strong>Export</strong> tab on the Dashboard. You can download:</p>
+        <div class="section" id="session-modes">
+            <h2>Session modes</h2>
+            <p>Controls which <em>personas</em> react to each human message.</p>
             <ul>
-                <li><strong>Activity Log (CSV)</strong> — every event in a session: who joined, when they sent messages, when bots responded, errors, etc. One row per event.</li>
-                <li><strong>Chat History (CSV)</strong> — every message in a specific room: timestamp, sender, and full message text.</li>
+                <li><strong>Mode 1 — all bots:</strong> Every persona replies to every message.</li>
+                <li><strong>Mode 2 — one bot:</strong> The system picks one persona per message.</li>
+                <li><strong>Mode 3 — @mention:</strong> A persona replies only when its name is in the message.</li>
             </ul>
-            <p>Both files are ready to open in Excel, R, or Python (pandas).</p>
-
-            <div class="info-box">
-                Activity log columns: <code>timestamp · event_type · session_id · room_id · actor · details</code><br>
-                Chat history columns: <code>timestamp · room_id · sender · message</code>
-            </div>
         </div>
 
-        <!-- FAQ -->
+        <div class="section" id="persona-modes">
+            <h2>Persona modes</h2>
+            <p>Controls <em>when</em> one persona speaks. All modes use delay + typing time.</p>
+            <ul>
+                <li><strong>Mode 1 — fixed delay:</strong> Always replies after your delay setting.</li>
+                <li><strong>Mode 2 — random delay:</strong> Always replies; adds 0.5–2.5 s jitter.</li>
+                <li><strong>Mode 3 — random skip:</strong> May skip each message (skip rate). If not skipped, delay + jitter + typing.</li>
+                <li><strong>Mode 4 — context chance:</strong> AI estimates reply probability from context, then one random draw.</li>
+            </ul>
+        </div>
+
+        <div class="section" id="qualtrics">
+            <h2>Qualtrics</h2>
+            <ol>
+                <li>In Admin, turn <strong>Qualtrics</strong> On and create a session. Copy the HTML block.</li>
+                <li>In <strong>Survey Flow → Embedded Data</strong>, add fields from the table Admin shows (at least <code>session_id</code> and <code>participant_id</code> in the iframe URL; plus <code>condition</code> if Condition is On; plus <code>transcript</code> and <code>chat_status</code> as outputs).</li>
+                <li>Paste the HTML into a <strong>Text/Graphic → HTML</strong> question. Use the full inline block (script + iframe), not only an external script tag.</li>
+                <li>Test with a real anonymous link. Preview may not save <code>transcript</code>.</li>
+            </ol>
+            <h3>When data is saved</h3>
+            <ul>
+                <li>Chat runs full duration → <code>completed_full</code></li>
+                <li>Participant clicks <strong>Next</strong> early → <code>left_early</code> or <code>no_messages</code></li>
+                <li>Close or refresh → same as Next</li>
+            </ul>
+            <p>Transcript text is capped at about 240,000 characters for Qualtrics.</p>
+            <div class="note">Production server URL is usually <code>https://group.xjhuang.com</code>. Qualtrics cannot load <code>localhost</code>.</div>
+        </div>
+
+        <div class="section" id="dashboard">
+            <h2>Dashboard</h2>
+            <ul>
+                <li><strong>Sessions</strong> — list sessions, join a queue for testing, open settings.</li>
+                <li><strong>Monitor</strong> — read-only live view of active rooms (refreshes every few seconds).</li>
+                <li><strong>Export</strong> — download activity log or chat history as CSV.</li>
+            </ul>
+            <p>The top metric <strong>AI bots</strong> is On if any session has bots enabled.</p>
+            <p>Chat UI shows plain text with a small avatar (👤 or 🤖). There are no chat bubbles.</p>
+        </div>
+
         <div class="section" id="faq">
             <h2>FAQ</h2>
-
-            <h3>Can participants tell the bot is an AI?</h3>
-            <p>That depends on your persona prompt and mode settings. Mode 1 with a short fixed delay is the most transparent. Mode 3 with a well-written prompt is the hardest to detect.</p>
-
-            <h3>What happens if a participant drops out mid-session?</h3>
-            <p>The remaining participants can continue chatting. The bot will still respond. The disconnected participant's messages are preserved in the log.</p>
-
-            <h3>How many bots can I add per session?</h3>
-            <p>There is no hard limit. In Session Mode 2, the AI picks the single most relevant bot per message. In Session Mode 1, all bots respond to every message. In Session Mode 3, bots only respond when @mentioned.</p>
-
+            <h3>How do I watch without joining?</h3>
+            <p>Use Dashboard → Monitor.</p>
+            <h3>Can I change a session after creating it?</h3>
+            <p>Use Dashboard → Sessions → open a session → Modify (if the survey window is still open).</p>
             <h3>Where is data stored?</h3>
-            <p>By default, all data is stored locally in JSON files in the <code>db/</code> and <code>activity_logs/</code> folders. If a <code>MONGO_URL</code> is set in <code>.env</code>, MongoDB is used instead.</p>
-
-            <h3>How do I reset a session?</h3>
-            <p>Currently there is no one-click reset. To start fresh, create a new session from the Admin page. Old sessions and their data remain on disk.</p>
+            <p>Local JSON under <code>db/</code> and <code>activity_logs/</code>, or MongoDB if <code>MONGO_URL</code> is set.</p>
+            <h3>How do I start over?</h3>
+            <p>Create a new session. Old data stays on disk.</p>
         </div>
 
-    </div><!-- /content -->
-</div><!-- /page -->
+    </div>
+</div>
 
 </body>
 </html>

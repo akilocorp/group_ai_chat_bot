@@ -94,11 +94,28 @@
 
         .message-group {
             display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            max-width: 80%;
+            align-items: flex-start;
+            gap: 10px;
+            max-width: 85%;
             animation: fadeIn 0.18s ease-out;
         }
+        .msg-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            line-height: 1;
+            background: #eef2ff;
+            border: 1.5px solid #c7d2fe;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .msg-avatar.human { background: #eef2ff; border-color: #a5b4fc; }
+        .msg-avatar.bot { background: #fff7ed; border-color: #fdba74; }
+        .message-group.own .msg-avatar.human { background: #fff7ed; border-color: #fdba74; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(8px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -116,15 +133,14 @@
         }
         .sender-bot { color: var(--orange-dark); font-weight: 800; }
 
-        .message {
-            padding: 9px 14px;
-            border-radius: 18px;
+        .message-body {
             font-size: 0.93rem;
             line-height: 1.45;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            color: #333;
+            word-break: break-word;
+            padding: 0 2px;
         }
-        .message.own   { background: var(--own-msg); color: white; border-bottom-right-radius: 4px; }
-        .message.other { background: var(--other-msg); color: #333; border-bottom-left-radius: 4px; }
+        .message-group.own .message-body { text-align: right; }
 
         /* Read receipts */
         .read-receipt {
@@ -292,12 +308,24 @@
 
     function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
 
+    function avatarKindForSender(botMatch, isBot) {
+        if (!isBot) return 'human';
+        return botMatch && botMatch.avatar_type === 'human' ? 'human' : 'bot';
+    }
+
+    function createMessageAvatar(kind) {
+        const av = document.createElement('div');
+        av.className = `msg-avatar ${kind}`;
+        av.setAttribute('aria-hidden', 'true');
+        av.textContent = kind === 'bot' ? '🤖' : '👤';
+        return av;
+    }
+
     /* ---- Render a final message bubble ---- */
     function renderMessage(sender, text) {
         const botMatch = activeBots.find(b => b.name === sender);
         const isBot = !!botMatch;
 
-        // Add all participants (including bots disguised as humans) to the members list
         if (!knownMembers.has(sender)) {
             knownMembers.add(sender);
             updateMembersDisplay();
@@ -305,11 +333,14 @@
 
         const isOwn = (myDisplayName && sender === myDisplayName);
         const showAsBot = isBot && (!botMatch.avatar_type || botMatch.avatar_type === 'bot');
+        const avatarKind = avatarKindForSender(botMatch, isBot);
         const msgId = 'msg-' + (++msgCounter);
 
         const group = document.createElement('div');
         group.className = `message-group ${isOwn ? 'own' : 'other'}`;
         group.dataset.msgId = msgId;
+
+        const avatar = createMessageAvatar(avatarKind);
 
         const content = document.createElement('div');
         content.className = 'message-content';
@@ -318,9 +349,9 @@
         senderEl.className = `message-sender${showAsBot ? ' sender-bot' : ''}`;
         senderEl.textContent = isOwn ? `${sender} (you)` : sender;
 
-        const bubble = document.createElement('div');
-        bubble.className = `message ${isOwn ? 'own' : 'other'}`;
-        bubble.textContent = text;
+        const body = document.createElement('div');
+        body.className = 'message-body';
+        body.textContent = text;
 
         const receipt = document.createElement('div');
         receipt.className = `read-receipt${isOwn ? ' own' : ''}`;
@@ -328,8 +359,9 @@
         receipt.textContent = '';
 
         content.appendChild(senderEl);
-        content.appendChild(bubble);
+        content.appendChild(body);
         if (isOwn) content.appendChild(receipt);
+        group.appendChild(avatar);
         group.appendChild(content);
         chatBox.appendChild(group);
         scrollToBottom();
