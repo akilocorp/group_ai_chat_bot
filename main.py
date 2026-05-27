@@ -336,7 +336,7 @@ class SessionCreateRequest(BaseModel):
     qualtrics_store_chat: bool = True
     qualtrics_field_transcript: str = "transcript"
     qualtrics_field_status: str = "chat_status"
-    ai_starts_conversation: bool = False
+    ai_starts_conversation: bool = True
     turn_mode: str = "none"
     turn_duration_seconds: int = 60
     assignment_mode: str = "fifo"

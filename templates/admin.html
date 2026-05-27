@@ -208,11 +208,6 @@
             </div>
 
             <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">Experiment</div>
-            <p class="field-note">
-                <strong>Matching:</strong> controls who is placed in the same group while waiting for chat.
-                <strong>Condition On</strong> (default) — only participants with the same Qualtrics <code>condition</code> value are matched; Assignment is locked to stratified.
-                <strong>Condition Off</strong> — <strong>FIFO</strong> = one line for everyone; <strong>Stratified</strong> = separate lines per <code>condition</code> bucket (if you still pass condition in the URL).
-            </p>
             <div class="grid-2" style="margin-bottom:16px;">
                 <div class="form-group">
                     <label>Assignment</label>
@@ -254,8 +249,8 @@
                 <div class="form-group">
                     <label>AI opens chat</label>
                     <select id="aiStartsConversation">
-                        <option value="false" selected>No — wait for human</option>
-                        <option value="true">Yes — bot sends first</option>
+                        <option value="false">No — wait for human</option>
+                        <option value="true" selected>Yes — random bot sends first</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -340,7 +335,7 @@ const HUMAN_LIKE_PRESET = {
     sessionMode: 1,
     botReplyOnAny: true,
     maxChainDepth: 3,
-    aiStartsConversation: false,
+    aiStartsConversation: true,
     styleMimicEnabled: false,
     turnMode: 'none',
     bot: {

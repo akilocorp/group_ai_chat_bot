@@ -4,6 +4,7 @@ Runtime helpers: turn-taking, AI opening, Qualtrics session end, participant exp
 
 import asyncio
 import json
+import random
 from datetime import datetime
 from typing import Callable, Dict, List, Optional, Set
 
@@ -325,8 +326,8 @@ async def maybe_trigger_ai_opening(
         return
 
     group_info["opening_sent"] = True
-    # One short opener keeps the room feeling like a natural human chat.
-    bot_cfg = session.bots[0]
+    # One short opener; pick any configured persona at random.
+    bot_cfg = random.choice(session.bots)
     bot_name = bot_cfg.get("name", "Assistant")
     await process_opening_fn(session_id, group_id, bot_cfg, bot_name)
 

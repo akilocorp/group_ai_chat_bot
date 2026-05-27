@@ -95,7 +95,9 @@ class SessionConfig:
         obj.qualtrics_store_chat = data.get("qualtrics_store_chat", False)
         obj.qualtrics_field_transcript = data.get("qualtrics_field_transcript", "chat_transcript")
         obj.qualtrics_field_status = data.get("qualtrics_field_status", "chat_status")
-        obj.ai_starts_conversation = data.get("ai_starts_conversation", False)
+        obj.ai_starts_conversation = data.get(
+            "ai_starts_conversation", HUMAN_LIKE_SESSION["ai_starts_conversation"]
+        )
         obj.turn_mode = data.get("turn_mode", "none")
         obj.turn_duration_seconds = data.get("turn_duration_seconds", 60)
         obj.assignment_mode = data.get("assignment_mode", "fifo")

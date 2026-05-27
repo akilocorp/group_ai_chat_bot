@@ -21,7 +21,7 @@ HUMAN_LIKE_SESSION: Dict[str, Any] = {
     "use_mentions": False,
     "mention_prob": 0.0,
     "self_correction_prob": 0.0,
-    "ai_starts_conversation": False,
+    "ai_starts_conversation": True,
     "style_mimic_enabled": False,
     "turn_mode": "none",
 }
