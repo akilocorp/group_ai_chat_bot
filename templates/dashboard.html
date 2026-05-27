@@ -30,7 +30,7 @@
             display: flex;
             flex-direction: column;
         }
-        .main-content { padding: 34px 20px 40px; flex: 1; }
+        .main-content { padding: 26px 20px 40px; flex: 1; }
 
         .page-hero { margin-bottom: 20px; }
 
@@ -79,14 +79,14 @@
             flex-wrap: wrap;
         }
         .tab-btn {
-            padding: 14px 36px;
+            padding: 11px 28px;
             background: var(--gray-100);
             border: 2px solid var(--gray-300);
             color: var(--gray-700);
             cursor: pointer;
             border-radius: 10px;
             font-weight: 700;
-            font-size: var(--fs-md);
+            font-size: 0.95rem;
             font-family: inherit;
             transition: 0.15s;
         }
@@ -618,6 +618,10 @@ async function selectSession(sessionId) {
         detailSnapshot = JSON.parse(JSON.stringify(cfg));
         const status = cfg.is_open ? 'Open' : 'Closed';
         const displayName = cfg.name || cfg.session_id;
+        const condOn = cfg.condition_enabled !== false;
+        const assignmentOptions = condOn
+            ? `<option value="stratified">Stratified</option>`
+            : `<option value="fifo">FIFO</option><option value="stratified">Stratified</option>`;
         panel.innerHTML = `
             <div class="detail-header">
                 <div>
@@ -646,7 +650,7 @@ async function selectSession(sessionId) {
                 <div class="grid-3">
                     <div class="form-group"><label>Mode</label><select id="modSessionMode" disabled><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
                     <div class="form-group"><label>Bots</label><select id="modBotEnabled" disabled><option value="true">On</option><option value="false">Off</option></select></div>
-                    <div class="form-group"><label>Assignment</label><select id="modAssignmentMode" disabled><option value="fifo">FIFO</option><option value="stratified">Stratified</option></select></div>
+                    <div class="form-group"><label>Assignment</label><select id="modAssignmentMode" disabled>${assignmentOptions}</select></div>
                 </div>
                 <div class="grid-2">
                     <div class="form-group"><label>Condition</label><select id="modConditionEnabled" disabled><option value="true">On</option><option value="false">Off</option></select></div>
@@ -677,8 +681,10 @@ function fillSessionDetailForm(cfg) {
     document.getElementById('modGroupChatDuration').value = cfg.group_chat_duration_minutes ?? 5;
     document.getElementById('modSessionMode').value = String(cfg.session_mode ?? 1);
     document.getElementById('modBotEnabled').value = cfg.bot_enabled ? 'true' : 'false';
-    document.getElementById('modAssignmentMode').value = cfg.assignment_mode || 'fifo';
-    document.getElementById('modConditionEnabled').value = cfg.condition_enabled !== false ? 'true' : 'false';
+    const condOn = cfg.condition_enabled !== false;
+    document.getElementById('modConditionEnabled').value = condOn ? 'true' : 'false';
+    // When Condition is On, assignment is forced to stratified.
+    document.getElementById('modAssignmentMode').value = condOn ? 'stratified' : (cfg.assignment_mode || 'fifo');
     const qOn = cfg.qualtrics_handoff_enabled && cfg.qualtrics_store_chat;
     document.getElementById('modQualtricsIntegration').value = qOn ? 'true' : 'false';
     document.getElementById('modBotsJson').value = JSON.stringify(cfg.bots || [], null, 2);
