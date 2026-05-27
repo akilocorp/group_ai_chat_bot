@@ -6,6 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/theme.css">
     <style>
+        /* Typography: lg / md / sm only */
+        .page-wrap {
+            --fs-lg: 1.5rem;
+            --fs-md: 1.0625rem;
+            --fs-sm: 0.875rem;
+            max-width: 1060px;
+            margin: 0 auto;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: var(--fs-md);
+            line-height: 1.5;
+            color: var(--gray-900);
+        }
+        .text-lg { font-size: var(--fs-lg); font-weight: 700; line-height: 1.25; }
+        .text-md { font-size: var(--fs-md); font-weight: 600; line-height: 1.45; }
+        .text-sm { font-size: var(--fs-sm); font-weight: 500; line-height: 1.45; color: var(--gray-700); }
+        .text-muted { color: var(--gray-500); }
+        .label-caps {
+            font-size: var(--fs-sm);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+        }
+
         body {
             min-height: 100vh;
             display: flex;
@@ -13,18 +37,19 @@
             padding-top: 48px;
         }
         .main-content { padding: 24px 20px 40px; flex: 1; }
-        .page-wrap { max-width: 1060px; margin: 0 auto; }
 
-        .page-hero { margin-bottom: 18px; }
+        .page-hero { margin-bottom: 20px; }
         .page-hero h1 {
-            font-size: 1.65rem;
+            font-size: var(--fs-lg);
             font-weight: 800;
             color: var(--orange-dark);
+            line-height: 1.2;
         }
         .page-hero .subtitle {
-            font-size: 0.9rem;
+            font-size: var(--fs-md);
+            font-weight: 500;
             color: var(--gray-700);
-            margin-top: 6px;
+            margin-top: 8px;
         }
 
         .metrics {
@@ -35,26 +60,26 @@
         }
         .metric {
             flex: 1;
-            min-width: 100px;
+            min-width: 110px;
             background: var(--white);
             border-radius: 12px;
-            padding: 14px 18px;
+            padding: 16px 18px;
             border: 1px solid rgba(0, 0, 0, 0.06);
         }
         .metric label {
             display: block;
-            font-size: 0.72rem;
-            font-weight: 600;
+            font-size: var(--fs-sm);
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
             color: var(--gray-500);
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
         .metric span {
-            font-size: 1.5rem;
+            font-size: var(--fs-lg);
             font-weight: 700;
-            letter-spacing: -0.02em;
             color: var(--gray-900);
+            line-height: 1.2;
         }
 
         .card {
@@ -63,14 +88,7 @@
             padding: 24px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.06);
             border: 1px solid var(--gray-300);
-        }
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--orange-dark);
-            margin-bottom: 18px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f2f5;
+            font-size: var(--fs-md);
         }
         .tabs {
             display: flex;
@@ -86,7 +104,8 @@
             cursor: pointer;
             border-radius: 10px;
             font-weight: 700;
-            font-size: 1.08rem;
+            font-size: var(--fs-md);
+            font-family: inherit;
             transition: 0.15s;
         }
         .tab-btn:hover { border-color: #fdba74; color: var(--orange-dark); }
@@ -101,12 +120,12 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .section-title {
-            font-size: 0.78rem;
+            font-size: var(--fs-md);
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.05em;
             color: var(--orange-dark);
-            margin: 20px 0 10px;
+            margin: 22px 0 12px;
         }
         .section-title:first-child { margin-top: 0; }
 
@@ -118,22 +137,24 @@
             background: var(--white);
         }
         .session-header {
-            padding: 14px 16px;
+            padding: 16px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
+            font-size: var(--fs-md);
         }
         .session-header:hover { background: var(--gray-100); }
-        .session-title { font-weight: 600; font-size: 0.9375rem; }
-        .session-meta { font-size: 0.8125rem; color: var(--gray-700); margin-top: 2px; }
-        .session-body { padding: 14px 16px; display: none; border-top: 1px solid rgba(0, 0, 0, 0.06); }
+        .session-header .chevron { font-size: var(--fs-lg); color: var(--gray-500); }
+        .session-title { font-weight: 700; font-size: var(--fs-md); color: var(--gray-900); }
+        .session-meta { font-size: var(--fs-sm); color: var(--gray-700); margin-top: 4px; font-weight: 500; }
+        .session-body { padding: 16px 18px; display: none; border-top: 1px solid rgba(0, 0, 0, 0.06); }
         .group-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
         .group-card {
             background: var(--gray-100);
-            padding: 8px 14px;
+            padding: 10px 16px;
             border-radius: 8px;
-            font-size: 0.8125rem;
+            font-size: var(--fs-md);
             font-weight: 600;
             cursor: pointer;
             transition: background 0.15s;
@@ -144,8 +165,9 @@
             background: none;
             border: none;
             color: var(--orange-dark);
-            font-weight: 600;
-            font-size: 0.875rem;
+            font-weight: 700;
+            font-size: var(--fs-md);
+            font-family: inherit;
             cursor: pointer;
             padding: 0;
         }
@@ -154,8 +176,10 @@
             padding: 32px 16px;
             color: var(--gray-500);
             text-align: center;
-            font-size: 0.9375rem;
+            font-size: var(--fs-md);
+            font-weight: 500;
         }
+        .empty-state a { font-size: inherit; }
 
         .published-layout {
             display: grid;
@@ -172,7 +196,7 @@
             overflow-y: auto;
         }
         .session-row {
-            padding: 12px 14px;
+            padding: 14px 16px;
             border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 10px;
             cursor: pointer;
@@ -181,13 +205,13 @@
         }
         .session-row:hover { border-color: rgba(230, 126, 34, 0.35); }
         .session-row.active { border-color: var(--orange); background: #fffaf5; }
-        .session-row-id { font-weight: 600; font-size: 0.875rem; }
-        .session-row-meta { font-size: 0.75rem; color: var(--gray-700); margin-top: 4px; }
+        .session-row-id { font-weight: 700; font-size: var(--fs-md); color: var(--gray-900); }
+        .session-row-meta { font-size: var(--fs-sm); color: var(--gray-700); margin-top: 4px; font-weight: 500; }
         .badge-open, .badge-closed {
             float: right;
-            padding: 2px 8px;
+            padding: 3px 10px;
             border-radius: 6px;
-            font-size: 0.65rem;
+            font-size: var(--fs-sm);
             font-weight: 700;
         }
         .badge-open { background: #d1fae5; color: #065f46; }
@@ -205,15 +229,19 @@
             align-items: center;
             justify-content: center;
             color: var(--gray-500);
-            font-size: 0.9375rem;
+            font-size: var(--fs-md);
+            font-weight: 500;
         }
         .detail-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .detail-title { font-size: var(--fs-lg); font-weight: 800; color: var(--gray-900); }
+        .detail-subtitle { font-size: var(--fs-sm); color: var(--gray-700); margin-top: 6px; font-weight: 500; }
         .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-modify, .btn-action {
-            padding: 8px 16px;
+            padding: 10px 18px;
             border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.8125rem;
+            font-weight: 700;
+            font-size: var(--fs-md);
+            font-family: inherit;
             cursor: pointer;
             border: none;
         }
@@ -221,22 +249,32 @@
         .btn-primary { background: var(--orange); color: white; }
         .btn-danger { background: var(--white); color: #b42318; border: 1px solid #fecaca; }
         .param-section-title {
-            font-size: 0.7rem;
-            font-weight: 700;
+            font-size: var(--fs-sm);
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.05em;
             color: var(--gray-500);
-            margin: 16px 0 8px;
+            margin: 18px 0 10px;
         }
         .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-weight: 600; font-size: 0.8125rem; margin-bottom: 4px; }
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            font-size: var(--fs-md);
+            margin-bottom: 6px;
+            color: var(--gray-900);
+        }
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid rgba(0, 0, 0, 0.12);
             border-radius: 8px;
-            font-size: 0.875rem;
+            font-size: var(--fs-md);
             font-family: inherit;
+        }
+        .form-group textarea.mono {
+            font-family: ui-monospace, monospace;
+            font-size: var(--fs-sm);
         }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -252,38 +290,42 @@
         .rooms-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.875rem;
+            font-size: var(--fs-md);
             margin-bottom: 20px;
         }
         .rooms-table th {
             text-align: left;
-            padding: 10px 12px;
-            font-size: 0.7rem;
-            font-weight: 600;
+            padding: 12px;
+            font-size: var(--fs-sm);
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
             color: var(--gray-500);
             border-bottom: 1px solid rgba(0, 0, 0, 0.08);
         }
         .rooms-table td {
             padding: 12px;
             border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            font-size: var(--fs-md);
+            font-weight: 500;
         }
         .badge-bot {
             background: var(--gray-100);
             color: var(--gray-700);
-            padding: 2px 6px;
+            padding: 3px 8px;
             border-radius: 4px;
-            font-size: 0.7rem;
+            font-size: var(--fs-sm);
+            font-weight: 600;
             margin-right: 4px;
         }
         .btn-row {
             border: none;
             background: var(--gray-100);
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: var(--fs-sm);
+            font-weight: 700;
+            font-family: inherit;
             cursor: pointer;
             margin-right: 4px;
         }
@@ -305,16 +347,18 @@
             border: 1px solid rgba(0, 0, 0, 0.06);
         }
         .room-item {
-            padding: 10px 12px;
+            padding: 12px 14px;
             margin-bottom: 4px;
             border-radius: 8px;
             background: var(--white);
             cursor: pointer;
-            font-size: 0.8125rem;
+            font-size: var(--fs-md);
             border: 1px solid transparent;
         }
         .room-item:hover { border-color: rgba(0, 0, 0, 0.08); }
         .room-item.active { background: var(--orange); color: white; }
+        .room-item.active .text-sm { color: rgba(255,255,255,0.85); }
+        .room-item b { font-size: var(--fs-md); font-weight: 700; }
         .viewer {
             background: var(--white);
             border-radius: 12px;
@@ -323,7 +367,11 @@
             padding: 16px;
             border: 1px solid rgba(0, 0, 0, 0.06);
         }
-        .viewer h3 { font-size: 0.875rem; font-weight: 600; color: var(--gray-700); }
+        .viewer h3 {
+            font-size: var(--fs-md);
+            font-weight: 700;
+            color: var(--gray-900);
+        }
         .messages-list {
             flex: 1;
             overflow-y: auto;
@@ -334,18 +382,18 @@
         }
         .msg-bubble {
             background: var(--gray-100);
-            padding: 10px 12px;
+            padding: 12px 14px;
             border-radius: 12px;
             max-width: 90%;
-            font-size: 0.875rem;
+            font-size: var(--fs-md);
             line-height: 1.45;
         }
         .msg-bubble b {
             display: block;
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: var(--fs-sm);
+            font-weight: 700;
             color: var(--gray-500);
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
         .msg-bubble.bot-msg { border-left: 3px solid var(--orange); }
 
@@ -360,16 +408,22 @@
             padding: 16px;
             background: var(--white);
         }
-        .export-card strong { font-size: 0.9375rem; }
+        .export-card strong {
+            font-size: var(--fs-md);
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        .export-card .text-sm { margin-top: 4px; }
         .btn-export {
             display: inline-block;
             margin-top: 12px;
-            padding: 8px 14px;
+            padding: 10px 16px;
             border-radius: 8px;
             background: var(--gray-900);
             color: white;
-            font-weight: 600;
-            font-size: 0.8125rem;
+            font-weight: 700;
+            font-size: var(--fs-md);
+            font-family: inherit;
             text-decoration: none;
         }
         .btn-export:hover { opacity: 0.9; }
@@ -383,8 +437,9 @@
             border-radius: 10px;
             background: var(--gray-900);
             color: white;
-            font-weight: 600;
-            font-size: 0.875rem;
+            font-weight: 700;
+            font-size: var(--fs-md);
+            font-family: inherit;
             display: none;
             z-index: 2000;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -405,7 +460,7 @@
 <div id="notification" class="notify"></div>
 
 <div class="main-content">
-    <div class="page-wrap">
+    <div class="page-wrap dashboard">
 
         <div class="page-hero">
             <h1>Dashboard</h1>
@@ -532,14 +587,14 @@ function renderLobbySessions(sessions) {
                     <div class="session-title">${s.name || s.id}</div>
                     <div class="session-meta">${s.id} · ${s.group_size} per group · ${s.groups.length} active</div>
                 </div>
-                <span aria-hidden="true">›</span>
+                <span class="chevron" aria-hidden="true">›</span>
             </div>
             <div class="session-body" id="body-${s.id}">
                 ${s.groups.length ? `
                     <div class="group-grid">${s.groups.map(g => `
                         <div class="group-card" onclick="joinGroup('${s.id}','${g}')">${g}</div>
                     `).join('')}</div>
-                ` : '<p style="color:var(--gray-500);font-size:0.875rem;">No active groups.</p>'}
+                ` : '<p class="text-sm text-muted">No active groups.</p>'}
                 <button type="button" class="btn-text" onclick="goToWait('${s.id}')">Join matching queue</button>
             </div>
         </div>
@@ -584,8 +639,8 @@ async function selectSession(sessionId) {
         panel.innerHTML = `
             <div class="detail-header">
                 <div>
-                    <h3 style="font-size:1.1rem;font-weight:700;">${cfg.session_id}</h3>
-                    <p style="font-size:0.8125rem;color:var(--gray-700);margin-top:4px;">${cfg.name} · ${status}</p>
+                    <h3 class="detail-title">${cfg.session_id}</h3>
+                    <p class="detail-subtitle">${cfg.name} · ${status}</p>
                 </div>
                 <div class="detail-actions">
                     <button type="button" class="btn-modify" id="btnUnlockModify">Edit</button>
@@ -615,7 +670,7 @@ async function selectSession(sessionId) {
                     <div class="form-group"><label>Condition</label><select id="modConditionEnabled" disabled><option value="true">On</option><option value="false">Off</option></select></div>
                     <div class="form-group"><label>Qualtrics</label><select id="modQualtricsIntegration" disabled><option value="false">Off</option><option value="true">On</option></select></div>
                 </div>
-                <div class="form-group"><label>Personas (JSON)</label><textarea id="modBotsJson" rows="5" disabled style="font-family:ui-monospace,monospace;font-size:0.78rem;"></textarea></div>
+                <div class="form-group"><label>Personas (JSON)</label><textarea id="modBotsJson" rows="5" disabled class="mono"></textarea></div>
             </form>
         `;
         fillSessionDetailForm(cfg);
@@ -760,9 +815,9 @@ async function updateData() {
 
         document.getElementById('sidebar-list').innerHTML = allRoomsCache.map(r => `
             <div class="room-item ${selectedRoomId === r.id ? 'active' : ''}" onclick="selectRoom('${r.id}')">
-                <b>${r.id}</b><br><small>${r.message_count} messages</small>
+                <b>${r.id}</b><br><span class="text-sm">${r.message_count} messages</span>
             </div>
-        `).join('') || '<p class="empty-state" style="padding:8px;">No rooms</p>';
+        `).join('') || '<p class="empty-state" style="padding:12px;">No rooms</p>';
 
         if (selectedRoomId) fetchMessages(selectedRoomId);
         if (document.getElementById('sessions-tab').classList.contains('active')) {
@@ -812,14 +867,16 @@ async function deleteRoom(id) {
 function renderExportTab() {
     document.getElementById('export-sessions-list').innerHTML = allSessionsCache.length ? allSessionsCache.map(s => `
         <div class="export-card">
-            <strong>${s.name || s.id}</strong><br><small>${s.id}</small>
+            <strong>${s.name || s.id}</strong>
+            <div class="text-sm">${s.id}</div>
             <a href="/api/export/session/${encodeURIComponent(s.id)}/activity" download class="btn-export">Download CSV</a>
         </div>
     `).join('') : '<p class="empty-state">No sessions</p>';
 
     document.getElementById('export-rooms-list').innerHTML = allRoomsCache.length ? allRoomsCache.map(r => `
         <div class="export-card">
-            <strong>${r.id}</strong><br><small>${r.message_count} messages</small>
+            <strong>${r.id}</strong>
+            <div class="text-sm">${r.message_count} messages</div>
             <a href="/api/export/room/${encodeURIComponent(r.id)}/messages" download class="btn-export">Download CSV</a>
         </div>
     `).join('') : '<p class="empty-state">No rooms yet</p>';
