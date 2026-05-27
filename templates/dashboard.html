@@ -9,6 +9,9 @@
         .page-wrap {
             max-width: 1060px;
             margin: 0 auto;
+            --fs-lg: 1.35rem;
+            --fs-md: 1rem;
+            --fs-sm: 0.8125rem;
         }
         .text-lg { font-size: var(--fs-lg); font-weight: 700; line-height: 1.25; }
         .text-md { font-size: var(--fs-md); font-weight: 600; line-height: 1.45; }
@@ -27,7 +30,7 @@
             display: flex;
             flex-direction: column;
         }
-        .main-content { padding: 24px 20px 40px; flex: 1; }
+        .main-content { padding: 34px 20px 40px; flex: 1; }
 
         .page-hero { margin-bottom: 20px; }
 
@@ -563,7 +566,7 @@ function renderLobbySessions(sessions) {
             <div class="session-header" onclick="toggleSession('${s.id}')">
                 <div>
                     <div class="session-title">${s.name || s.id}</div>
-                    <div class="session-meta">${s.id} · ${s.group_size} per group · ${s.groups.length} active</div>
+                    <div class="session-meta">${s.group_size} per group · ${s.groups.length} active · ${s.id}</div>
                 </div>
                 <span class="chevron" aria-hidden="true">›</span>
             </div>
@@ -592,8 +595,8 @@ async function loadPublishedSessions() {
         list.innerHTML = sessions.map(s => `
             <div class="session-row ${s.id === selectedSessionId ? 'active' : ''}" data-id="${s.id}" onclick="selectSession('${s.id}')">
                 <span class="${s.is_open ? 'badge-open' : 'badge-closed'}">${s.is_open ? 'Open' : 'Closed'}</span>
-                <div class="session-row-id">${s.id}</div>
-                <div class="session-row-meta">${s.name || 'Unnamed'} · ${s.group_size}/group</div>
+                <div class="session-row-id">${s.name || 'Unnamed'}</div>
+                <div class="session-row-meta">${s.id} · ${s.group_size}/group</div>
             </div>
         `).join('');
     } catch (e) {

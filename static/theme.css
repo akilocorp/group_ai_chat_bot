@@ -62,7 +62,7 @@ body.has-top-nav {
 
 .nav-logo {
     font-weight: 800;
-    font-size: 1.375rem;
+    font-size: 1.5rem;
     color: var(--orange);
     text-decoration: none;
     flex-shrink: 0;
@@ -74,7 +74,7 @@ body.has-top-nav {
     text-decoration: none;
     color: var(--gray-700);
     font-weight: 700;
-    font-size: var(--fs-md);
+    font-size: 1.125rem;
     padding: 8px 14px;
     border-radius: 8px;
     transition: all 0.15s;

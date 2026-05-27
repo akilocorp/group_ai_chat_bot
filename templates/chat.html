@@ -325,20 +325,12 @@
         body.className = 'message-body';
         body.textContent = text;
 
-        const receipt = document.createElement('div');
-        receipt.className = `read-receipt${isOwn ? ' own' : ''}`;
-        receipt.id = `receipt-${msgId}`;
-        receipt.textContent = '';
-
         content.appendChild(senderEl);
         content.appendChild(body);
-        if (isOwn) content.appendChild(receipt);
         group.appendChild(avatar);
         group.appendChild(content);
         chatBox.appendChild(group);
         scrollToBottom();
-
-        msgReadMap[msgId] = { receiptEl: receipt, readBy: new Set() };
         return msgId;
     }
 
