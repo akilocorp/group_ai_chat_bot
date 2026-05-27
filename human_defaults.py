@@ -3,7 +3,20 @@ Canonical example defaults for new sessions, API fallbacks, and Admin ★ Exampl
 Keep templates/admin.html HUMAN_LIKE_PRESET in sync when changing values here.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
+
+# Strongest GPT chat models in Admin (keep templates/admin.html GPT_CHAT_MODELS in sync)
+GPT_CHAT_MODELS: Tuple[str, ...] = ("gpt-5.5", "gpt-5", "gpt-4o")
+DEFAULT_GPT_CHAT_MODEL = "gpt-5"
+
+
+def normalize_gpt_chat_model(model: Optional[str]) -> str:
+    """Return a whitelisted GPT model id; unknown values fall back to default."""
+    m = (model or "").strip()
+    if m in GPT_CHAT_MODELS:
+        return m
+    return DEFAULT_GPT_CHAT_MODEL
+
 
 HUMAN_LIKE_PROMPT = (
     "You are a participant in a casual climate group chat. "
@@ -34,6 +47,7 @@ HUMAN_LIKE_SESSION: Dict[str, Any] = {
 
 HUMAN_LIKE_BOT: Dict[str, Any] = {
     "prompt": HUMAN_LIKE_PROMPT,
+    "model": DEFAULT_GPT_CHAT_MODEL,
     "mode": 3,
     "avatar_type": "human",
     "disclosed_ai_allowed": False,

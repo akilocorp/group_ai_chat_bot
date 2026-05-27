@@ -61,4 +61,8 @@ Bot **timing** modes (per bot card) control delay/skip — separate from session
 | Variable | Description |
 |----------|-------------|
 | `OPENAI_API_KEY` | Required for bot replies |
+| `OPENAI_CHAT_MODEL` | Default if persona has no model: `gpt-5.5`, `gpt-5`, or `gpt-4o` |
+| `OPENAI_AUX_MODEL` | Orchestrator / scoring calls (default `gpt-5-mini`) |
+
+Per-persona **GPT model** is set in Admin (dropdown: GPT-5.5 / GPT-5 / GPT-4o). Example preset uses **gpt-5** for both a and b.
 | `MONGO_URL` | Optional MongoDB |

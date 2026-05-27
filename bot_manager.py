@@ -13,7 +13,24 @@ load_dotenv()
 # Initialize OpenAI client
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-from human_defaults import HUMAN_LIKE_PROMPT
+from human_defaults import HUMAN_LIKE_PROMPT, GPT_CHAT_MODELS, normalize_gpt_chat_model
+
+DEFAULT_AUX_MODEL = (os.getenv("OPENAI_AUX_MODEL") or "gpt-5-mini").strip() or "gpt-5-mini"
+
+
+def resolve_chat_model(bot_cfg: Optional[dict] = None) -> str:
+    """Per-persona GPT model (Admin whitelist), else env OPENAI_CHAT_MODEL, else gpt-5."""
+    if bot_cfg:
+        return normalize_gpt_chat_model(bot_cfg.get("model"))
+    env = (os.getenv("OPENAI_CHAT_MODEL") or "").strip()
+    if env in GPT_CHAT_MODELS:
+        return env
+    return normalize_gpt_chat_model(None)
+
+
+def resolve_aux_model() -> str:
+    """Orchestrator / scoring calls (lighter default)."""
+    return DEFAULT_AUX_MODEL
 
 # Default system prompt when no specific instructions are provided
 DEFAULT_SYSTEM_PROMPT = HUMAN_LIKE_PROMPT
@@ -32,7 +49,31 @@ STRICT CHAT FORMAT (always follow):
 - Avoid interview tone ("What do you think?", "Any thoughts on…") unless the room is stuck.
 - Avoid formal essay words (e.g. "individual lifestyle changes", "tackle", "contribute to fighting").
 - Other participants in the room: {peers}. You are not them. Treat every sender the same.
+- You are an independent participant with your own views; never imply you share a hidden controller with other bots.
 """
+
+
+async def create_chat_completion(
+    *,
+    model: str,
+    messages: List[Dict],
+    cap_tokens: int,
+    temperature: float = 0.7,
+) -> str:
+    """OpenAI chat completion with model-specific token param names."""
+    kwargs: Dict = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+    }
+    if model.startswith("gpt-5") or model.startswith("o"):
+        kwargs["max_completion_tokens"] = cap_tokens
+    else:
+        kwargs["max_tokens"] = cap_tokens
+        kwargs["frequency_penalty"] = 0.35
+        kwargs["presence_penalty"] = 0.2
+    response = await client.chat.completions.create(**kwargs)
+    return response.choices[0].message.content.strip()
 
 # Short fallbacks when the AI API is unavailable
 
@@ -180,7 +221,10 @@ class ChatBot:
         self.name = name
         
         # Identity injection: Ensure the bot knows its name and role
-        identity_instr = f"Your name is {self.name}. Always stay in character as {self.name}. "
+        identity_instr = (
+            f"Your name is {self.name}. Always stay in character as {self.name}. "
+            f"You are an independent person in this chat—not controlled by other participants or bots. "
+        )
         
         base = DEFAULT_SYSTEM_PROMPT if not system_prompt or not system_prompt.strip() else system_prompt
         self.system_prompt = identity_instr + base + build_style_rules(name)
@@ -203,6 +247,7 @@ class ChatBot:
         mention_note: Optional[str] = None,
         mention_target: Optional[str] = None,
         emoji_enabled: bool = False,
+        model: Optional[str] = None,
     ) -> Optional[str]:
         """
         Generates a response using the full room history provided by the ContextManager.
@@ -245,16 +290,13 @@ class ChatBot:
                 )
             messages.insert(2, {"role": "system", "content": emoji_style_note(emoji_enabled)})
 
-            response = await client.chat.completions.create(
-                model="gpt-3.5-turbo",
+            chat_model = normalize_gpt_chat_model(model)
+            raw = await create_chat_completion(
+                model=chat_model,
                 messages=messages,
-                max_tokens=cap_tokens,
+                cap_tokens=cap_tokens,
                 temperature=temperature,
-                frequency_penalty=0.35,
-                presence_penalty=0.2,
             )
-
-            raw = response.choices[0].message.content.strip()
             # Length target is prompt-only; max_words is a loose safety ceiling if the model runs long.
             reply = sanitize_bot_reply(
                 raw, self.name, peer_names, max_words=max_words, allow_emoji=emoji_enabled
@@ -265,7 +307,10 @@ class ChatBot:
             return random.choice(FALLBACK_REPLIES)
     def update_persona(self, new_prompt: str):
         """Update the system instructions for this specific persona."""
-        identity_instr = f"Your name is {self.name}. Always stay in character as {self.name}. "
+        identity_instr = (
+            f"Your name is {self.name}. Always stay in character as {self.name}. "
+            f"You are an independent person in this chat—not controlled by other participants or bots. "
+        )
         base = new_prompt if new_prompt.strip() else DEFAULT_SYSTEM_PROMPT
         self.system_prompt = identity_instr + base + build_style_rules(self.name)
 
@@ -306,13 +351,14 @@ async def analyze_intent(user_text: str, bots_config: list, history_text: str) -
     """
 
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "system", "content": orchestrator_prompt}],
-            max_tokens=10, # Very small for speed
-            temperature=0
-        )
-        decision = response.choices[0].message.content.strip().replace("@", "")
+        decision = (
+            await create_chat_completion(
+                model=resolve_aux_model(),
+                messages=[{"role": "system", "content": orchestrator_prompt}],
+                cap_tokens=10,
+                temperature=0,
+            )
+        ).replace("@", "")
         # Robust name matching
         for bot in bots_config:
             if bot['name'].lower() in decision.lower():
@@ -356,13 +402,12 @@ Guidelines:
 Output ONLY one number from 0 to 1 (examples: 0, 0.25, 0.6, 1). No other text."""
 
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+        text = await create_chat_completion(
+            model=resolve_aux_model(),
             messages=[{"role": "system", "content": orchestrator_prompt}],
-            max_tokens=12,
+            cap_tokens=12,
             temperature=0.2,
         )
-        text = response.choices[0].message.content.strip()
         match = re.search(r"0?\.\d+|1\.0*|1|0", text)
         if match:
             return max(0.0, min(1.0, float(match.group())))
@@ -403,22 +448,23 @@ async def build_style_mimic_hint(
 
     summary = f"~{avg_words:.0f} words per message; informal chat."
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        f"Summarize how '{target_name}' writes in 2 short bullets: length, tone, "
-                        f"slang/typos/punctuation. Be concrete.\n\nMessages:\n"
-                        + "\n".join(f"- {t}" for t in recent)
-                    ),
-                }
-            ],
-            max_tokens=90,
-            temperature=0.2,
-        )
-        summary = response.choices[0].message.content.strip().replace("\n", " ")
+        summary = (
+            await create_chat_completion(
+                model=resolve_aux_model(),
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            f"Summarize how '{target_name}' writes in 2 short bullets: length, tone, "
+                            f"slang/typos/punctuation. Be concrete.\n\nMessages:\n"
+                            + "\n".join(f"- {t}" for t in recent)
+                        ),
+                    }
+                ],
+                cap_tokens=90,
+                temperature=0.2,
+            )
+        ).replace("\n", " ")
     except Exception as e:
         print(f"⚠️ build_style_mimic_hint LLM failed: {e}")
 

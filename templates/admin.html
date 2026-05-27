@@ -322,6 +322,27 @@ function toast(msg, color = '#2ecc71') {
    ============================================================ */
 let botPersonas = [];
 
+/** Keep in sync with human_defaults.py GPT_CHAT_MODELS */
+const GPT_CHAT_MODELS = [
+    { id: 'gpt-5.5', label: 'GPT-5.5 — strongest' },
+    { id: 'gpt-5', label: 'GPT-5 — recommended' },
+    { id: 'gpt-4o', label: 'GPT-4o — strong & stable' },
+];
+const DEFAULT_GPT_CHAT_MODEL = 'gpt-5';
+
+function normalizeGptModel(value) {
+    const m = (value || '').trim();
+    return GPT_CHAT_MODELS.some(x => x.id === m) ? m : DEFAULT_GPT_CHAT_MODEL;
+}
+
+function gptModelSelectHtml(selected, index) {
+    const cur = normalizeGptModel(selected);
+    const opts = GPT_CHAT_MODELS.map(
+        x => `<option value="${x.id}" ${x.id === cur ? 'selected' : ''}>${x.label}</option>`
+    ).join('');
+    return `<select onchange="updateBot(${index}, 'model', this.value)">${opts}</select>`;
+}
+
 /** Keep in sync with human_defaults.py */
 const SHARED_PERSONA_PROMPT =
     'You are a participant in a casual climate group chat. ' +
@@ -352,6 +373,7 @@ const HUMAN_LIKE_PRESET = {
     styleMimicEnabled: false,
     turnMode: 'none',
     bot: {
+        model: DEFAULT_GPT_CHAT_MODEL,
         mode: 3,
         delay_seconds: 5,
         typing_cps: 2,
@@ -369,6 +391,7 @@ function defaultBotTemplate(overrides = {}) {
     return {
         name: '',
         prompt: SHARED_PERSONA_PROMPT,
+        model: overrides.model || HUMAN_LIKE_PRESET.bot.model,
         mode: HUMAN_LIKE_PRESET.bot.mode,
         avatar_type: 'human',
         disclosed_ai_allowed: false,
@@ -396,8 +419,8 @@ function applyExamplePreset() {
     document.getElementById('turnMode').value = p.turnMode;
     syncTurnDurationUI();
     botPersonas = [
-        defaultBotTemplate({ name: 'a' }),
-        defaultBotTemplate({ name: 'b' }),
+        defaultBotTemplate({ name: 'a', model: DEFAULT_GPT_CHAT_MODEL, temperature: 0.65 }),
+        defaultBotTemplate({ name: 'b', model: DEFAULT_GPT_CHAT_MODEL, temperature: 0.9 }),
     ];
     renderBots();
     toast('Example settings applied');
@@ -538,6 +561,10 @@ function renderBots() {
             </div>
 
             <div class="section-label">Quality</div>
+            <div class="form-group">
+                <label>GPT model <span class="hint">(per persona)</span></label>
+                ${gptModelSelectHtml(bot.model, i)}
+            </div>
             <div class="grid-3">
                 <div class="form-group">
                     <label>Temperature</label>
@@ -590,6 +617,7 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
     const bots = botPersonas.map(b => ({
         name:             b.name,
         prompt:           b.prompt,
+        model:            normalizeGptModel(b.model),
         mode:             b.mode,
         avatar_type:      b.avatar_type || 'human',
         disclosed_ai_allowed: !!b.disclosed_ai_allowed,

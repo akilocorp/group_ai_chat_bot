@@ -10,7 +10,7 @@ from typing import Callable, Dict, List, Optional, Set
 
 from match_manager import match_manager, SessionConfig
 from context_manager import get_or_create_context, get_context
-from bot_manager import compute_typing_delay_seconds, get_or_create_bot_from_cfg
+from bot_manager import compute_typing_delay_seconds, get_or_create_bot_from_cfg, resolve_chat_model
 from db.database import get_room_history, save_message
 from cache_manager import cache_manager
 from activity_logger import activity_logger
@@ -357,6 +357,7 @@ async def send_ai_opening_message(session_id: str, group_id: str, bot_cfg: Dict,
         length_variation=bot_cfg.get("length_variation", True),
         max_tokens=bot_cfg.get("max_tokens"),
         emoji_enabled=bool(bot_cfg.get("emoji_enabled", False)),
+        model=resolve_chat_model(bot_cfg),
     )
     if not reply:
         return

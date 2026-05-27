@@ -6,7 +6,7 @@
     <title>Study Chat</title>
     <link rel="stylesheet" href="/static/theme.css">
     <style>
-        :root { --header-height: 80px; }
+        :root { --header-height: 100px; }
         html, body { height: 100%; width: 100%; overflow: hidden; font-family: var(--font-chat); }
         body, input, textarea, button { font-family: var(--font-chat); }
         .app-wrapper { display: flex; flex-direction: column; height: 100vh; }
@@ -413,6 +413,14 @@
         scrollToBottom();
     }
 
+    function showSessionBanner(text) {
+        const el = document.createElement('div');
+        el.className = 'system-banner';
+        el.textContent = text;
+        chatBox.appendChild(el);
+        scrollToBottom();
+    }
+
     function updateTurnBanner(payload) {
         if (!payload || payload.turn_mode === 'none') {
             turnBanner.className = '';
@@ -542,6 +550,12 @@
     async function onSessionEnded(payload) {
         sessionEndedNormally = true;
         setConnected(false);
+        msgInput.disabled = true;
+        sendButton.disabled = true;
+        msgInput.placeholder = 'Session ended. You can view chat history only.';
+        wsStatus.textContent = 'Session ended';
+        wsStatusDetail.textContent = 'Read-only mode';
+        statusDot.style.background = 'var(--gray-500)';
         if (sessionConfig.qualtrics_store_chat && !payload.transcript_text) {
             try {
                 const r = await fetch(`/api/export/participant/${encodeURIComponent(sessionId)}/${encodeURIComponent(participantId)}`);
@@ -560,7 +574,7 @@
         );
         notifyQualtricsParent(payload);
         qualtricsHandoffSent = true;
-        showError(payload.message || 'Session ended.');
+        showSessionBanner(payload.message || 'Session ended. Chat is now read-only.');
     }
 
     function usesEmbedCondition() {

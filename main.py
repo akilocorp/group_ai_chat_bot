@@ -27,6 +27,7 @@ from bot_manager import (
     assess_reply_probability,
     build_style_mimic_hint,
     compute_typing_delay_seconds,
+    resolve_chat_model,
     get_or_create_bot,
     get_or_create_bot_from_cfg,
     jitter_delay_extra,
@@ -39,6 +40,7 @@ from db.database import save_message, get_room_history
 # ============ Optimization Modules ============
 from cache_manager import cache_manager
 from bot_queue import bot_response_queue, BotResponse
+from human_defaults import GPT_CHAT_MODELS, normalize_gpt_chat_model
 from bot_interaction import (
     interaction_settings,
     all_peer_names,
@@ -220,6 +222,7 @@ def reset_idle_timer(session_id: str, group_id: str, idle_seconds: int = DEFAULT
             length_variation=initiator_cfg.get("length_variation", True),
             max_tokens=initiator_cfg.get("max_tokens"),
             emoji_enabled=bool(initiator_cfg.get("emoji_enabled", False)),
+            model=resolve_chat_model(initiator_cfg),
         )
 
         if reply:
@@ -355,7 +358,12 @@ async def get_human_defaults():
     """Recommended example settings (same as Admin ★ Example button and human_defaults.py)."""
     from human_defaults import HUMAN_LIKE_BOT, HUMAN_LIKE_PROMPT, HUMAN_LIKE_SESSION
 
-    return {"session": HUMAN_LIKE_SESSION, "bot": HUMAN_LIKE_BOT, "prompt": HUMAN_LIKE_PROMPT}
+    return {
+        "session": HUMAN_LIKE_SESSION,
+        "bot": HUMAN_LIKE_BOT,
+        "prompt": HUMAN_LIKE_PROMPT,
+        "gpt_chat_models": list(GPT_CHAT_MODELS),
+    }
 
 
 @app.get("/api/sessions")
@@ -372,7 +380,11 @@ async def create_session(data: SessionCreateRequest):
             name = (bot.get("name") or "").strip()
             if not name:
                 raise HTTPException(status_code=400, detail="Each bot must have a non-empty name")
-            cleaned_bots.append({**bot, "name": name})
+            cleaned_bots.append({
+                **bot,
+                "name": name,
+                "model": normalize_gpt_chat_model(bot.get("model")),
+            })
 
         session_id = match_manager.create_session(
             name=data.session_name,
@@ -533,7 +545,11 @@ async def modify_session(session_id: str, data: SessionUpdateRequest):
                 name = (bot.get("name") or "").strip()
                 if not name:
                     raise HTTPException(status_code=400, detail="Each bot must have a non-empty name")
-                cleaned.append({**bot, "name": name})
+                cleaned.append({
+                    **bot,
+                    "name": name,
+                    "model": normalize_gpt_chat_model(bot.get("model")),
+                })
             payload["bots"] = cleaned
         if not match_manager.update_session(session_id, payload):
             raise HTTPException(status_code=404, detail="Session not found")
@@ -1053,7 +1069,10 @@ async def handle_bot_reply(
             typing_cps = max(1, min(6, float(bot_cfg.get('typing_cps', 4))))
             idle_threshold = bot_cfg.get('idle_threshold', DEFAULT_IDLE_THRESHOLD)
 
-            print(f"[BOT]    mode={mode} delay={delay}s max_tokens={bot_cfg.get('max_tokens',200)} temp={bot_cfg.get('temperature',0.7)}")
+            print(
+                f"[BOT]    mode={mode} model={resolve_chat_model(bot_cfg)} delay={delay}s "
+                f"max_tokens={bot_cfg.get('max_tokens',200)} temp={bot_cfg.get('temperature',0.7)}"
+            )
 
             session_cfg = match_manager.get_session(session_id)
             group_info = group_info or match_manager.get_group_info(session_id, group_id) or {}
@@ -1119,6 +1138,7 @@ async def handle_bot_reply(
                 mention_note=mention_note or None,
                 mention_target=mention_target,
                 emoji_enabled=emoji_enabled,
+                model=resolve_chat_model(bot_cfg),
             )
             if not reply:
                 print(f"[BOT] ⚠️ {bot.name} returned empty reply")
