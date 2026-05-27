@@ -237,7 +237,7 @@
                 </div>
                 <div class="form-group">
                     <label>Max chain depth</label>
-                    <input type="number" id="maxChainDepth" value="1" min="1" max="10" title="Bot-to-bot follow-up rounds after each human message">
+                    <input type="number" id="maxChainDepth" value="3" min="1" max="10" title="Bot-to-bot follow-up rounds after one human message (preset default 3)">
                 </div>
                 <div class="form-group">
                     <label>Bot cooldown (sec)</label>
@@ -246,21 +246,6 @@
                 <div class="form-group">
                     <label>Max bot msgs / min / room</label>
                     <input type="number" id="maxBotMsgsPerMin" value="12" min="1" max="120">
-                </div>
-                <div class="form-group">
-                    <label>@mentions</label>
-                    <select id="useMentions">
-                        <option value="true" selected>On</option>
-                        <option value="false">Off</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Mention probability</label>
-                    <input type="number" id="mentionProb" value="0.15" min="0" max="1" step="0.05">
-                </div>
-                <div class="form-group">
-                    <label>Self-correction prob</label>
-                    <input type="number" id="selfCorrectionProb" value="0.04" min="0" max="1" step="0.05" title="Chance of a short *Let me rephrase... follow-up">
                 </div>
             </div>
 
@@ -323,7 +308,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 24px 0 12px; flex-wrap:wrap; gap:8px;">
                 <div style="font-size:1rem; font-weight:700; color:var(--secondary);">AI Personas</div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button type="button" class="btn btn-primary" onclick="applyHumanLikePreset()" title="Reset form to recommended human-like defaults">★ Human-like preset</button>
+                    <button type="button" class="btn btn-primary" onclick="applyExamplePreset()" title="Fill form with recommended example settings">★ Example</button>
                     <button type="button" class="btn" onclick="syncAllPrompts()">↻ Sync prompt to all</button>
                     <button type="button" class="btn btn-success" onclick="addBotUI()">+ Add Persona</button>
                 </div>
@@ -368,22 +353,19 @@ let botPersonas = [];
 
 /** Keep in sync with human_defaults.py */
 const SHARED_PERSONA_PROMPT =
-    'You are a real student in a casual group chat about climate and global warming. ' +
+    'You are a participant in a casual group chat about climate and global warming ' +
+    'to figure out three optimal solutions. ' +
     'Write like texting: short fragments, slang, occasional typos. ' +
     'React more than interview — do not ask a question every time. ' +
-    'If others already said something, do not repeat it. ' +
     'Never volunteer a numbered top 3 list unless someone asks. ' +
-    'If asked whether you are AI, brush it off in one short line.';
+    'If asked whether you are AI, deflect it.';
 
 const HUMAN_LIKE_PRESET = {
     sessionMode: 1,
     botReplyOnAny: false,
-    maxChainDepth: 1,
+    maxChainDepth: 3,
     cooldownPerBot: 12,
     maxBotMsgsPerMin: 12,
-    useMentions: true,
-    mentionProb: 0.15,
-    selfCorrectionProb: 0.04,
     aiStartsConversation: false,
     styleMimicEnabled: false,
     turnMode: 'none',
@@ -420,16 +402,13 @@ function defaultBotTemplate(overrides = {}) {
     };
 }
 
-function applyHumanLikePreset() {
+function applyExamplePreset() {
     const p = HUMAN_LIKE_PRESET;
     document.getElementById('sessionMode').value = String(p.sessionMode);
     document.getElementById('botReplyOnAny').value = p.botReplyOnAny ? 'true' : 'false';
     document.getElementById('maxChainDepth').value = p.maxChainDepth;
     document.getElementById('cooldownPerBot').value = p.cooldownPerBot;
     document.getElementById('maxBotMsgsPerMin').value = p.maxBotMsgsPerMin;
-    document.getElementById('useMentions').value = p.useMentions ? 'true' : 'false';
-    document.getElementById('mentionProb').value = p.mentionProb;
-    document.getElementById('selfCorrectionProb').value = p.selfCorrectionProb;
     document.getElementById('aiStartsConversation').value = p.aiStartsConversation ? 'true' : 'false';
     document.getElementById('styleMimicEnabled').value = p.styleMimicEnabled ? 'true' : 'false';
     document.getElementById('turnMode').value = p.turnMode;
@@ -439,11 +418,11 @@ function applyHumanLikePreset() {
         defaultBotTemplate({ name: 'b' }),
     ];
     renderBots();
-    toast('Human-like preset applied');
+    toast('Example settings applied');
 }
 
 function loadDefaultPersonas() {
-    applyHumanLikePreset();
+    applyExamplePreset();
 }
 
 function syncAllPrompts() {
@@ -660,9 +639,6 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         max_chain_depth: parseInt(document.getElementById('maxChainDepth').value, 10),
         cooldown_per_bot_sec: parseInt(document.getElementById('cooldownPerBot').value, 10),
         max_bot_msgs_per_minute_per_room: parseInt(document.getElementById('maxBotMsgsPerMin').value, 10),
-        use_mentions: document.getElementById('useMentions').value === 'true',
-        mention_prob: parseFloat(document.getElementById('mentionProb').value),
-        self_correction_prob: parseFloat(document.getElementById('selfCorrectionProb').value),
         participant_names: document.getElementById('participantNames').value
             ? document.getElementById('participantNames').value.split(',').map(s => s.trim()).filter(Boolean)
             : null,
@@ -706,54 +682,62 @@ function syncTurnDurationUI() {
     turnDurationGroup.style.display = turnMode === 'timed' ? '' : 'none';
 }
 
-/** Qualtrics Embedded Data + iframe URL reference for researchers */
+/** Full spreadsheet column list (study documentation); keep in sync with Manual → Qualtrics. */
+const SPREADSHEET_HEADERS = [
+    'session_id', 'participant_id', 'condition', 'transcript', 'chat_status',
+    'group_size', 'group_chat_duration_minutes', 'survey_open_days', 'session_mode',
+    'bot_reply_on_any_message', 'max_chain_depth', 'cooldown_per_bot_sec',
+    'max_bot_msgs_per_minute_per_room',
+    'bot_enabled', 'participant_names', 'assignment_mode', 'condition_enabled',
+    'style_mimic', 'ai_starts_conversation', 'turn_mode', 'personas'
+];
+
+/** Qualtrics Embedded Data + server settings reference for researchers */
 function buildQualtricsFieldTable(sessionId, payload) {
     const conditionOn = payload.condition_enabled !== false;
     const qOn = payload.qualtrics_handoff_enabled && payload.qualtrics_store_chat;
     const transcriptField = payload.qualtrics_field_transcript || 'transcript';
     const statusField = payload.qualtrics_field_status || 'chat_status';
+    const styleMimic = payload.style_mimic_enabled
+        ? 'On (target: ' + (payload.style_mimic_target || 'c') + ')'
+        : 'Off';
+
     const rows = [
-        ['Field name', 'In / Out', 'Set by', 'Required', 'Description / example'],
-        ['session_id', 'In (iframe URL)', 'You (Admin)', 'Yes', sessionId + ' — fixed in HTML for this study'],
-        ['participant_id', 'In (iframe URL)', 'Qualtrics', 'Yes', '${e://Field/ResponseID} — one row per respondent'],
+        ['Field name', 'Direction', 'Set by', 'Required', 'Description'],
+        ['session_id', 'In (iframe URL)', 'Researcher (Admin HTML)', 'Yes', 'Fixed per study, e.g. ' + sessionId],
+        ['participant_id', 'In (iframe URL)', 'Qualtrics', 'Yes', '${e://Field/ResponseID} — unique per respondent'],
+        ['condition', conditionOn ? 'In (iframe URL)' : 'Optional', 'Qualtrics', conditionOn ? 'Yes' : 'No', 'Embedded Data ${e://Field/condition}; same value → same match queue when Condition is On'],
+        [transcriptField, qOn ? 'Out (saved on end)' : 'N/A', 'Chat app', qOn ? 'Yes' : 'No', 'Full group transcript (capped ~240k characters)'],
+        [statusField, qOn ? 'Out (saved on end)' : 'N/A', 'Chat app', qOn ? 'Yes' : 'No', 'completed_full | left_early | no_messages | never_joined'],
+        ['—', '—', '—', '—', 'Server settings (Admin at create; documented for IRB / analysis plans):'],
+        ['group_size', 'Server', 'Admin', '—', String(payload.group_size ?? '') + ' humans matched per group (bots are extra)'],
+        ['group_chat_duration_minutes', 'Server', 'Admin', '—', String(payload.group_chat_duration_minutes ?? 5) + ' minutes per group from match time'],
+        ['survey_open_days', 'Server', 'Admin', '—', String(payload.survey_open_days ?? 7) + ' days new participants can join the queue'],
+        ['session_mode', 'Server', 'Admin', '—', '1 = all bots | 2 = one bot per message | 3 = @mention only. This session: ' + (payload.session_mode ?? 1)],
+        ['bot_reply_on_any_message', 'Server', 'Admin', '—', String(payload.bot_reply_on_any_message === true) + ' — if true, bot messages can trigger other bots (with chain limits)'],
+        ['max_chain_depth', 'Server', 'Admin', '—', String(payload.max_chain_depth ?? 3) + ' — bot-to-bot follow-up rounds after one human message'],
+        ['cooldown_per_bot_sec', 'Server', 'Admin', '—', String(payload.cooldown_per_bot_sec ?? 12) + ' seconds before the same persona can send again'],
+        ['max_bot_msgs_per_minute_per_room', 'Server', 'Admin', '—', String(payload.max_bot_msgs_per_minute_per_room ?? 12) + ' cap on total bot messages per minute in one room'],
+        ['bot_enabled', 'Server', 'Admin', '—', String(payload.bot_enabled !== false)],
+        ['participant_names', 'Server', 'Admin', '—', (payload.participant_names || []).join(', ') || '(auto participant IDs)'],
+        ['assignment_mode', 'Server', 'Admin', '—', conditionOn ? 'stratified (forced when Condition On)' : (payload.assignment_mode || 'fifo')],
+        ['condition_enabled', 'Server', 'Admin', '—', String(conditionOn)],
+        ['style_mimic', 'Server', 'Admin', '—', styleMimic],
+        ['ai_starts_conversation', 'Server', 'Admin', '—', String(payload.ai_starts_conversation === true)],
+        ['turn_mode', 'Server', 'Admin', '—', payload.turn_mode || 'none'],
+        ['personas', 'Server', 'Admin', '—', (payload.bots || []).map(b => b.name).filter(Boolean).join(', ') || '—'],
     ];
-    if (conditionOn) {
-        rows.push(['condition', 'In (iframe URL)', 'Qualtrics', 'Yes', '${e://Field/condition} — e.g. cond1_a, cond1_b, cond2; same value → same match queue']);
-    }
-    if (qOn) {
-        rows.push([transcriptField, 'Out (saved)', 'Chat app', 'Yes', 'Full group transcript text (up to ~240k chars)']);
-        rows.push([statusField, 'Out (saved)', 'Chat app', 'Yes', 'completed_full | left_early | no_messages | never_joined']);
-    }
-    rows.push(['—', '—', '—', '—', 'Settings below are configured in Admin only (not passed through Qualtrics):']);
-    rows.push(['group_size', 'Server', 'Admin', '—', String(payload.group_size ?? '') + ' humans per group']);
-    rows.push(['group_chat_duration_minutes', 'Server', 'Admin', '—', String(payload.group_chat_duration_minutes ?? 5) + ' min per group']);
-    rows.push(['survey_open_days', 'Server', 'Admin', '—', String(payload.survey_open_days ?? 7) + ' days collection window']);
-    rows.push(['session_mode', 'Server', 'Admin', '—', 'Mode ' + (payload.session_mode ?? 1) + ' (bot reply rules)']);
-    rows.push(['bot_reply_on_any_message', 'Server', 'Admin', '—', String(payload.bot_reply_on_any_message !== false)]);
-    rows.push(['max_chain_depth', 'Server', 'Admin', '—', String(payload.max_chain_depth ?? 1)]);
-    rows.push(['cooldown_per_bot_sec', 'Server', 'Admin', '—', String(payload.cooldown_per_bot_sec ?? 12)]);
-    rows.push(['max_bot_msgs_per_minute_per_room', 'Server', 'Admin', '—', String(payload.max_bot_msgs_per_minute_per_room ?? 12)]);
-    rows.push(['use_mentions', 'Server', 'Admin', '—', String(payload.use_mentions !== false) + ' (p=' + (payload.mention_prob ?? 0.15) + ')']);
-    rows.push(['self_correction_prob', 'Server', 'Admin', '—', String(payload.self_correction_prob ?? 0.04)]);
-    rows.push(['bot_enabled', 'Server', 'Admin', '—', String(payload.bot_enabled)]);
-    rows.push(['participant_names', 'Server', 'Admin', '—', (payload.participant_names || []).join(', ') || '(auto IDs)']);
-    rows.push(['assignment_mode', 'Server', 'Admin', '—', conditionOn ? 'stratified (forced when Condition On)' : (payload.assignment_mode || 'fifo')]);
-    rows.push(['condition_enabled', 'Server', 'Admin', '—', String(conditionOn)]);
-    rows.push(['style_mimic', 'Server', 'Admin', '—', (payload.style_mimic_enabled ? 'On → ' + (payload.style_mimic_target || 'c') : 'Off')]);
-    rows.push(['ai_starts_conversation', 'Server', 'Admin', '—', String(payload.ai_starts_conversation)]);
-    rows.push(['turn_mode', 'Server', 'Admin', '—', payload.turn_mode || 'none']);
-    rows.push(['personas', 'Server', 'Admin', '—', (payload.bots || []).map(b => b.name).filter(Boolean).join(', ') || '—']);
     const thead = rows[0].map(h => `<th style="text-align:left;padding:6px 8px;border-bottom:2px solid var(--orange);font-size:0.75rem;">${h}</th>`).join('');
     const body = rows.slice(1).map(r => `<tr>${r.map(c => `<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:0.78rem;vertical-align:top;">${c}</td>`).join('')}</tr>`).join('');
-    const headerLine = rows.slice(1).filter(r => r[1] !== '—').map(r => r[0]).join('\t');
+    const headerLine = SPREADSHEET_HEADERS.join('\t');
     return `
         <div class="setup-block" style="margin-top:16px;">
-            <h4>Qualtrics Embedded Data — field reference</h4>
-            <p style="font-size:0.82rem;color:var(--gray-700);margin:8px 0;">See <a href="/manual#qualtrics">Manual → Qualtrics</a> for setup steps.</p>
+            <h4>Qualtrics &amp; study field reference</h4>
+            <p style="font-size:0.82rem;color:var(--gray-700);margin:8px 0;">Full setup: <a href="/manual#qualtrics">Manual → Qualtrics</a>. <strong>In/Out</strong> rows must exist in Qualtrics Embedded Data when integration is On.</p>
             <div style="overflow-x:auto;margin:10px 0;">
                 <table style="width:100%;border-collapse:collapse;">${thead ? '<thead><tr>' + thead + '</tr></thead>' : ''}<tbody>${body}</tbody></table>
             </div>
-            <p style="font-size:0.78rem;color:var(--gray-700);margin:8px 0 4px;"><strong>Spreadsheet / import header row (In + Out fields only):</strong></p>
+            <p style="font-size:0.78rem;color:var(--gray-700);margin:8px 0 4px;"><strong>Spreadsheet / import header row (tab-separated):</strong></p>
             <div class="url-box" style="align-items:flex-start;">
                 <code id="qualtrics-header-row" style="white-space:pre-wrap;font-size:0.8rem;">${headerLine.replace(/</g, '&lt;')}</code>
                 <button type="button" class="btn-copy" onclick="copyText('qualtrics-header-row')">Copy headers</button>
@@ -804,8 +788,6 @@ function showSessionSetupGuide(sessionId, payload) {
 
         ${qualtricsGuide}
         ${buildQualtricsFieldTable(sessionId, payload)}
-
-        <p style="font-size:0.8rem;color:var(--gray-500);margin-top:8px;">Backup export: <a href="/?tab=export">Dashboard → Export</a></p>
     `;
 
     panel.classList.add('visible');

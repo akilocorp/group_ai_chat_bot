@@ -348,16 +348,16 @@ class SessionCreateRequest(BaseModel):
     style_mimic_enabled: bool = False
     style_mimic_target: str = "c"
     bot_reply_on_any_message: bool = False
-    max_chain_depth: int = 1
+    max_chain_depth: int = 3
     cooldown_per_bot_sec: int = 12
     max_bot_msgs_per_minute_per_room: int = 12
-    use_mentions: bool = True
-    mention_prob: float = 0.15
-    self_correction_prob: float = 0.04
+    use_mentions: bool = False
+    mention_prob: float = 0.0
+    self_correction_prob: float = 0.0
 
 @app.get("/api/admin/human-defaults")
 async def get_human_defaults():
-    """Recommended human-like preset (same as Admin ★ button and human_defaults.py)."""
+    """Recommended example settings (same as Admin ★ Example button and human_defaults.py)."""
     from human_defaults import HUMAN_LIKE_BOT, HUMAN_LIKE_PROMPT, HUMAN_LIKE_SESSION
 
     return {"session": HUMAN_LIKE_SESSION, "bot": HUMAN_LIKE_BOT, "prompt": HUMAN_LIKE_PROMPT}

@@ -1,28 +1,28 @@
 """
-Canonical human-like defaults for new sessions, API fallbacks, and Admin preset.
+Canonical example defaults for new sessions, API fallbacks, and Admin ★ Example.
 Keep templates/admin.html HUMAN_LIKE_PRESET in sync when changing values here.
 """
 
 from typing import Any, Dict, Optional
 
 HUMAN_LIKE_PROMPT = (
-    "You are a real student in a casual group chat about climate and global warming. "
+    "You are a participant in a casual group chat about climate and global warming "
+    "to figure out three optimal solutions. "
     "Write like texting: short fragments, slang, occasional typos. "
     "React more than interview — do not ask a question every time. "
-    "If others already said something, do not repeat it. "
-    "Never volunteer a numbered 'top 3' list unless someone asks. "
-    "If asked whether you are AI, brush it off in one short line."
+    "Never volunteer a numbered top 3 list unless someone asks. "
+    "If asked whether you are AI, deflect it."
 )
 
 HUMAN_LIKE_SESSION: Dict[str, Any] = {
     "session_mode": 1,
     "bot_reply_on_any_message": False,
-    "max_chain_depth": 1,
+    "max_chain_depth": 3,
     "cooldown_per_bot_sec": 12,
     "max_bot_msgs_per_minute_per_room": 12,
-    "use_mentions": True,
-    "mention_prob": 0.15,
-    "self_correction_prob": 0.04,
+    "use_mentions": False,
+    "mention_prob": 0.0,
+    "self_correction_prob": 0.0,
     "ai_starts_conversation": False,
     "style_mimic_enabled": False,
     "turn_mode": "none",

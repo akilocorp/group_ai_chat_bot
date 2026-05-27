@@ -666,8 +666,6 @@ async function selectSession(sessionId) {
                     <div class="form-group"><label>Chain depth</label><input type="number" id="modMaxChainDepth" min="1" max="10" disabled></div>
                     <div class="form-group"><label>Cooldown (s)</label><input type="number" id="modCooldownPerBot" min="0" max="120" disabled></div>
                     <div class="form-group"><label>Max bot/min</label><input type="number" id="modMaxBotMsgsPerMin" min="1" max="120" disabled></div>
-                    <div class="form-group"><label>Mention prob</label><input type="number" id="modMentionProb" min="0" max="1" step="0.05" disabled></div>
-                    <div class="form-group"><label>Self-correct</label><input type="number" id="modSelfCorrectionProb" min="0" max="1" step="0.05" disabled></div>
                 </div>
                 <div class="form-group"><label>Personas (JSON)</label><textarea id="modBotsJson" rows="5" disabled class="mono"></textarea></div>
             </form>
@@ -706,11 +704,9 @@ function fillSessionDetailForm(cfg) {
         if (el) el.value = val ?? fallback;
     };
     setIf('modBotReplyOnAny', cfg.bot_reply_on_any_message === true ? 'true' : 'false', 'false');
-    setIf('modMaxChainDepth', cfg.max_chain_depth, 1);
+    setIf('modMaxChainDepth', cfg.max_chain_depth, 3);
     setIf('modCooldownPerBot', cfg.cooldown_per_bot_sec, 12);
     setIf('modMaxBotMsgsPerMin', cfg.max_bot_msgs_per_minute_per_room, 12);
-    setIf('modMentionProb', cfg.mention_prob, 0.15);
-    setIf('modSelfCorrectionProb', cfg.self_correction_prob, 0.04);
 }
 
 function setDetailEditMode(editing) {
@@ -743,8 +739,6 @@ async function confirmModifySession() {
             max_chain_depth: parseInt(document.getElementById('modMaxChainDepth').value, 10),
             cooldown_per_bot_sec: parseInt(document.getElementById('modCooldownPerBot').value, 10),
             max_bot_msgs_per_minute_per_room: parseInt(document.getElementById('modMaxBotMsgsPerMin').value, 10),
-            mention_prob: parseFloat(document.getElementById('modMentionProb').value),
-            self_correction_prob: parseFloat(document.getElementById('modSelfCorrectionProb').value),
             bots
         };
     } catch (e) {
