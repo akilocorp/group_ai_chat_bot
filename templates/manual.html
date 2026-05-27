@@ -118,6 +118,7 @@
         <a href="#quick-start">Quick start</a>
         <a href="#admin-fields">Admin fields</a>
         <a href="#matching">Matching</a>
+        <a href="#example-condition">Example condition</a>
         <a href="#session-modes">Session modes</a>
         <a href="#group-chat-flow">Group chat flow</a>
         <a href="#persona-modes">Persona modes</a>
@@ -176,6 +177,45 @@
             </ul>
             <p>Matching decides <em>who waits together</em>. It does not control bot speech rules (session mode, persona delay, chain depth, etc.).</p>
 
+            <h3 id="example-condition">Qualtrics <code>condition</code> field (★ Example default)</h3>
+            <p>The ★ Example preset turns <strong>Condition On</strong> in Admin. It does <em>not</em> assign one fixed <code>condition</code> value for every respondent — you set that in <strong>Qualtrics → Survey Flow → Embedded Data</strong>, and the iframe passes <code>${e://Field/condition}</code>.</p>
+            <table class="param-table">
+                <thead><tr><th>How you run the study</th><th>What to put in Qualtrics <code>condition</code></th><th>What the server does</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Simple pilot</strong> (everyone in one pool)</td>
+                        <td>Same value for all respondents, e.g. <code>pilot</code></td>
+                        <td>Everyone with <code>pilot</code> waits in one queue and can be matched together.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Simple pilot</strong> (field left empty)</td>
+                        <td>Blank / not set</td>
+                        <td>Server uses internal bucket <code>_default</code> — one shared queue; no “may use AI” roster tag on bots.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Disclosure design</strong> (★ Example personas <code>a</code>, <code>b</code>)</td>
+                        <td><code>cond1_a</code></td>
+                        <td>Match only with others who have <code>cond1_a</code>; show “may use AI” next to persona <strong>a</strong>.</td>
+                    </tr>
+                    <tr>
+                        <td>Disclosure design</td>
+                        <td><code>cond1_b</code></td>
+                        <td>Same, but tag persona <strong>b</strong>.</td>
+                    </tr>
+                    <tr>
+                        <td>Disclosure design</td>
+                        <td><code>cond2</code> or <code>control</code></td>
+                        <td>Match within that bucket; no “may use AI” tag on anyone.</td>
+                    </tr>
+                    <tr>
+                        <td>Disclosure design</td>
+                        <td><code>cond1</code></td>
+                        <td>Server randomly picks <strong>a</strong> or <strong>b</strong> for the tag (counterbalancing across subjects with the same matching key).</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="note">Only respondents with the <strong>exact same</strong> <code>condition</code> string are placed in the same waiting queue when Condition is On. Aliases like <code>condition2</code> or <code>c1_a</code> are accepted — see <code>study_conditions.py</code>.</div>
+
             <h3>Experiment</h3>
             <table class="param-table">
                 <thead><tr><th>Field</th><th>What it does</th></tr></thead>
@@ -206,7 +246,8 @@
                     <tr><td>Silence timeout (sec)</td><td>If the room is quiet this long, a persona may send a nudge (preset 50 s).</td></tr>
                     <tr><td>Length mix</td><td>On — each reply targets a random word count between min and max. Off — always use max words.</td></tr>
                     <tr><td>Min / max words</td><td>Target reply length. Max is also a hard ceiling if the model runs long (preset max 12).</td></tr>
-                    <tr><td>Temperature</td><td>0 = very steady, 1 = more varied (preset 0.82).</td></tr>
+                    <tr><td>Temperature</td><td>0 = very steady, 1 = more varied (preset 0.7).</td></tr>
+                    <tr><td>Emoji</td><td><strong>Off</strong> (preset) or <strong>On</strong> — allow occasional emojis in replies; when Off, the model is instructed not to use them and stray emoji are stripped.</td></tr>
                     <tr><td>Context (chars)</td><td>How much recent chat history is sent to the model (10,000–10,000,000; default 100,000).</td></tr>
                     <tr><td>Skip rate</td><td>Persona mode 3 only: probability this persona skips an eligible message (0–80%; preset 15%).</td></tr>
                 </tbody>
@@ -261,6 +302,8 @@
                     <tr><td>Reply on any message</td><td><strong>On</strong></td><td>Bots may react to bot messages within max chain depth.</td></tr>
                     <tr><td>Max chain depth</td><td><strong>3</strong></td><td>Bot-to-bot follow-up rounds after one trigger message.</td></tr>
                     <tr><td>AI opens chat</td><td><strong>Yes</strong></td><td>A random persona opens with a short first line.</td></tr>
+                    <tr><td>Condition (Admin)</td><td><strong>On</strong></td><td>Match by Qualtrics <code>condition</code>; see <a href="#example-condition">Example condition</a>.</td></tr>
+                    <tr><td>Qualtrics <code>condition</code></td><td><em>You set in survey</em></td><td>Not fixed by ★ Example — e.g. <code>pilot</code> for everyone, or <code>cond1_a</code> / <code>cond2</code> for disclosure.</td></tr>
                 </tbody>
             </table>
             <h3>Each persona</h3>
@@ -271,7 +314,8 @@
                     <tr><td>Skip rate</td><td><strong>15%</strong></td><td>Each eligible message: 15% chance this persona stays silent.</td></tr>
                     <tr><td>Max words</td><td><strong>12</strong></td><td>Short, text-like replies.</td></tr>
                     <tr><td>Delay + typing</td><td><strong>5 s</strong>, <strong>3</strong> cps</td><td>Less “instant bot” feel.</td></tr>
-                    <tr><td>Temperature</td><td><strong>0.82</strong></td><td>More wording variety.</td></tr>
+                    <tr><td>Temperature</td><td><strong>0.7</strong></td><td>Balanced wording variety.</td></tr>
+                    <tr><td>Emoji</td><td><strong>Off</strong></td><td>Plain text by default; turn On per persona for casual reactions.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -292,7 +336,7 @@
                 <tbody>
                     <tr><td><code>session_id</code></td><td>In (iframe URL)</td><td>Fixed in the HTML snippet from Admin (e.g. <code>SES-…</code>).</td></tr>
                     <tr><td><code>participant_id</code></td><td>In (iframe URL)</td><td>Use <code>${e://Field/ResponseID}</code> or your participant key.</td></tr>
-                    <tr><td><code>condition</code></td><td>In (iframe URL)</td><td>Required when <strong>Condition</strong> is On in Admin. Same value → same match queue.</td></tr>
+                    <tr><td><code>condition</code></td><td>In (iframe URL)</td><td>Required when <strong>Condition</strong> is On (★ Example default). Set in Qualtrics Embedded Data; iframe uses <code>${e://Field/condition}</code>. Same value → same match queue. ★ Example does not pick the value for you — see <a href="#example-condition">Example condition</a> (pilot: <code>pilot</code> or blank → <code>_default</code>; disclosure: <code>cond1_a</code>, <code>cond1_b</code>, <code>cond2</code>, <code>control</code>, or <code>cond1</code>).</td></tr>
                     <tr><td><code>transcript</code></td><td>Out (saved)</td><td>Written by the chat app when the session ends (~240k char cap).</td></tr>
                     <tr><td><code>chat_status</code></td><td>Out (saved)</td><td><code>completed_full</code>, <code>left_early</code>, <code>no_messages</code>, or <code>never_joined</code>.</td></tr>
                 </tbody>
@@ -317,7 +361,7 @@
                 <li><strong>Export</strong> — download activity logs or chat history as CSV (optional; Qualtrics Out fields are the primary handoff when integration is On).</li>
             </ul>
             <h3>Modify a published session</h3>
-            <p>Select a session → <strong>Edit</strong> → change timing, session mode, bot interaction limits, or persona JSON → <strong>Save</strong>. Use Admin <strong>★ Example</strong> when creating a new session; for existing sessions, align fields with <a href="#recommended-defaults">Recommended defaults</a>.</p>
+            <p>Select a session → <strong>Edit</strong> → change timing, session mode, reply-on-any / chain depth, or persona JSON → <strong>Save</strong>. Use Admin <strong>★ Example</strong> when creating a new session; for existing sessions, align fields with <a href="#recommended-defaults">Recommended defaults</a>.</p>
         </div>
 
         <div class="section" id="faq">

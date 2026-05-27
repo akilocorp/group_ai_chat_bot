@@ -63,6 +63,7 @@ def sanitize_bot_reply(
     bot_name: str,
     peer_names: Optional[List[str]] = None,
     max_words: int = 45,
+    allow_emoji: bool = True,
 ) -> str:
     """Strip multi-speaker scripts, lists, and runaway length."""
     if not text:
@@ -98,6 +99,9 @@ def sanitize_bot_reply(
     if len(words) > max_words:
         cleaned = " ".join(words[:max_words]).rstrip(".,;:") + "…"
 
+    if not allow_emoji:
+        cleaned = strip_emojis(cleaned)
+
     return cleaned
 
 
@@ -116,6 +120,29 @@ def api_token_cap_for_words(max_words: int) -> int:
     """OpenAI max_tokens from admin word cap (~1.45 tokens per word)."""
     mw = max(1, int(max_words))
     return min(120, max(15, int(mw * 1.45)))
+
+
+def emoji_enabled_from_cfg(bot_cfg: dict) -> bool:
+    return bool((bot_cfg or {}).get("emoji_enabled", False))
+
+
+def emoji_style_note(enabled: bool) -> str:
+    if enabled:
+        return "You may use emojis sparingly when it fits casual texting."
+    return "Do not use emoji, emoticons, or ASCII smileys (e.g. :) :D)."
+
+
+def strip_emojis(text: str) -> str:
+    if not text:
+        return text
+    cleaned = re.sub(
+        r"[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0000FE00-\U0000FE0F\u200d]+",
+        "",
+        text,
+        flags=re.UNICODE,
+    )
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+    return cleaned
 
 
 def pick_reply_word_cap(
@@ -172,7 +199,7 @@ class ChatBot:
         user_id: str,
         user_message: str,
         full_context_summary: str,
-        temperature: float = 0.75,
+        temperature: float = 0.7,
         peer_names: Optional[List[str]] = None,
         max_words: int = 35,
         min_words: int = 1,
@@ -181,6 +208,7 @@ class ChatBot:
         max_tokens: Optional[int] = None,
         mention_note: Optional[str] = None,
         mention_target: Optional[str] = None,
+        emoji_enabled: bool = False,
     ) -> Optional[str]:
         """
         Generates a response using the full room history provided by the ContextManager.
@@ -221,6 +249,7 @@ class ChatBot:
                 messages[-1]["content"] += (
                     f" If natural, you may address @{mention_target}."
                 )
+            messages.insert(2, {"role": "system", "content": emoji_style_note(emoji_enabled)})
 
             response = await client.chat.completions.create(
                 model="gpt-3.5-turbo",
@@ -233,7 +262,9 @@ class ChatBot:
 
             raw = response.choices[0].message.content.strip()
             # Length target is prompt-only; max_words is a loose safety ceiling if the model runs long.
-            reply = sanitize_bot_reply(raw, self.name, peer_names, max_words=max_words)
+            reply = sanitize_bot_reply(
+                raw, self.name, peer_names, max_words=max_words, allow_emoji=emoji_enabled
+            )
             return _cap_sentences(reply, 2)
         except Exception as e:
             print(f"❌ Generation Error: {e} — using fallback reply")

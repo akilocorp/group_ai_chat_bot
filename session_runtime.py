@@ -350,12 +350,13 @@ async def send_ai_opening_message(session_id: str, group_id: str, bot_cfg: Dict,
         "system",
         opening_prompt,
         "",
-        temperature=bot_cfg.get("temperature", 0.75),
+        temperature=bot_cfg.get("temperature", 0.7),
         peer_names=peer_names,
         max_words=bot_cfg.get("max_words", 35),
         min_words=bot_cfg.get("min_words", 1),
         length_variation=bot_cfg.get("length_variation", True),
         max_tokens=bot_cfg.get("max_tokens"),
+        emoji_enabled=bool(bot_cfg.get("emoji_enabled", False)),
     )
     if not reply:
         return

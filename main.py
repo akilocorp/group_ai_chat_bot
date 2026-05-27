@@ -213,12 +213,13 @@ def reset_idle_timer(session_id: str, group_id: str, idle_seconds: int = DEFAULT
         )
         reply = await initiator.generate_response(
             "system", init_prompt, summary,
-            temperature=initiator_cfg.get('temperature', 0.75),
+            temperature=initiator_cfg.get('temperature', 0.7),
             peer_names=peer_names,
             max_words=initiator_cfg.get("max_words", 35),
             min_words=initiator_cfg.get("min_words", 1),
             length_variation=initiator_cfg.get("length_variation", True),
             max_tokens=initiator_cfg.get("max_tokens"),
+            emoji_enabled=bool(initiator_cfg.get("emoji_enabled", False)),
         )
 
         if reply:
@@ -1096,6 +1097,7 @@ async def handle_bot_reply(
             if min_words > max_words:
                 min_words = max_words
             length_variation = bool(bot_cfg.get("length_variation", True))
+            emoji_enabled = bool(bot_cfg.get("emoji_enabled", False))
 
             style_hint = ""
             if session_cfg and getattr(session_cfg, "style_mimic_enabled", False):
@@ -1107,7 +1109,7 @@ async def handle_bot_reply(
             print(f"[BOT] 🔄 Calling generate_response for {bot.name}...")
             reply = await bot.generate_response(
                 user_id, clean_text, full_summary,
-                temperature=bot_cfg.get('temperature', 0.75),
+                temperature=bot_cfg.get('temperature', 0.7),
                 peer_names=peer_names,
                 max_words=max_words,
                 min_words=min_words,
@@ -1116,6 +1118,7 @@ async def handle_bot_reply(
                 max_tokens=bot_cfg.get("max_tokens"),
                 mention_note=mention_note or None,
                 mention_target=mention_target,
+                emoji_enabled=emoji_enabled,
             )
             if not reply:
                 print(f"[BOT] ⚠️ {bot.name} returned empty reply")

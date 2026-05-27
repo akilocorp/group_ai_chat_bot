@@ -331,6 +331,13 @@ const SHARED_PERSONA_PROMPT =
     'Never volunteer a numbered top 3 list unless someone asks. ' +
     'If asked whether you are AI, deflect it.';
 
+/** ★ Example + Qualtrics reference — keep in sync with Manual → Qualtrics → condition field */
+const EXAMPLE_CONDITION_HELP =
+    '★ Example: Admin Condition = On (not a single value for everyone). Set Qualtrics Embedded Data field ' +
+    'condition per respondent. Simple pilot: same value for all (e.g. pilot) or leave blank → server bucket _default ' +
+    '(one shared queue; no “may use AI” tag). Disclosure study (personas a, b): cond1_a | cond1_b | cond2/control | ' +
+    'cond1 (random tag on a or b). Same string → same match queue. See Manual.';
+
 const HUMAN_LIKE_PRESET = {
     sessionMode: 1,
     botReplyOnAny: true,
@@ -342,12 +349,13 @@ const HUMAN_LIKE_PRESET = {
         mode: 3,
         delay_seconds: 5,
         typing_cps: 3,
-        temperature: 0.82,
+        temperature: 0.7,
         max_words: 12,
         min_words: 1,
         skip_rate: 0.15,
         idle_threshold: 50,
         length_variation: true,
+        emoji_enabled: false,
     }
 };
 
@@ -367,6 +375,7 @@ function defaultBotTemplate(overrides = {}) {
         min_words: HUMAN_LIKE_PRESET.bot.min_words,
         max_words: HUMAN_LIKE_PRESET.bot.max_words,
         length_variation: HUMAN_LIKE_PRESET.bot.length_variation,
+        emoji_enabled: HUMAN_LIKE_PRESET.bot.emoji_enabled,
         ...overrides
     };
 }
@@ -538,6 +547,13 @@ function renderBots() {
                            value="${bot.context_max_chars ?? 100000}"
                            oninput="updateBot(${i},'context_max_chars',Number(this.value))">
                 </div>
+                <div class="form-group">
+                    <label>Emoji</label>
+                    <select onchange="updateBot(${i},'emoji_enabled',this.value==='true')">
+                        <option value="false" ${bot.emoji_enabled ? '' : 'selected'}>Off</option>
+                        <option value="true" ${bot.emoji_enabled ? 'selected' : ''}>On</option>
+                    </select>
+                </div>
             </div>
 
             ${m === 3 ? `
@@ -580,6 +596,7 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         min_words:        Math.min(b.min_words ?? 1, b.max_words ?? 20),
         max_words:        b.max_words ?? 20,
         length_variation: b.length_variation !== false,
+        emoji_enabled: b.emoji_enabled === true,
     }));
 
     const payload = {
@@ -661,7 +678,10 @@ function buildQualtricsFieldTable(sessionId, payload) {
         ['Field name', 'Direction', 'Set by', 'Required', 'Description'],
         ['session_id', 'In (iframe URL)', 'Researcher (Admin HTML)', 'Yes', 'Fixed per study, e.g. ' + sessionId],
         ['participant_id', 'In (iframe URL)', 'Qualtrics', 'Yes', '${e://Field/ResponseID} — unique per respondent'],
-        ['condition', conditionOn ? 'In (iframe URL)' : 'Optional', 'Qualtrics', conditionOn ? 'Yes' : 'No', 'Embedded Data ${e://Field/condition}; same value → same match queue when Condition is On'],
+        ['condition', conditionOn ? 'In (iframe URL)' : 'Optional', 'Qualtrics', conditionOn ? 'Yes' : 'No',
+            conditionOn
+                ? EXAMPLE_CONDITION_HELP + ' URL: ${e://Field/condition}.'
+                : 'Optional when Condition Off; used only if you still pass it in the URL.'],
         [transcriptField, qOn ? 'Out (saved on end)' : 'N/A', 'Chat app', qOn ? 'Yes' : 'No', 'Full group transcript (capped ~240k characters)'],
         [statusField, qOn ? 'Out (saved on end)' : 'N/A', 'Chat app', qOn ? 'Yes' : 'No', 'completed_full | left_early | no_messages | never_joined'],
         ['—', '—', '—', '—', 'Server settings (Admin at create; documented for IRB / analysis plans):'],
@@ -674,7 +694,8 @@ function buildQualtricsFieldTable(sessionId, payload) {
         ['bot_enabled', 'Server', 'Admin', '—', String(payload.bot_enabled !== false)],
         ['participant_names', 'Server', 'Admin', '—', (payload.participant_names || []).join(', ') || '(auto participant IDs)'],
         ['assignment_mode', 'Server', 'Admin', '—', conditionOn ? 'stratified (forced when Condition On)' : (payload.assignment_mode || 'fifo')],
-        ['condition_enabled', 'Server', 'Admin', '—', String(conditionOn)],
+        ['condition_enabled', 'Server', 'Admin', '—',
+            String(conditionOn) + ' (★ Example default: On — stratified matching by Qualtrics condition field)'],
         ['style_mimic', 'Server', 'Admin', '—', styleMimic],
         ['ai_starts_conversation', 'Server', 'Admin', '—', String(payload.ai_starts_conversation === true)],
         ['turn_mode', 'Server', 'Admin', '—', payload.turn_mode || 'none'],

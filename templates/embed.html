@@ -6,7 +6,8 @@
     <title>Study Chat</title>
     <link rel="stylesheet" href="/static/theme.css">
     <style>
-        html, body { height: 100%; width: 100%; overflow: hidden; }
+        html, body { height: 100%; width: 100%; overflow: hidden; font-family: var(--font-chat); }
+        body, input, textarea, button { font-family: var(--font-chat); }
         .app-wrapper { display: flex; flex-direction: column; height: 100vh; }
         .header {
             height: var(--header-height);
@@ -21,10 +22,10 @@
         }
         .header h2 { font-size: 1.05rem; font-weight: 700; }
         .team-roster {
-            font-size: 0.82rem; font-weight: 600; margin-top: 6px;
+            font-size: 0.82rem; font-weight: 500; margin-top: 6px;
             opacity: 0.95; line-height: 1.35;
         }
-        .team-roster .you { text-decoration: underline; text-underline-offset: 2px; }
+        .team-roster .you { font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
         .team-roster .ai-label { font-weight: 500; opacity: 0.92; font-size: 0.78rem; }
         .info { font-size: 0.78rem; opacity: 0.9; margin-top: 4px; }
         .chat-container {
@@ -149,20 +150,16 @@
             text-align: center; box-shadow: 0 16px 48px rgba(0,0,0,0.18);
         }
         .onboarding-card h3 {
-            font-size: 1.15rem; color: var(--gray-900);
-            margin-bottom: 10px; font-weight: 700; line-height: 1.45;
+            font-size: 1.05rem; color: var(--gray-900);
+            margin-bottom: 12px; font-weight: 500; line-height: 1.5;
         }
         .onboarding-card p.sub {
-            font-size: 0.9rem; color: var(--gray-700); line-height: 1.5;
+            font-size: 0.95rem; color: var(--gray-700); line-height: 1.5;
+            font-weight: 400;
         }
         .onboarding-card p.sub-en {
-            font-size: 0.88rem; color: var(--orange-dark);
-            margin-top: 14px; font-weight: 600;
-        }
-        .onboarding-name {
-            display: inline-block;
-            font-size: 1.35rem; font-weight: 800;
-            color: var(--orange); margin: 8px 0 4px;
+            font-size: 0.95rem; color: var(--gray-700);
+            margin-top: 8px; font-weight: 400;
         }
         .match-spinner {
             width: 44px; height: 44px; margin: 0 auto 20px;
@@ -187,7 +184,7 @@
         }
     </style>
 </head>
-<body>
+<body class="font-chat">
 
 <div class="app-wrapper main-chat-hidden" id="app-wrapper">
     <div id="onboarding-overlay" aria-live="polite">
@@ -284,7 +281,7 @@
 
     async function showAssignedOnboarding(displayName) {
         onboardingSpinner.style.display = 'none';
-        onboardingTitle.innerHTML = `You are assigned as <span class="onboarding-name">${displayName}</span>`;
+        onboardingTitle.textContent = `You are assigned as ${displayName}`;
         onboardingSub.textContent = 'Entering team chat…';
         onboardingSubEn.textContent = "Let's begin your chat!";
         onboardingSubEn.style.display = 'block';
