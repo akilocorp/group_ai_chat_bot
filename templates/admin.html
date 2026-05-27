@@ -13,27 +13,13 @@
             --danger: #e74c3c;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #2d3436; line-height: 1.6; padding-top: 48px; }
-
-        /* NAV */
-        .nav-header {
-            width: 100%;
-            background: rgba(255,255,255,0.97); backdrop-filter: blur(10px);
-            padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 20px;
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
-        }
-        .nav-logo { font-weight: 800; font-size: 1.2rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; flex-shrink: 0; }
-        .nav-links { display: flex; gap: 4px; }
-        .nav-links a { text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem; padding: 5px 12px; border-radius: 8px; transition: all 0.15s; }
-        .nav-links a:hover { color: var(--orange); background: var(--orange-pale); }
-        .nav-links a.active { color: var(--orange-dark); background: var(--orange-pale); }
+        body { background: var(--bg); color: #2d3436; line-height: 1.6; }
 
         /* LAYOUT */
         .container { max-width: 1060px; margin: 24px auto 36px; padding: 0 20px; display: flex; flex-direction: column; gap: 18px; }
 
         .card { background: white; border-radius: 14px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--gray-300); }
-        .card-title { font-size: 1.1rem; font-weight: 700; color: var(--orange-dark); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #f0f2f5; display: flex; align-items: center; gap: 8px; }
+        .card-title { font-size: var(--fs-lg); font-weight: 700; color: var(--orange-dark); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #f0f2f5; display: flex; align-items: center; gap: 8px; }
         .intro { font-size: 0.9rem; color: var(--gray-700); margin-bottom: 12px; }
         .sticky-actions {
             position: sticky;
@@ -48,11 +34,11 @@
 
         /* FORM */
         .form-group { margin-bottom: 16px; }
-        label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; color: #333; }
-        label .hint { font-weight: 400; color: #aaa; font-size: 0.8rem; }
+        label { display: block; font-weight: 700; font-size: var(--fs-md); margin-bottom: 6px; color: #333; }
+        label .hint { font-weight: 500; color: #aaa; font-size: var(--fs-sm); }
         input[type=text], input[type=number], select, textarea {
-            width: 100%; padding: 9px 12px; border: 2px solid #e8e8e8;
-            border-radius: 8px; font-size: 0.9rem; font-family: inherit;
+            width: 100%; padding: 10px 12px; border: 2px solid #e8e8e8;
+            border-radius: 8px; font-size: var(--fs-md); font-family: inherit;
             transition: border-color 0.15s; background: #fafafa;
         }
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: white; }
@@ -82,13 +68,13 @@
         .grid-4 input, .grid-4 select { width: 100%; }
 
         /* BUTTONS */
-        .btn { padding: 9px 18px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-size: 0.88rem; }
+        .btn { padding: 10px 18px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-size: var(--fs-md); font-family: inherit; }
         .btn-primary { background: var(--gradient); color: white; }
         .btn-primary:hover { opacity: 0.9; }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: #fff; color: var(--danger); border: 1px solid var(--danger); }
         .btn-danger:hover { background: var(--danger); color: white; }
-        .btn-lg { padding: 13px 24px; font-size: 1rem; width: 100%; margin-top: 8px; }
+        .btn-lg { padding: 14px 24px; font-size: var(--fs-md); width: 100%; margin-top: 8px; }
 
         /* BOT CARD */
         .bot-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
@@ -104,10 +90,10 @@
         .mode-tab.active-m4 { border-color: #c2410c; background: #fff7ed; color: #c2410c; }
 
         /* SECTION DIVIDER inside bot card */
-        .section-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: #aaa; margin: 18px 0 10px; }
+        .section-label { font-size: var(--fs-sm); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-500); margin: 18px 0 10px; }
 
         /* NOTIFY */
-        .notify { position: fixed; top: 60px; right: 20px; padding: 13px 22px; border-radius: 8px; color: white; font-weight: 700; display: none; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .notify { position: fixed; top: calc(var(--header-height) + 8px); right: 20px; padding: 13px 22px; border-radius: 8px; color: white; font-weight: 700; display: none; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 
         /* SESSION SETUP PANEL (shown after create, at page bottom) */
         .setup-panel { display: none; border: 2px solid #fed7aa; background: linear-gradient(180deg, #fffbf5 0%, #ffffff 100%); }
@@ -170,7 +156,7 @@
         }
     </style>
 </head>
-<body>
+<body class="has-top-nav">
 
 <header class="nav-header">
     <a href="/" class="nav-logo">ACTR</a>
@@ -255,13 +241,13 @@
                 </div>
                 <div class="form-group">
                     <label>Turns</label>
-                    <select id="turnMode">
+                    <select id="turnMode" onchange="syncTurnDurationUI()">
                         <option value="none">Off — free chat</option>
                         <option value="round_robin">Round-robin — fixed order</option>
                         <option value="timed">Timed — seconds per turn</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="turnDurationGroup">
                     <label>Turn duration (sec)</label>
                     <input type="number" id="turnDuration" value="60" min="10" max="600">
                 </div>
@@ -341,9 +327,8 @@ let botPersonas = [];
 /** Default shared persona prompt (edit once, sync to all). */
 const SHARED_PERSONA_PROMPT =
     'You are a participant in a small group chat to discuss the best 3 ways to solve global warming. ' +
-    'Sound casual and natural, more like human (1–2 short sentences). You can use abbreviations and typos. ' +
-    'You can pretend to be human. When questioned by others, deflect this question. ' +
-    'React to what others said; ask simple questions sometimes. No long lists unless someone explicitly asks.';
+    'Sound casual and natural, more like human. You can have abbreviations and typos. ' +
+    'You should pretend to be human. When questioned by others, deflect this question.';
 
 function defaultBotTemplate(overrides = {}) {
     return {
@@ -359,7 +344,7 @@ function defaultBotTemplate(overrides = {}) {
         idle_threshold: 35,
         skip_rate: 0.1,
         min_words: 1,
-        max_words: 35,
+        max_words: 20,
         length_variation: true,
         ...overrides
     };
@@ -390,7 +375,7 @@ function updateBot(i, field, value) {
     botPersonas[i][field] = value;
     const b = botPersonas[i];
     const minW = b.min_words ?? 1;
-    const maxW = b.max_words ?? 35;
+    const maxW = b.max_words ?? 20;
     if (minW > maxW) {
         if (field === 'min_words') b.max_words = minW;
         else b.min_words = maxW;
@@ -488,7 +473,7 @@ function renderBots() {
                 <div class="form-group">
                     <label>Min words</label>
                     <div class="range-row">
-                        <input type="range" min="1" max="35" step="1" value="${bot.min_words ?? 1}"
+                        <input type="range" min="1" max="50" step="1" value="${bot.min_words ?? 1}"
                                oninput="updateBot(${i},'min_words',Number(this.value)); this.nextElementSibling.textContent=botPersonas[${i}].min_words">
                         <span class="range-val">${bot.min_words ?? 1}</span>
                     </div>
@@ -496,9 +481,9 @@ function renderBots() {
                 <div class="form-group">
                     <label>Max words</label>
                     <div class="range-row">
-                        <input type="range" min="1" max="35" step="1" value="${bot.max_words ?? 35}"
+                        <input type="range" min="1" max="50" step="1" value="${bot.max_words ?? 20}"
                                oninput="updateBot(${i},'max_words',Number(this.value)); this.nextElementSibling.textContent=botPersonas[${i}].max_words">
-                        <span class="range-val">${bot.max_words ?? 35}</span>
+                        <span class="range-val">${bot.max_words ?? 20}</span>
                     </div>
                 </div>
             </div>
@@ -558,8 +543,8 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         context_max_chars: Math.min(10000000, Math.max(10000, Number(b.context_max_chars) || 100000)),
         idle_threshold:   b.idle_threshold,
         skip_rate:        b.skip_rate,
-        min_words:        Math.min(b.min_words ?? 1, b.max_words ?? 35),
-        max_words:        b.max_words ?? 35,
+        min_words:        Math.min(b.min_words ?? 1, b.max_words ?? 20),
+        max_words:        b.max_words ?? 20,
         length_variation: b.length_variation !== false,
     }));
 
@@ -617,6 +602,13 @@ function syncConditionAssignmentUI() {
     } else {
         assign.disabled = false;
     }
+}
+
+function syncTurnDurationUI() {
+    const turnMode = document.getElementById('turnMode')?.value || 'none';
+    const turnDurationGroup = document.getElementById('turnDurationGroup');
+    if (!turnDurationGroup) return;
+    turnDurationGroup.style.display = turnMode === 'timed' ? '' : 'none';
 }
 
 /** Qualtrics Embedded Data + iframe URL reference for researchers */
@@ -735,6 +727,7 @@ function copyText(elementId) {
 
 // Init
 syncConditionAssignmentUI();
+syncTurnDurationUI();
 loadDefaultPersonas();
 </script>
 </body>

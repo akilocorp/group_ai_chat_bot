@@ -6,17 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/theme.css">
     <style>
-        /* Typography: lg / md / sm only */
         .page-wrap {
-            --fs-lg: 1.5rem;
-            --fs-md: 1.0625rem;
-            --fs-sm: 0.875rem;
             max-width: 1060px;
             margin: 0 auto;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            font-size: var(--fs-md);
-            line-height: 1.5;
-            color: var(--gray-900);
         }
         .text-lg { font-size: var(--fs-lg); font-weight: 700; line-height: 1.25; }
         .text-md { font-size: var(--fs-md); font-weight: 600; line-height: 1.45; }
@@ -34,23 +26,10 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            padding-top: 48px;
         }
         .main-content { padding: 24px 20px 40px; flex: 1; }
 
         .page-hero { margin-bottom: 20px; }
-        .page-hero h1 {
-            font-size: var(--fs-lg);
-            font-weight: 800;
-            color: var(--orange-dark);
-            line-height: 1.2;
-        }
-        .page-hero .subtitle {
-            font-size: var(--fs-md);
-            font-weight: 500;
-            color: var(--gray-700);
-            margin-top: 8px;
-        }
 
         .metrics {
             display: flex;
@@ -430,7 +409,7 @@
 
         .notify {
             position: fixed;
-            top: 56px;
+            top: calc(var(--header-height) + 8px);
             left: 50%;
             transform: translateX(-50%);
             padding: 12px 20px;
@@ -446,7 +425,7 @@
         }
     </style>
 </head>
-<body>
+<body class="has-top-nav">
 
 <header class="nav-header">
     <a href="/" class="nav-logo">ACTR</a>
@@ -463,8 +442,7 @@
     <div class="page-wrap dashboard">
 
         <div class="page-hero">
-            <h1>Dashboard</h1>
-            <p class="subtitle">Sessions, live monitoring, and exports.</p>
+            <h1 class="page-title">Dashboard</h1>
         </div>
 
         <div class="metrics">

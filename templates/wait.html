@@ -13,54 +13,19 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: var(--font);
             background: var(--primary-gradient);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        .nav-header {
-            background: rgba(255,255,255,0.97);
-            backdrop-filter: blur(10px);
-            padding: 0 24px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
-        }
-
-        .nav-logo {
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: var(--orange);
-            text-decoration: none;
-            flex-shrink: 0;
-        }
-
-        .nav-links { display: flex; gap: 4px; }
-        .nav-links a {
-            text-decoration: none;
-            color: #555;
-            font-weight: 600;
-            font-size: 0.85rem;
-            padding: 5px 12px;
-            border-radius: 8px;
-            transition: all 0.15s;
-        }
-        .nav-links a:hover { color: var(--orange); background: var(--orange-pale); }
-
         .main-content {
             flex: 1;
             display: flex;
-            justify-content: center;
             align-items: center;
-            padding: 20px;
-            margin-top: 48px;
+            justify-content: center;
+            padding: 24px;
         }
 
         .container {
@@ -71,7 +36,10 @@
             text-align: center;
             max-width: 500px;
             width: 100%;
+            font-size: var(--fs-md);
         }
+        .container h1 { font-size: var(--fs-lg); font-weight: 800; }
+        #status-text { font-size: var(--fs-md); margin-top: 8px; }
 
         .spinner {
             border: 4px solid #f3f3f3;
@@ -131,7 +99,7 @@
         .btn-danger:hover { background: #ff6b81; transform: scale(1.05); }
     </style>
 </head>
-<body>
+<body class="has-top-nav">
 
     <header class="nav-header">
         <a href="/" class="nav-logo">ACTR</a>

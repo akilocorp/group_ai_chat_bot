@@ -20,40 +20,12 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* ---- NAV ---- */
-        .nav-header {
-            background: rgba(255,255,255,0.97);
-            backdrop-filter: blur(10px);
-            padding: 0 24px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 100;
-            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
-        }
-        .nav-logo {
-            font-weight: 800; font-size: 1.2rem;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            text-decoration: none; flex-shrink: 0;
-        }
-        .nav-links { display: flex; gap: 4px; }
-        .nav-links a {
-            text-decoration: none; color: #555; font-weight: 600; font-size: 0.85rem;
-            padding: 5px 12px; border-radius: 8px; transition: all 0.15s;
-        }
-        .nav-links a:hover { color: var(--orange); background: var(--orange-pale); }
-        .nav-links a.active { color: var(--orange-dark); background: var(--orange-pale); }
-
         /* ---- LAYOUT ---- */
         .app-wrapper {
             display: flex;
             flex-direction: column;
             height: 100vh;
-            padding-top: 48px;
+            padding-top: var(--header-height);
         }
 
         /* ---- CHAT HEADER ---- */

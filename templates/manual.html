@@ -8,44 +8,8 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: var(--bg-color);
-            color: #2d3436;
             line-height: 1.65;
-            padding-top: 48px;
         }
-        .nav-header {
-            width: 100%;
-            background: #fff;
-            padding: 0 24px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
-        }
-        .nav-logo {
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: var(--orange);
-            text-decoration: none;
-        }
-        .nav-links { display: flex; gap: 4px; }
-        .nav-links a {
-            text-decoration: none;
-            color: #555;
-            font-weight: 600;
-            font-size: 0.85rem;
-            padding: 5px 12px;
-            border-radius: 8px;
-        }
-        .nav-links a:hover { color: var(--orange); background: var(--orange-pale); }
-        .nav-links a.active { color: var(--orange-dark); background: var(--orange-pale); }
 
         .page {
             display: flex;
@@ -58,23 +22,25 @@
             width: 200px;
             flex-shrink: 0;
             position: sticky;
-            top: 68px;
+            top: calc(var(--header-height) + 16px);
             align-self: flex-start;
         }
         .toc h3 {
-            font-size: 0.72rem;
+            font-size: var(--fs-sm);
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #999;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
             margin-bottom: 8px;
         }
         .toc a {
             display: block;
-            padding: 5px 8px;
+            padding: 6px 10px;
             border-radius: 6px;
             text-decoration: none;
-            font-size: 0.84rem;
-            color: #555;
+            font-size: var(--fs-md);
+            font-weight: 600;
+            color: var(--gray-700);
         }
         .toc a:hover { color: var(--orange); background: var(--orange-pale); }
 
@@ -88,31 +54,31 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
         h1 {
-            font-size: 1.5rem;
+            font-size: var(--fs-lg);
             font-weight: 800;
             color: var(--orange-dark);
             margin-bottom: 8px;
         }
         h2 {
-            font-size: 1.05rem;
-            font-weight: 700;
+            font-size: var(--fs-md);
+            font-weight: 800;
             color: var(--orange-dark);
             margin-bottom: 12px;
             padding-bottom: 8px;
             border-bottom: 2px solid #f0f2f5;
         }
         h3 {
-            font-size: 0.95rem;
+            font-size: var(--fs-md);
             font-weight: 700;
             color: #333;
             margin: 16px 0 8px;
         }
-        p, li { font-size: 0.9rem; color: #444; margin-bottom: 8px; }
+        p, li { font-size: var(--fs-md); color: #444; margin-bottom: 8px; }
         ul, ol { padding-left: 20px; margin-bottom: 10px; }
         .param-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: var(--fs-md);
             margin-top: 10px;
         }
         .param-table th {
@@ -120,9 +86,10 @@
             padding: 8px 10px;
             background: #f8fafc;
             border-bottom: 2px solid #e2e8f0;
-            font-size: 0.72rem;
+            font-size: var(--fs-sm);
+            font-weight: 700;
             text-transform: uppercase;
-            color: #888;
+            color: var(--gray-500);
         }
         .param-table td {
             padding: 8px 10px;
@@ -142,13 +109,13 @@
             border: 1px solid #fed7aa;
             border-radius: 8px;
             padding: 10px 14px;
-            font-size: 0.86rem;
+            font-size: var(--fs-md);
             color: #7c2d12;
             margin-top: 10px;
         }
     </style>
 </head>
-<body>
+<body class="has-top-nav">
 
 <header class="nav-header">
     <a href="/" class="nav-logo">ACTR</a>
