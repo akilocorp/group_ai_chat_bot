@@ -38,7 +38,7 @@ HUMAN_LIKE_BOT: Dict[str, Any] = {
     "temperature": 0.82,
     "context_max_chars": 100_000,
     "idle_threshold": 50,
-    "skip_rate": 0.45,
+    "skip_rate": 0.15,
     "min_words": 1,
     "max_words": 12,
     "length_variation": True,

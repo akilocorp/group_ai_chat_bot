@@ -120,7 +120,6 @@
         <a href="#session-modes">Session modes</a>
         <a href="#bot-interaction">Bot interaction</a>
         <a href="#persona-modes">Persona modes</a>
-        <a href="#natural-chat">Natural-looking chat</a>
         <a href="#recommended-defaults">Recommended defaults</a>
         <a href="#qualtrics">Qualtrics</a>
         <a href="#dashboard">Dashboard</a>
@@ -141,6 +140,7 @@
             </ol>
 
             <h3>Typical room layouts</h3>
+            <p>The Admin form defaults to <strong>group size 1</strong> when you click ★ Example.</p>
             <ul>
                 <li><strong>1 human + 2 bots:</strong> Group size = 1, personas <code>a</code> and <code>b</code>, participant name <code>c</code>.</li>
                 <li><strong>2 humans + 2 bots:</strong> Group size = 2, personas <code>a</code> and <code>b</code>, participant names <code>c,d</code>.</li>
@@ -159,7 +159,7 @@
                 <tbody>
                     <tr><td>Session name</td><td>Your label only. The system also assigns a session ID such as <code>SES-AB12C</code>.</td></tr>
                     <tr><td>AI bots</td><td><strong>On</strong> — personas can send messages. <strong>Off</strong> — humans only.</td></tr>
-                    <tr><td>Group size</td><td>Number of <em>humans</em> matched into each group. Bots are additional members, not counted in this number.</td></tr>
+                    <tr><td>Group size</td><td>Number of <em>humans</em> matched into each group (★ Example default: <strong>1</strong>). Bots are extra and not counted in this number.</td></tr>
                     <tr><td>Session mode</td><td>Which personas may react to each incoming message — see <a href="#session-modes">Session modes</a> (distinct from persona mode).</td></tr>
                     <tr><td>Survey open (days)</td><td>How long new participants can enter the waiting queue (default 7).</td></tr>
                     <tr><td>Chat duration (min)</td><td>Each group chat ends this many minutes after the group is formed (default 5).</td></tr>
@@ -208,7 +208,7 @@
                     <tr><td>Min / max words</td><td>Target reply length. Max is also a hard ceiling if the model runs long (preset max 12).</td></tr>
                     <tr><td>Temperature</td><td>0 = very steady, 1 = more varied (preset 0.82).</td></tr>
                     <tr><td>Context (chars)</td><td>How much recent chat history is sent to the model (10,000–10,000,000; default 100,000).</td></tr>
-                    <tr><td>Skip rate</td><td>Persona mode 3 only: probability this persona skips an eligible message (0–80%; preset ~45%).</td></tr>
+                    <tr><td>Skip rate</td><td>Persona mode 3 only: probability this persona skips an eligible message (0–80%; preset 15%).</td></tr>
                 </tbody>
             </table>
         </div>
@@ -252,17 +252,6 @@
             </ul>
         </div>
 
-        <div class="section" id="natural-chat">
-            <h2>Natural-looking chat</h2>
-            <p>Common causes of robotic or overly active bots:</p>
-            <ul>
-                <li>Session mode 1 <strong>and</strong> Reply on any message <strong>On</strong> <strong>and</strong> high chain depth — many bot lines per human line.</li>
-                <li>Persona mode 1 (always reply) on every persona — use mode 3 (skip) or mode 4 instead.</li>
-                <li>Prompts that ask for “top 3” lists or interview-style questions every turn.</li>
-            </ul>
-            <p>Click <strong>★ Example</strong> in Admin or copy values from <a href="#recommended-defaults">Recommended defaults</a>.</p>
-        </div>
-
         <div class="section" id="recommended-defaults">
             <h2>Recommended defaults (★ Example)</h2>
             <p>Applied when you click <strong>★ Example</strong> or create a session without changing fields. Source: <code>human_defaults.py</code> — API: <code>GET /api/admin/human-defaults</code>.</p>
@@ -270,6 +259,7 @@
             <table class="param-table">
                 <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
                 <tbody>
+                    <tr><td>Group size</td><td><strong>1</strong></td><td>One human per group; common layout is 1 human + 2 bots.</td></tr>
                     <tr><td>Session mode</td><td><strong>1</strong></td><td>All bots may respond; persona skip thins traffic.</td></tr>
                     <tr><td>Reply on any message</td><td><strong>Off</strong></td><td>Human-led turns; bots do not chain off each other.</td></tr>
                     <tr><td>Max chain depth</td><td><strong>3</strong></td><td>Bot-to-bot follow-up rounds after one human message when Reply on any message is On.</td></tr>
@@ -282,7 +272,8 @@
             <table class="param-table">
                 <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
                 <tbody>
-                    <tr><td>Persona mode</td><td><strong>3</strong></td><td>~45% skip rate — not every bot on every message.</td></tr>
+                    <tr><td>Persona mode</td><td><strong>3</strong></td><td>Random skip before replying.</td></tr>
+                    <tr><td>Skip rate</td><td><strong>15%</strong></td><td>Each eligible message: 15% chance this persona stays silent.</td></tr>
                     <tr><td>Max words</td><td><strong>12</strong></td><td>Short, text-like replies.</td></tr>
                     <tr><td>Delay + typing</td><td><strong>5 s</strong>, <strong>3</strong> cps</td><td>Less “instant bot” feel.</td></tr>
                     <tr><td>Temperature</td><td><strong>0.82</strong></td><td>More wording variety.</td></tr>
@@ -346,7 +337,7 @@
             <h3>Where is data stored?</h3>
             <p>Local JSON under <code>db/</code> and <code>activity_logs/</code>, or MongoDB if <code>MONGO_URL</code> is set.</p>
             <h3>Why do bots feel robotic or talk too much?</h3>
-            <p>See <a href="#natural-chat">Natural-looking chat</a> and apply <strong>★ Example</strong> in Admin.</p>
+            <p>Apply <strong>★ Example</strong> in Admin or see <a href="#recommended-defaults">Recommended defaults</a>.</p>
             <h3>Do bots know they are talking to other bots?</h3>
             <p>No special label is shown to the model — everyone is a display name in the transcript. For human-led flow, keep <strong>Reply on any message Off</strong>.</p>
             <h3>What is the difference between session mode and persona mode?</h3>

@@ -14,7 +14,7 @@ class SessionConfig:
     """
     Configuration for a specific experimental Session.
     """
-    def __init__(self, session_id: str, name: str, group_size: int = 2, bot_enabled: bool = True):
+    def __init__(self, session_id: str, name: str, group_size: int = 1, bot_enabled: bool = True):
         self.session_id = session_id
         self.name = name
         self.group_size = group_size
@@ -78,7 +78,7 @@ class SessionConfig:
         obj = cls(
             session_id=data.get("session_id", f"SES-{uuid.uuid4().hex[:5].upper()}"),
             name=data.get("name", "Unnamed Session"),
-            group_size=data.get("group_size", 2),
+            group_size=data.get("group_size", 1),
             bot_enabled=data.get("bot_enabled", True),
         )
         obj.bots = data.get("bots", [])
