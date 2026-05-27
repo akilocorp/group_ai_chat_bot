@@ -89,9 +89,8 @@ def sanitize_bot_reply(
         if len(before_list.split()) >= 4:
             cleaned = before_list
 
-    words = cleaned.split()
-    if len(words) > max_words:
-        cleaned = " ".join(words[:max_words]).rstrip(".,;:") + "…"
+    # NOTE: We do not hard-truncate by max_words here. Length is guided via prompt
+    # ("within about X words") and bounded by max_tokens.
 
     if not allow_emoji:
         cleaned = strip_emojis(cleaned)
@@ -160,10 +159,9 @@ def pick_reply_word_cap(
 
 
 def _cap_sentences(text: str, max_sentences: int = 2) -> str:
-    parts = re.split(r"(?<=[.!?])\s+", text.strip())
-    if len(parts) <= max_sentences:
-        return text.strip()
-    return " ".join(parts[:max_sentences]).strip()
+    # Backwards-compatible shim (no-op). We no longer hard-cap sentences.
+    _ = max_sentences
+    return (text or "").strip()
 
 
 class ChatBot:
@@ -259,7 +257,7 @@ class ChatBot:
             reply = sanitize_bot_reply(
                 raw, self.name, peer_names, max_words=max_words, allow_emoji=emoji_enabled
             )
-            return _cap_sentences(reply, 2)
+            return reply
         except Exception as e:
             print(f"❌ Generation Error: {e} — using fallback reply")
             return random.choice(FALLBACK_REPLIES)

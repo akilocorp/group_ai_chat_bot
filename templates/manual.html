@@ -242,7 +242,7 @@
                     <tr><td>Reply on any message</td><td>Session-level control above the persona cards. <strong>On</strong> (preset) — bot messages can trigger other bots (within max chain depth). <strong>Off</strong> — only human messages start bot replies.</td></tr>
                     <tr><td>Max chain depth</td><td>Session-level: bot-to-bot follow-up rounds after one trigger message (preset <strong>3</strong>). Lower values quiet the room.</td></tr>
                     <tr><td>Delay (sec)</td><td>Per-persona wait before generating a reply (main spacing control; no separate session cooldown). Persona modes 2–4 add 0.5–2.5 s random jitter.</td></tr>
-                    <tr><td>Typing (chars/sec)</td><td>Simulated typing delay before the message appears (1–6; preset 3).</td></tr>
+                    <tr><td>Typing (chars/sec)</td><td>Simulated typing delay before the message appears (1–6; preset 2).</td></tr>
                     <tr><td>Silence timeout (sec)</td><td>If the room is quiet this long, a persona may send a nudge (preset 50 s).</td></tr>
                     <tr><td>Length mix</td><td>On — each reply targets a random word count between min and max. Off — always use max words.</td></tr>
                     <tr><td>Min / max words</td><td>Target reply length. Max is also a hard ceiling if the model runs long (preset max 20).</td></tr>
@@ -313,7 +313,7 @@
                     <tr><td>Persona mode</td><td><strong>3</strong></td><td>Random skip before replying.</td></tr>
                     <tr><td>Skip rate</td><td><strong>15%</strong></td><td>Each eligible message: 15% chance this persona stays silent.</td></tr>
                     <tr><td>Max words</td><td><strong>20</strong></td><td>Still concise, but enough room for one concrete idea.</td></tr>
-                    <tr><td>Delay + typing</td><td><strong>5 s</strong>, <strong>3</strong> cps</td><td>Less “instant bot” feel.</td></tr>
+                    <tr><td>Delay + typing</td><td><strong>5 s</strong>, <strong>2</strong> cps</td><td>Less “instant bot” feel.</td></tr>
                     <tr><td>Temperature</td><td><strong>0.7</strong></td><td>Balanced wording variety.</td></tr>
                     <tr><td>Emoji</td><td><strong>Off</strong></td><td>Plain text by default; turn On per persona for casual reactions.</td></tr>
                 </tbody>

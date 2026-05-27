@@ -34,7 +34,7 @@ HUMAN_LIKE_BOT: Dict[str, Any] = {
     "avatar_type": "human",
     "disclosed_ai_allowed": False,
     "delay_seconds": 5,
-    "typing_cps": 3,
+    "typing_cps": 2,
     "temperature": 0.7,
     "context_max_chars": 100_000,
     "idle_threshold": 50,
