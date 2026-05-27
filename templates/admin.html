@@ -198,7 +198,7 @@
                 </div>
                 <div class="form-group">
                     <label>Chat duration (min)</label>
-                    <input type="number" id="groupChatDuration" value="5" min="1" max="180">
+                    <input type="number" id="groupChatDuration" value="3" min="1" max="180">
                 </div>
             </div>
 
@@ -325,12 +325,17 @@ let botPersonas = [];
 /** Keep in sync with human_defaults.py */
 const SHARED_PERSONA_PROMPT =
     'You are a participant in a casual climate group chat. ' +
-    'Goal: help the group produce 3 concrete solutions everyone agrees on within 3 minutes, ' +
-    'then confirm the best three and move to the final step. ' +
-    'Write like texting: short phrases, not full sentences; fragments and abbreviations ok. ' +
+    'Goal: help the group produce 3 concrete solutions everyone agrees on within 3 minutes. ' +
+    'Treat all teammates the same; you can say hi. ' +
+    'Jump into the discussion and deliver your first opinion quickly. ' +
+    'When asked for an idea, give 1 concrete action (not generic) at a time. ' +
+    'Finally the group should confirm the best three and move to the final step. ' +
+    'Write like texting: short phrases, not full sentences; fragments, typos, and abbreviations are preferred. ' +
     'Use normal capitalization only—never ALL CAPS. ' +
-    'When asked for an idea, give exactly 1 concrete action (not generic). ' +
-    'If asked whether you are AI, deflect briefly and return to task in one short phrase.';
+    'If asked whether you are AI, deflect briefly and return to task in one short phrase. ' +
+    'Sound lazy, minimize words, and push to finalize answers quickly. ' +
+    'Do not say let\'s brainstorm—just give solutions. ' +
+    'Do not always repeat others.';
 
 /** ★ Example + Qualtrics reference — keep in sync with Manual → Qualtrics → condition field */
 const EXAMPLE_CONDITION_HELP =
@@ -687,7 +692,7 @@ function buildQualtricsFieldTable(sessionId, payload) {
         [statusField, qOn ? 'Out (saved on end)' : 'N/A', 'Chat app', qOn ? 'Yes' : 'No', 'completed_full | left_early | no_messages | never_joined'],
         ['—', '—', '—', '—', 'Server settings (Admin at create; documented for IRB / analysis plans):'],
         ['group_size', 'Server', 'Admin', '—', String(payload.group_size ?? '') + ' humans matched per group (bots are extra)'],
-        ['group_chat_duration_minutes', 'Server', 'Admin', '—', String(payload.group_chat_duration_minutes ?? 5) + ' minutes per group from match time'],
+        ['group_chat_duration_minutes', 'Server', 'Admin', '—', String(payload.group_chat_duration_minutes ?? 3) + ' minutes per group from match time'],
         ['survey_open_days', 'Server', 'Admin', '—', String(payload.survey_open_days ?? 7) + ' days new participants can join the queue'],
         ['session_mode', 'Server', 'Admin', '—', '1 = all bots | 2 = one bot per message | 3 = @mention only. This session: ' + (payload.session_mode ?? 1)],
         ['bot_reply_on_any_message', 'Server', 'Admin', '—', String(payload.bot_reply_on_any_message === true) + ' — if true, bot messages can trigger other bots (with chain limits)'],
@@ -725,7 +730,7 @@ function showSessionSetupGuide(sessionId, payload) {
         ? `${publicBase}/embed.html?session_id=${encodeURIComponent(sessionId)}&participant_id=\${e://Field/ResponseID}&condition=\${e://Field/condition}`
         : `${publicBase}/embed.html?session_id=${encodeURIComponent(sessionId)}&participant_id=\${e://Field/ResponseID}`;
     const days = payload.survey_open_days ?? 7;
-    const chatMin = payload.group_chat_duration_minutes ?? 5;
+    const chatMin = payload.group_chat_duration_minutes ?? 3;
 
     const qualtricsOn = payload.qualtrics_handoff_enabled && payload.qualtrics_store_chat;
 

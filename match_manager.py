@@ -26,7 +26,7 @@ class SessionConfig:
         self.spy_mode_enabled = False
         # Survey open for N days; each group chat lasts M minutes (from group formation)
         self.survey_open_days = 7
-        self.group_chat_duration_minutes = 5
+        self.group_chat_duration_minutes = 3
         # Qualtrics integration (optional)
         self.qualtrics_handoff_enabled = True
         self.qualtrics_store_chat = True
@@ -89,8 +89,8 @@ class SessionConfig:
         if gcm is not None:
             obj.group_chat_duration_minutes = max(1, min(int(gcm), 180))
         else:
-            # Legacy group_timeout was inactivity minutes — default 5 min per-group chat
-            obj.group_chat_duration_minutes = 5
+            # Legacy group_timeout was inactivity minutes — default 3 min per-group chat
+            obj.group_chat_duration_minutes = 3
         obj.qualtrics_handoff_enabled = data.get("qualtrics_handoff_enabled", False)
         obj.qualtrics_store_chat = data.get("qualtrics_store_chat", False)
         obj.qualtrics_field_transcript = data.get("qualtrics_field_transcript", "chat_transcript")
@@ -200,7 +200,7 @@ class MatchManager:
         bot_enabled: bool,
         bots: List,
         survey_open_days: int = 7,
-        group_chat_duration_minutes: int = 5,
+        group_chat_duration_minutes: int = 3,
         participant_names: List = None,
         spy_mode_enabled: bool = False,
         session_mode: int = None,

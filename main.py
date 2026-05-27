@@ -332,7 +332,7 @@ class SessionCreateRequest(BaseModel):
     spy_mode_enabled: bool = False
     session_mode: int = 1
     survey_open_days: int = 7
-    group_chat_duration_minutes: int = 5
+    group_chat_duration_minutes: int = 3
     qualtrics_handoff_enabled: bool = True
     qualtrics_store_chat: bool = True
     qualtrics_field_transcript: str = "transcript"

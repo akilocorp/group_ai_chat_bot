@@ -671,7 +671,7 @@ function fillSessionDetailForm(cfg) {
     document.getElementById('modSessionName').value = cfg.name || '';
     document.getElementById('modGroupSize').value = cfg.group_size;
     document.getElementById('modSurveyOpenDays').value = cfg.survey_open_days ?? 7;
-    document.getElementById('modGroupChatDuration').value = cfg.group_chat_duration_minutes ?? 5;
+    document.getElementById('modGroupChatDuration').value = cfg.group_chat_duration_minutes ?? 3;
     document.getElementById('modSessionMode').value = String(cfg.session_mode ?? 1);
     document.getElementById('modBotEnabled').value = cfg.bot_enabled ? 'true' : 'false';
     const condOn = cfg.condition_enabled !== false;
