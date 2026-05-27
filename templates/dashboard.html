@@ -617,11 +617,12 @@ async function selectSession(sessionId) {
         const cfg = await res.json();
         detailSnapshot = JSON.parse(JSON.stringify(cfg));
         const status = cfg.is_open ? 'Open' : 'Closed';
+        const displayName = cfg.name || cfg.session_id;
         panel.innerHTML = `
             <div class="detail-header">
                 <div>
-                    <h3 class="detail-title">${cfg.session_id}</h3>
-                    <p class="detail-subtitle">${cfg.name} · ${status}</p>
+                    <h3 class="detail-title">${displayName}</h3>
+                    <p class="detail-subtitle">${cfg.session_id} · ${status}</p>
                 </div>
                 <div class="detail-actions">
                     <button type="button" class="btn-modify" id="btnUnlockModify">Edit</button>
