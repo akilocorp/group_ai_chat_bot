@@ -69,13 +69,9 @@ class BotResponseQueue:
         queue = self._get_queue(response.room_id)
         # PriorityQueue需要可比较的对象
         await queue.put((-response.priority, response))
-        
         print(f"📋 Bot response queued: {response.bot_name} in {response.room_id}")
-        
-        # Start a processor task if one isn't already running for this room
-        if response.room_id not in self.processing_tasks or \
-           self.processing_tasks[response.room_id].done():
-            self.processing_tasks[response.room_id] = asyncio.create_task(self._process_queue(response.room_id))
+        # Processor is started only via ensure_queue_processor() so Mode 1 can
+        # enqueue every bot before any handler runs.
 
     async def _process_queue(self, room_id: str):
         """处理某个room的响应队列"""

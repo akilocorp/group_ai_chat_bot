@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 # ============ Internal Modules ============
 from match_manager import match_manager, SessionConfig
 from context_manager import get_or_create_context, get_context
-from bot_manager import analyze_intent, get_or_create_bot, remove_room_bots
+from bot_manager import analyze_intent, get_or_create_bot, get_or_create_bot_from_cfg, remove_room_bots
 
 # Database Functions
 from db.database import save_message, get_room_history
@@ -164,15 +164,25 @@ def reset_idle_timer(session_id: str, group_id: str, idle_seconds: int = DEFAULT
             return
 
         initiator_cfg = random.choice(session_cfg.bots)
-        initiator = get_or_create_bot(group_id, initiator_cfg.get("name", "Assistant"),
-                                     initiator_cfg.get("prompt", ""))
+        gi = match_manager.get_group_info(session_id, group_id) or {}
+        initiator = get_or_create_bot_from_cfg(group_id, initiator_cfg, gi)
         summary = ctx.get_context_summary(num_messages=initiator_cfg.get('context_messages', 20))
 
-        init_prompt = "[No one has spoken for a while. Start a natural conversation based on context.]"
+        session_cfg = match_manager.get_session(session_id)
+        peer_names = [
+            b["name"] for b in (session_cfg.bots if session_cfg else [])
+            if b.get("name") and b["name"] != initiator.name
+        ]
+        init_prompt = (
+            "[Chat went quiet. Send ONE casual line (max 2 short sentences) "
+            "to nudge the group—no lists, no 'hello team'.]"
+        )
         reply = await initiator.generate_response(
             "system", init_prompt, summary,
-            max_tokens=initiator_cfg.get('max_tokens', 200),
-            temperature=initiator_cfg.get('temperature', 0.7)
+            max_tokens=initiator_cfg.get('max_tokens', 60),
+            temperature=initiator_cfg.get('temperature', 0.75),
+            peer_names=peer_names,
+            max_words=initiator_cfg.get("max_words", 45),
         )
 
         if reply:
@@ -273,9 +283,9 @@ class SessionCreateRequest(BaseModel):
     session_mode: int = 1
     survey_open_days: int = 7
     group_chat_duration_minutes: int = 5
-    qualtrics_handoff_enabled: bool = False
-    qualtrics_store_chat: bool = False
-    qualtrics_field_transcript: str = "chat_transcript"
+    qualtrics_handoff_enabled: bool = True
+    qualtrics_store_chat: bool = True
+    qualtrics_field_transcript: str = "transcript"
     qualtrics_field_status: str = "chat_status"
     ai_starts_conversation: bool = False
     turn_mode: str = "none"
@@ -326,24 +336,52 @@ async def create_session(data: SessionCreateRequest):
         return {"status": "error", "message": str(e), "error_id": error_id}
 
 @app.get("/api/sessions/{session_id}/config")
-async def get_session_config(session_id: str):
-    """Fetches Session Configuration (used by chat.html)."""
+async def get_session_config(
+    session_id: str,
+    participant_id: Optional[str] = Query(None),
+    condition: Optional[str] = Query(None),
+):
+    """Fetches Session Configuration (used by chat.html / embed)."""
+    from study_conditions import apply_disclosure_to_bots, assign_group_disclosure, resolve_ai_disclosed_bot
+
     session = match_manager.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+
+    bots = list(session.bots)
+    ai_disclosed_bot = None
+    study_condition = None
+
+    if participant_id and participant_id in match_manager.user_locations:
+        loc = match_manager.user_locations[participant_id]
+        if loc.get("session_id") == session_id:
+            gid = loc.get("group_id")
+            group_info = match_manager.get_group_info(session_id, gid)
+            if group_info:
+                if "ai_disclosed_bot" not in group_info and session.bots:
+                    assign_group_disclosure(session.bots, group_info.get("condition") or condition, group_info)
+                ai_disclosed_bot = group_info.get("ai_disclosed_bot")
+                study_condition = group_info.get("study_condition")
+                bots = apply_disclosure_to_bots(session.bots, ai_disclosed_bot)
+    elif condition and session.bots:
+        ai_disclosed_bot, study_condition = resolve_ai_disclosed_bot(session.bots, condition)
+        bots = apply_disclosure_to_bots(session.bots, ai_disclosed_bot)
+
     return {
         "session_id": session.session_id,
         "session_name": session.name,
         "bot_enabled": session.bot_enabled,
-        "bots": session.bots,
+        "bots": bots,
+        "ai_disclosed_bot": ai_disclosed_bot,
+        "study_condition": study_condition,
         "group_size": session.group_size,
         "participant_names": session.participant_names,
         "spy_mode_enabled": session.spy_mode_enabled,
         "session_mode": session.session_mode,
         "qualtrics_handoff_enabled": session.qualtrics_handoff_enabled,
         "qualtrics_store_chat": session.qualtrics_store_chat,
+        "qualtrics_enabled": bool(session.qualtrics_handoff_enabled and session.qualtrics_store_chat),
         "qualtrics_field_transcript": session.qualtrics_field_transcript,
-        "qualtrics_field_status": session.qualtrics_field_status,
         "ai_starts_conversation": session.ai_starts_conversation,
         "turn_mode": session.turn_mode,
         "turn_duration_seconds": session.turn_duration_seconds,
@@ -718,8 +756,9 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
         print(f"[AI]    bot_enabled={session_cfg.bot_enabled} bots={[b['name'] for b in session_cfg.bots]} mode={session_cfg.session_mode}")
 
         # Check if room is paused
-        group_info = match_manager.get_group_info(session_id, group_id)
-        if group_info and group_info.get("paused", False):
+        group_info = match_manager.get_group_info(session_id, group_id) or {}
+
+        if group_info.get("paused", False):
             print(f"[AI] ⏸ Room {group_id} is paused, skipping AI")
             return
 
@@ -750,15 +789,15 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
                 # Mode 1: all bots respond independently to the latest chat state
                 for bot_cfg in session_cfg.bots:
                     print(f"[AI]    → Queueing bot: {bot_cfg['name']}")
-                    bot_instance = get_or_create_bot(group_id, bot_cfg['name'], bot_cfg.get('prompt', ''))
+                    bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
                     n_ctx = bot_cfg.get('context_messages', 20)
                     full_summary = ctx.get_context_summary(num_messages=n_ctx)
 
-                    async def make_handler(s_id, b_inst, b_cfg, n, summary):
+                    async def make_handler(s_id, b_inst, b_cfg, n, summary, gi):
                         async def handler(resp):
                             fresh_ctx = get_context(resp.room_id)
                             latest_summary = fresh_ctx.get_context_summary(num_messages=n) if fresh_ctx else summary
-                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg)
+                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg, gi)
                         return handler
 
                     bot_response = BotResponse(
@@ -767,7 +806,7 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
                         user_id=display_name,
                         user_text=data,
                         priority=1,
-                        handler=await make_handler(session_id, bot_instance, bot_cfg, n_ctx, full_summary)
+                        handler=await make_handler(session_id, bot_instance, bot_cfg, n_ctx, full_summary, group_info)
                     )
                     await bot_response_queue.enqueue(bot_response)
                     activity_logger.log_bot_triggered(session_id, group_id, bot_cfg['name'])
@@ -784,15 +823,15 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
                     chosen_name = _random.choice(session_cfg.bots)['name']
                 bot_cfg = next((b for b in session_cfg.bots if b['name'] == chosen_name), None)
                 if bot_cfg:
-                    bot_instance = get_or_create_bot(group_id, bot_cfg['name'], bot_cfg.get('prompt', ''))
+                    bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
                     n_ctx = bot_cfg.get('context_messages', 20)
                     full_summary = ctx.get_context_summary(num_messages=n_ctx)
 
-                    async def make_handler(s_id, b_inst, b_cfg, n, summary):
+                    async def make_handler(s_id, b_inst, b_cfg, n, summary, gi):
                         async def handler(resp):
                             fresh_ctx = get_context(resp.room_id)
                             latest_summary = fresh_ctx.get_context_summary(num_messages=n) if fresh_ctx else summary
-                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg)
+                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg, gi)
                         return handler
 
                     bot_response = BotResponse(
@@ -801,7 +840,7 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
                         user_id=display_name,
                         user_text=data,
                         priority=1,
-                        handler=await make_handler(session_id, bot_instance, bot_cfg, n_ctx, full_summary)
+                        handler=await make_handler(session_id, bot_instance, bot_cfg, n_ctx, full_summary, group_info)
                     )
                     await bot_response_queue.enqueue(bot_response)
                     activity_logger.log_bot_triggered(session_id, group_id, bot_cfg['name'])
@@ -811,15 +850,15 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
                 # Mode 3: @mention — only bots explicitly mentioned respond
                 mentioned_bots = [b for b in session_cfg.bots if f"@{b['name']}" in data or b['name'].lower() in data.lower()]
                 for bot_cfg in mentioned_bots:
-                    bot_instance = get_or_create_bot(group_id, bot_cfg['name'], bot_cfg.get('prompt', ''))
+                    bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
                     n_ctx = bot_cfg.get('context_messages', 20)
                     full_summary = ctx.get_context_summary(num_messages=n_ctx)
 
-                    async def make_handler(s_id, b_inst, b_cfg, n, summary):
+                    async def make_handler(s_id, b_inst, b_cfg, n, summary, gi):
                         async def handler(resp):
                             fresh_ctx = get_context(resp.room_id)
                             latest_summary = fresh_ctx.get_context_summary(num_messages=n) if fresh_ctx else summary
-                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg)
+                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg, gi)
                         return handler
 
                     bot_response = BotResponse(
@@ -828,7 +867,7 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
                         user_id=display_name,
                         user_text=data,
                         priority=1,
-                        handler=await make_handler(session_id, bot_instance, bot_cfg, n_ctx, full_summary)
+                        handler=await make_handler(session_id, bot_instance, bot_cfg, n_ctx, full_summary, group_info)
                     )
                     await bot_response_queue.enqueue(bot_response)
                     activity_logger.log_bot_triggered(session_id, group_id, bot_cfg['name'])
@@ -839,15 +878,15 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
             else:
                 # Fallback: all bots respond (same as mode 1)
                 for bot_cfg in session_cfg.bots:
-                    bot_instance = get_or_create_bot(group_id, bot_cfg['name'], bot_cfg.get('prompt', ''))
+                    bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
                     n_ctx = bot_cfg.get('context_messages', 20)
                     full_summary = ctx.get_context_summary(num_messages=n_ctx)
 
-                    async def make_handler(s_id, b_inst, b_cfg, n, summary):
+                    async def make_handler(s_id, b_inst, b_cfg, n, summary, gi):
                         async def handler(resp):
                             fresh_ctx = get_context(resp.room_id)
                             latest_summary = fresh_ctx.get_context_summary(num_messages=n) if fresh_ctx else summary
-                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg)
+                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg, gi)
                         return handler
 
                     bot_response = BotResponse(
@@ -856,7 +895,7 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
                         user_id=display_name,
                         user_text=data,
                         priority=1,
-                        handler=await make_handler(session_id, bot_instance, bot_cfg, n_ctx, full_summary)
+                        handler=await make_handler(session_id, bot_instance, bot_cfg, n_ctx, full_summary, group_info)
                     )
                     await bot_response_queue.enqueue(bot_response)
                     activity_logger.log_bot_triggered(session_id, group_id, bot_cfg['name'])
@@ -868,7 +907,16 @@ async def process_ai_logic(session_id: str, group_id: str, display_name: str, da
         activity_logger.log_error(session_id, error_id, "process_ai_logic")
 
 
-async def handle_bot_reply(session_id: str, group_id: str, user_id: str, user_text: str, bot, full_summary, bot_cfg):
+async def handle_bot_reply(
+    session_id: str,
+    group_id: str,
+    user_id: str,
+    user_text: str,
+    bot,
+    full_summary,
+    bot_cfg,
+    group_info=None,
+):
     """Handles persona-specific AI generation and broadcasting."""
     try:
         print(f"[BOT] 🟡 handle_bot_reply started: bot={bot.name} group={group_id}")
@@ -895,11 +943,20 @@ async def handle_bot_reply(session_id: str, group_id: str, user_id: str, user_te
             if not clean_text:
                 clean_text = "Continue the conversation naturally based on prior context."
 
+            session_cfg = match_manager.get_session(session_id)
+            peer_names = [
+                b["name"] for b in (session_cfg.bots if session_cfg else [])
+                if b.get("name") and b["name"] != bot.name
+            ]
+            max_words = int(bot_cfg.get("max_words", 45))
+
             print(f"[BOT] 🔄 Calling generate_response for {bot.name}...")
             reply = await bot.generate_response(
                 user_id, clean_text, full_summary,
-                max_tokens=bot_cfg.get('max_tokens', 200),
-                temperature=bot_cfg.get('temperature', 0.7)
+                max_tokens=bot_cfg.get('max_tokens', 60),
+                temperature=bot_cfg.get('temperature', 0.75),
+                peer_names=peer_names,
+                max_words=max_words,
             )
             if not reply:
                 print(f"[BOT] ⚠️ {bot.name} returned empty reply")

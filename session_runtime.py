@@ -9,7 +9,7 @@ from typing import Callable, Dict, List, Optional, Set
 
 from match_manager import match_manager, SessionConfig
 from context_manager import get_or_create_context, get_context
-from bot_manager import get_or_create_bot
+from bot_manager import get_or_create_bot_from_cfg
 from db.database import get_room_history, save_message
 from cache_manager import cache_manager
 from activity_logger import activity_logger
@@ -188,8 +188,7 @@ async def notify_session_ended(session_id: str, group_id: str, reason: str):
         "message": "This chat session has ended.",
         "qualtrics_handoff": bool(session and session.qualtrics_handoff_enabled),
         "qualtrics_store_chat": bool(session and session.qualtrics_store_chat),
-        "qualtrics_field_transcript": getattr(session, "qualtrics_field_transcript", "chat_transcript"),
-        "qualtrics_field_status": getattr(session, "qualtrics_field_status", "chat_status"),
+        "qualtrics_field_transcript": getattr(session, "qualtrics_field_transcript", "transcript"),
     }
 
     sent = set()
@@ -229,6 +228,7 @@ async def maybe_trigger_ai_opening(
         return
 
     group_info["opening_sent"] = True
+    # One short opener keeps the room feeling like a natural human chat.
     bot_cfg = session.bots[0]
     bot_name = bot_cfg.get("name", "Assistant")
     await process_opening_fn(session_id, group_id, bot_cfg, bot_name)
@@ -237,17 +237,25 @@ async def maybe_trigger_ai_opening(
 async def send_ai_opening_message(session_id: str, group_id: str, bot_cfg: Dict, bot_name: str, broadcast_fn: Callable):
     get_or_create_context(group_id)
     ctx = get_context(group_id)
-    bot = get_or_create_bot(group_id, bot_name, bot_cfg.get("prompt", ""))
+    group_info = match_manager.get_group_info(session_id, group_id) or {}
+    bot = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
+    session = match_manager.get_session(session_id)
+    peer_names = [
+        b["name"] for b in (session.bots if session else [])
+        if b.get("name") and b["name"] != bot_name
+    ]
     opening_prompt = (
-        "[The conversation is just starting. You speak first. "
-        "Greet the group naturally and invite discussion based on your persona.]"
+        "[Conversation just started. One short casual opener (1–2 sentences)— "
+        "like texting teammates, not a meeting speech. No numbered lists.]"
     )
     reply = await bot.generate_response(
         "system",
         opening_prompt,
         "",
-        max_tokens=bot_cfg.get("max_tokens", 200),
-        temperature=bot_cfg.get("temperature", 0.7),
+        max_tokens=bot_cfg.get("max_tokens", 60),
+        temperature=bot_cfg.get("temperature", 0.75),
+        peer_names=peer_names,
+        max_words=bot_cfg.get("max_words", 45),
     )
     if not reply:
         return

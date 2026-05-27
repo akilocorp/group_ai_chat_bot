@@ -400,8 +400,8 @@
 
             <h3>Recommended setup</h3>
             <ol>
-                <li>Create a session in <a href="/admin">Admin</a> and enable <strong>Qualtrics auto-advance</strong> and <strong>Store chat in Qualtrics</strong> if needed.</li>
-                <li>In Qualtrics Survey Flow, define embedded data: <code>session_id</code>, <code>condition</code>, <code>chat_transcript</code>, <code>chat_status</code>.</li>
+                <li>Create a session in <a href="/admin">Admin</a> and enable <strong>Qualtrics integration</strong> if needed.</li>
+                <li>In Qualtrics Survey Flow, define embedded data: <code>session_id</code>, <code>condition</code>, <code>transcript</code> (or your chosen field name).</li>
                 <li>Embed the chat iframe using <code>participant_id=${e://Field/ResponseID}</code>.</li>
                 <li>Add the parent-page listener script (from <code>/static/qualtrics-parent-snippet.js</code>) so <code>session_ended</code> events write transcript/status and optionally advance to the next page.</li>
             </ol>

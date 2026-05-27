@@ -3,8 +3,8 @@
  * Paste into: Survey Flow → Add JavaScript, OR the HTML question that wraps your chat iframe.
  *
  * Listens for messages from ACTR embed (/embed.html) and:
- * 1. Saves chat transcript + status into Qualtrics Embedded Data
- * 2. Optionally auto-advances to the next survey question
+ * 1. Saves chat transcript into Qualtrics Embedded Data
+ * 2. Auto-advances to the next survey question when integration is enabled
  */
 (function () {
   function handleActrMessage(event) {
@@ -13,14 +13,12 @@
       return;
     }
 
-    var transcriptField = data.qualtrics_field_transcript || 'chat_transcript';
-    var statusField = data.qualtrics_field_status || 'chat_status';
+    var transcriptField = data.qualtrics_field_transcript || 'transcript';
 
     if (typeof Qualtrics !== 'undefined' && Qualtrics.SurveyEngine) {
       if (data.transcript_text) {
         Qualtrics.SurveyEngine.setEmbeddedData(transcriptField, data.transcript_text);
       }
-      Qualtrics.SurveyEngine.setEmbeddedData(statusField, data.reason || 'completed');
 
       if (data.auto_advance) {
         var se = Qualtrics.SurveyEngine;

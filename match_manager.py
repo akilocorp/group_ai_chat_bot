@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+from study_conditions import assign_group_disclosure
+
 PARTICIPANT_INDEX_FILE = "config/participant_index.json"
 
 
@@ -26,10 +28,10 @@ class SessionConfig:
         self.survey_open_days = 7
         self.group_chat_duration_minutes = 5
         # Qualtrics integration (optional)
-        self.qualtrics_handoff_enabled = False
-        self.qualtrics_store_chat = False
-        self.qualtrics_field_transcript = "chat_transcript"
-        self.qualtrics_field_status = "chat_status"
+        self.qualtrics_handoff_enabled = True
+        self.qualtrics_store_chat = True
+        self.qualtrics_field_transcript = "transcript"
+        self.qualtrics_field_status = "chat_status"  # legacy; unused by Qualtrics snippet
         # Conversation control
         self.ai_starts_conversation = False
         self.turn_mode = "none"  # none | round_robin | timed
@@ -307,9 +309,11 @@ class MatchManager:
 
         if session_config.assignment_mode == "stratified":
             return self._add_to_stratified_queue(session_id, uid, condition, session_config)
-        return self._add_to_fifo_queue(session_id, uid, session_config)
+        return self._add_to_fifo_queue(session_id, uid, session_config, condition)
 
-    def _add_to_fifo_queue(self, session_id: str, uid: str, session_config: SessionConfig) -> Optional[str]:
+    def _add_to_fifo_queue(
+        self, session_id: str, uid: str, session_config: SessionConfig, condition: Optional[str] = None
+    ) -> Optional[str]:
         queue = self.queues[session_id]
         if uid not in queue:
             queue.append(uid)
@@ -319,7 +323,7 @@ class MatchManager:
             matched_members = queue[: session_config.group_size]
             self.queues[session_id] = queue[session_config.group_size :]
             group_id = f"GRP-{uuid.uuid4().hex[:4].upper()}"
-            self.create_group(session_id, group_id, matched_members)
+            self.create_group(session_id, group_id, matched_members, condition=condition)
             return group_id
         return None
 
@@ -362,7 +366,8 @@ class MatchManager:
 
         if group_id not in self.active_rooms[session_id]:
             now = datetime.now()
-            self.active_rooms[session_id][group_id] = {
+            session_config = self.sessions.get(session_id)
+            group_info = {
                 "members": members if members else [],
                 "created_at": now,
                 "last_activity": now,
@@ -370,6 +375,9 @@ class MatchManager:
                 "opening_sent": False,
                 "turn_initialized": False,
             }
+            if session_config and session_config.bots:
+                assign_group_disclosure(session_config.bots, condition, group_info)
+            self.active_rooms[session_id][group_id] = group_info
             if members:
                 for muid in members:
                     self.user_locations[muid] = {"session_id": session_id, "group_id": group_id}

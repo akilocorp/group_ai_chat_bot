@@ -181,7 +181,7 @@
     <!-- ===== CREATE SESSION ===== -->
     <div class="card">
         <div class="card-title">🎛️ Create New Session</div>
-        <p class="intro">Create one experimental session template. Participants can then be auto-matched into many groups with the same settings.</p>
+        <p class="intro">Create a session template. Participants are matched into groups that share these settings. Pass optional URL parameters (e.g. <code>condition</code>) from your survey embed to vary the experience per participant.</p>
 
         <form id="newSessionForm">
 
@@ -189,7 +189,7 @@
             <div class="grid-3">
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Session Name</label>
-                    <input type="text" id="sessionName" placeholder="e.g., Study 1 — AI Trust Experiment" required>
+                    <input type="text" id="sessionName" placeholder="e.g., Group Chat Session 1" required>
                     <div class="helper">A unique Session ID (e.g. SES-A1B2C) is generated automatically on creation.</div>
                 </div>
                 <div class="form-group">
@@ -205,14 +205,14 @@
             <div class="grid-3">
                 <div class="form-group">
                     <label>Group Size</label>
-                    <input type="number" id="groupSize" value="2" min="1" max="20">
-                    <div class="helper">Human participants per group (bots not counted).</div>
+                    <input type="number" id="groupSize" value="1" min="1" max="20">
+                    <div class="helper">Number of human participants matched into each group (AI personas are not counted).</div>
                 </div>
                 <div class="form-group">
                     <label>Session Mode</label>
                     <select id="sessionMode" onchange="updateSessionModeInfo(this.value)">
-                        <option value="1">Mode 1 — All bots reply to every message</option>
-                        <option value="2">Mode 2 — Smart single bot (AI picks the most relevant)</option>
+                        <option value="1" selected>Mode 1 — All bots reply to every message</option>
+                        <option value="2">Mode 2 — Smart single bot (one persona per message)</option>
                         <option value="3">Mode 3 — @mention only (bot responds when named)</option>
                     </select>
                 </div>
@@ -238,14 +238,14 @@
             </div>
 
             <div class="mode-info" id="session-mode-info">
-                <strong>Mode 1 — All bots reply to every message</strong>Every bot responds to every message. All bots are always active in the conversation.
+                <strong>Mode 1 — All bots reply to every message</strong> Every persona responds to each message (independently).
             </div>
 
             <!-- Row 3: Participant names -->
             <div class="form-group" style="margin-top:16px;">
                 <label>Participant Display Names <span class="hint">(optional)</span></label>
-                <input type="text" id="participantNames" placeholder="e.g.  Alice, Bob, Carol  — assigned in join order">
-                <div class="helper">Comma-separated. Leave blank to show raw UIDs. Names are assigned in the order participants join.</div>
+                <input type="text" id="participantNames" value="c" placeholder="e.g. c">
+                <div class="helper">Comma-separated display names for humans, assigned in join order. Names must be unique from persona display names below.</div>
             </div>
 
             <!-- Experiment options -->
@@ -254,10 +254,10 @@
                 <div class="form-group">
                     <label>Assignment</label>
                     <select id="assignmentMode">
-                        <option value="fifo">FIFO — first-come group formation</option>
-                        <option value="stratified">Stratified — separate queue per condition</option>
+                        <option value="fifo" selected>FIFO — first-come group formation</option>
+                        <option value="stratified">Stratified — separate queue per <code>condition</code> value</option>
                     </select>
-                    <div class="helper">Stratified: pass <code>condition</code> in embed URL from Qualtrics embedded data.</div>
+                    <div class="helper">Optional embed param: <code>&amp;condition=…</code> from survey embedded data (e.g. Qualtrics). Used for roster labels and stratified queues.</div>
                 </div>
                 <div class="form-group">
                     <label>Speaking turns</label>
@@ -273,7 +273,7 @@
                     <div class="helper">Only when Speaking turns = <strong>Timed</strong>: max seconds per person per turn. Ignore for Off / Round-robin.</div>
                 </div>
             </div>
-            <div class="grid-3">
+            <div class="grid-2">
                 <div class="form-group">
                     <label>AI starts conversation?</label>
                     <select id="aiStartsConversation">
@@ -282,40 +282,22 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Qualtrics auto-advance <span class="hint">(after chat ends)</span></label>
-                    <select id="qualtricsHandoff">
-                        <option value="false">Off</option>
-                        <option value="true">On — postMessage to parent survey</option>
+                    <label>Qualtrics integration</label>
+                    <select id="qualtricsIntegration">
+                        <option value="true" selected>On — save transcript &amp; auto-advance</option>
+                        <option value="false">Off — export from Dashboard only</option>
                     </select>
-                    <div class="helper">When chat ends, send an event to Qualtrics parent page so the survey can move to the next question automatically.</div>
+                    <div class="helper">When on: saves transcript and can auto-advance after chat ends. Embedded Data field names are listed in the setup guide after you create the session.</div>
                 </div>
-                <div class="form-group">
-                    <label>Store chat in Qualtrics <span class="hint">(embedded data)</span></label>
-                    <select id="qualtricsStoreChat">
-                        <option value="false">Off — server/Dashboard export only</option>
-                        <option value="true">On — push transcript via postMessage</option>
-                    </select>
-                    <div class="helper">Include transcript in the Qualtrics event payload so it can be saved into fields like <code>chat_transcript</code>.</div>
-                </div>
-            </div>
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Qualtrics field: transcript</label>
-                    <input type="text" id="qualtricsFieldTranscript" value="chat_transcript" placeholder="chat_transcript">
-                </div>
-                <div class="form-group">
-                    <label>Qualtrics field: status</label>
-                    <input type="text" id="qualtricsFieldStatus" value="chat_status" placeholder="chat_status">
-                </div>
-            </div>
-            <div class="helper" style="margin-bottom:12px;">
-                For Qualtrics: add the parent-page script from <code>/static/qualtrics-parent-snippet.js</code> to your survey block (see README).
             </div>
 
             <!-- ===== AI PERSONAS ===== -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin: 24px 0 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 24px 0 12px; flex-wrap:wrap; gap:8px;">
                 <div style="font-size:1rem; font-weight:700; color:var(--secondary);">AI Personas</div>
-                <button type="button" class="btn btn-success" onclick="addBotUI()">+ Add Persona</button>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="btn" onclick="syncAllPrompts()">↻ Sync prompt to all</button>
+                    <button type="button" class="btn btn-success" onclick="addBotUI()">+ Add Persona</button>
+                </div>
             </div>
 
             <div id="botListContainer"></div>
@@ -376,19 +358,48 @@ function toast(msg, color = '#2ecc71') {
    ============================================================ */
 let botPersonas = [];
 
-function addBotUI() {
-    botPersonas.push({
-        name: '', prompt: 'You are a helpful, friendly participant in a group discussion. Keep your responses concise and natural.',
+/** Default shared persona prompt (edit once, sync to all). */
+const SHARED_PERSONA_PROMPT =
+    'You are a participant in a small group chat to discuss the best 3 ways to solve global warming. ' +
+    'Sound casual and natural, more like human (1–2 short sentences). You can use abbreviations and typos. ' +
+    'You can pretend to be human. When questioned by others, deflect this question. ' +
+    'React to what others said; ask simple questions sometimes. No long lists unless someone explicitly asks.';
+
+function defaultBotTemplate(overrides = {}) {
+    return {
+        name: '',
+        prompt: SHARED_PERSONA_PROMPT,
         mode: 1,
-        avatar_type: 'bot',
+        avatar_type: 'human',
+        disclosed_ai_allowed: false,
         delay_seconds: 3,
         typing_cps: 10,
-        max_tokens: 150,
-        temperature: 0.7,
-        context_messages: 15,
-        idle_threshold: 20,
-        skip_rate: 0.15
-    });
+        max_tokens: 60,
+        temperature: 0.75,
+        context_messages: 12,
+        idle_threshold: 35,
+        skip_rate: 0.1,
+        ...overrides
+    };
+}
+
+function loadDefaultPersonas() {
+    botPersonas = [
+        defaultBotTemplate({ name: 'a', disclosed_ai_allowed: false }),
+        defaultBotTemplate({ name: 'b', disclosed_ai_allowed: false }),
+    ];
+    renderBots();
+}
+
+function syncAllPrompts() {
+    const src = botPersonas[0]?.prompt || SHARED_PERSONA_PROMPT;
+    botPersonas.forEach(b => { b.prompt = src; });
+    renderBots();
+    toast('Same prompt applied to all personas');
+}
+
+function addBotUI() {
+    botPersonas.push(defaultBotTemplate());
     renderBots();
 }
 
@@ -416,21 +427,21 @@ function renderBots() {
                 <button type="button" class="btn btn-danger" onclick="removeBotUI(${i})">Remove</button>
             </div>
 
-            <!-- Name + Avatar Type + Mode selector -->
+            <!-- Name + Avatar + Mode -->
             <div class="grid-3">
                 <div class="form-group">
                     <label>Display Name</label>
                     <input type="text" placeholder="e.g., Alex" value="${bot.name}"
                            oninput="updateBot(${i}, 'name', this.value)">
-                    <div class="helper">Shown in chat. Participants can @mention this name.</div>
+                    <div class="helper">Shown in chat. Participants can @mention this name. “(may use AI)” in the header comes from the embed <code>condition</code> param, not this form.</div>
                 </div>
                 <div class="form-group">
                     <label>Avatar Type</label>
                     <select onchange="updateBot(${i}, 'avatar_type', this.value)">
                         <option value="bot" ${(bot.avatar_type||'bot')==='bot'?'selected':''}>Bot Avatar</option>
-                        <option value="human" ${bot.avatar_type==='human'?'selected':''}>Human Avatar</option>
+                        <option value="human" ${(bot.avatar_type||'human')==='human'?'selected':''}>Human-style avatar</option>
                     </select>
-                    <div class="helper">Display as bot or human in chat UI.</div>
+                    <div class="helper">How the persona appears in the message list.</div>
                 </div>
                 <div class="form-group">
                     <label>Response Mode</label>
@@ -447,7 +458,7 @@ function renderBots() {
             <div class="form-group">
                 <label>Personality Prompt</label>
                 <textarea rows="3" oninput="updateBot(${i}, 'prompt', this.value)">${bot.prompt}</textarea>
-                <div class="helper">System instructions defining this persona's role, tone, and behavior. This is the most important variable for shaping what the bot says.</div>
+                <div class="helper">Defines tone and behavior. Shorter prompts with “one idea per message” work best. Platform-wide brevity rules also apply.</div>
             </div>
 
             <!-- ── TIMING ── -->
@@ -488,11 +499,11 @@ function renderBots() {
                 <div class="form-group">
                     <label>Max Response Length <span class="hint">(tokens)</span></label>
                     <div class="range-row">
-                        <input type="range" min="20" max="500" step="10" value="${bot.max_tokens}"
+                        <input type="range" min="20" max="150" step="5" value="${bot.max_tokens}"
                                oninput="updateBot(${i},'max_tokens',Number(this.value)); this.nextElementSibling.textContent=this.value">
                         <span class="range-val">${bot.max_tokens}</span>
                     </div>
-                    <div class="helper">~¾ word per token. 100 ≈ 2 sentences. 200 ≈ short paragraph.</div>
+                    <div class="helper">Human-like chat: <strong>40–70</strong> tokens (~1–2 sentences). Above 100 often sounds robotic.</div>
                 </div>
                 <div class="form-group">
                     <label>Creativity <span class="hint">(temperature)</span></label>
@@ -545,7 +556,8 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         name:             b.name,
         prompt:           b.prompt,
         mode:             b.mode,
-        avatar_type:      b.avatar_type || 'bot',
+        avatar_type:      b.avatar_type || 'human',
+        disclosed_ai_allowed: !!b.disclosed_ai_allowed,
         delay_seconds:    b.delay_seconds,
         typing_cps:       b.typing_cps,
         max_tokens:       b.max_tokens,
@@ -567,10 +579,9 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         turn_mode: document.getElementById('turnMode').value,
         turn_duration_seconds: parseInt(document.getElementById('turnDuration').value, 10),
         ai_starts_conversation: document.getElementById('aiStartsConversation').value === 'true',
-        qualtrics_handoff_enabled: document.getElementById('qualtricsHandoff').value === 'true',
-        qualtrics_store_chat: document.getElementById('qualtricsStoreChat').value === 'true',
-        qualtrics_field_transcript: document.getElementById('qualtricsFieldTranscript').value.trim() || 'chat_transcript',
-        qualtrics_field_status: document.getElementById('qualtricsFieldStatus').value.trim() || 'chat_status',
+        qualtrics_handoff_enabled: document.getElementById('qualtricsIntegration').value === 'true',
+        qualtrics_store_chat: document.getElementById('qualtricsIntegration').value === 'true',
+        qualtrics_field_transcript: 'transcript',
         participant_names: document.getElementById('participantNames').value
             ? document.getElementById('participantNames').value.split(',').map(s => s.trim()).filter(Boolean)
             : null,
@@ -588,8 +599,7 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
             showSessionSetupGuide(data.session_id, payload);
             toast('Session created: ' + data.session_id);
             document.getElementById('sessionName').value = '';
-            botPersonas = [];
-            renderBots();
+            loadDefaultPersonas();
         } else {
             toast('Error: ' + (data.message || 'Unknown'), '#e74c3c');
         }
@@ -609,14 +619,33 @@ function showSessionSetupGuide(sessionId, payload) {
     const days = payload.survey_open_days ?? 7;
     const chatMin = payload.group_chat_duration_minutes ?? 5;
 
-    const handoffOn = payload.qualtrics_handoff_enabled;
-    const storeOn = payload.qualtrics_store_chat;
-    const handoffTag = handoffOn
+    const qualtricsOn = payload.qualtrics_handoff_enabled && payload.qualtrics_store_chat;
+    const qualtricsTag = qualtricsOn
         ? '<span class="tag-on">On</span>'
         : '<span class="tag-off">Off</span>';
-    const storeTag = storeOn
-        ? '<span class="tag-on">On</span>'
-        : '<span class="tag-off">Off</span>';
+    const transcriptField = 'transcript';
+
+    const embeddedDataBlock = qualtricsOn ? `
+        <div class="setup-block">
+            <h4>④ Qualtrics Embedded Data</h4>
+            <p>In Qualtrics: <strong>Survey Flow → Embedded Data → Add a new field</strong> for each name below (exact spelling).</p>
+            <table style="width:100%;font-size:0.84rem;border-collapse:collapse;margin:10px 0;">
+                <tr style="border-bottom:1px solid var(--gray-300);">
+                    <td style="padding:8px 6px;"><code>transcript</code></td>
+                    <td style="padding:8px 6px;">Filled automatically when chat ends (full chat text).</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--gray-300);">
+                    <td style="padding:8px 6px;"><code>condition</code></td>
+                    <td style="padding:8px 6px;">Optional. You set per respondent (e.g. <code>cond1_a</code>, <code>cond1_b</code>, <code>cond2</code>) before they reach the chat question.</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--gray-300);">
+                    <td style="padding:8px 6px;"><code>session_id</code></td>
+                    <td style="padding:8px 6px;">Optional if the iframe URL already includes <code>session_id=${sessionId}</code>. Otherwise set to <code>${sessionId}</code> in Survey Flow.</td>
+                </tr>
+            </table>
+            <p style="font-size:0.84rem;color:var(--gray-700);"><code>participant_id</code> uses Qualtrics <strong>ResponseID</strong> in the iframe URL — no extra Embedded Data field required.</p>
+        </div>
+    ` : '';
 
     content.innerHTML = `
         ${isLocal ? `<div class="warn-localhost">⚠️ You are on localhost. In Qualtrics use production URL: <strong>${publicBase}</strong></div>` : ''}
@@ -634,29 +663,28 @@ function showSessionSetupGuide(sessionId, payload) {
                 <code id="embed-url-text">${embedUrl}</code>
                 <button type="button" class="btn-copy" onclick="copyText('embed-url-text')">Copy</button>
             </div>
-            <p style="margin-top:10px;">Participants load the chat; <code>participant_id</code> uses Qualtrics ResponseID.</p>
+            <p style="margin-top:10px;">Participants load the chat; <code>participant_id</code> is usually the survey response ID. Optional <code>condition</code> can be set in embedded data for per-participant roster labels.</p>
         </div>
 
         <div class="setup-block">
-            <h4>③ Qualtrics options you selected</h4>
-            <ul>
-                <li><strong>Qualtrics auto-advance</strong> ${handoffTag}
-                    <br>When chat ends → notify Qualtrics parent → can auto-advance (needs parent script).</li>
-                <li><strong>Store chat in Qualtrics</strong> ${storeTag}
-                    <br>Transcript saved to <code>${payload.qualtrics_field_transcript}</code> and status <code>${payload.qualtrics_field_status}</code>.</li>
-            </ul>
-            <p>If both off: chat still works; no auto-advance or Qualtrics transcript (use Dashboard export).</p>
+            <h4>③ Qualtrics integration</h4>
+            <p><strong>Qualtrics integration</strong> ${qualtricsTag}</p>
+            ${qualtricsOn
+                ? '<p>When chat ends: transcript is saved to Embedded Data and the survey can advance to the next page (with parent script below).</p>'
+                : '<p>Off — use Dashboard export for transcripts.</p>'}
         </div>
 
+        ${embeddedDataBlock}
+
         <div class="setup-block">
-            <h4>④ Parent-page script (if either option above is on)</h4>
+            <h4>${qualtricsOn ? '⑤' : '④'} Parent-page script${qualtricsOn ? '' : ' (if integration on)'}</h4>
             <p>In the <strong>same HTML question</strong>, <strong>above</strong> the iframe:</p>
             <p><code>${publicBase}/static/qualtrics-parent-snippet.js</code> (or paste file contents into Qualtrics)</p>
             <p>Receives chat-ended messages, writes Embedded Data, can click Next.</p>
         </div>
 
         <div class="setup-block">
-            <h4>⑤ Pull API backup (optional)</h4>
+            <h4>${qualtricsOn ? '⑥' : '⑤'} Pull API backup (optional)</h4>
             <p>If not storing transcript in Qualtrics, call at end of survey:</p>
             <div class="url-box">
                 <code id="pull-url-text">${pullUrl}</code>
@@ -665,7 +693,7 @@ function showSessionSetupGuide(sessionId, payload) {
         </div>
 
         <div class="setup-block">
-            <h4>⑥ Full HTML for Qualtrics Text/Graphic question</h4>
+            <h4>${qualtricsOn ? '⑦' : '⑥'} Full HTML for Qualtrics Text/Graphic question</h4>
             <p>Survey → Add question → <strong>Text / Graphic → HTML</strong>, paste below (Session <code>${sessionId}</code>):</p>
             <div class="url-box" style="align-items:flex-start;">
                 <code id="qualtrics-html-text" style="white-space:pre-wrap;font-size:0.72rem;">&lt;script src="${publicBase}/static/qualtrics-parent-snippet.js"&gt;&lt;/script&gt;
@@ -681,7 +709,7 @@ function showSessionSetupGuide(sessionId, payload) {
                 <li>Confirm <a href="${publicBase}" target="_blank">${publicBase}</a> is live.</li>
                 <li>Session visible on <a href="/?tab=sessions">Dashboard → Sessions</a> as <code>${sessionId}</code>.</li>
                 <li>Publish survey → Preview → HTML question → chat UI appears.</li>
-                <li>After chat ends: if store enabled, check <strong>Data & Analysis → Response → Embedded Data</strong> for <code>${payload.qualtrics_field_transcript}</code>.</li>
+                <li>After chat ends: if Qualtrics integration is on, check <strong>Data & Analysis → Response → Embedded Data</strong> for <code>${transcriptField}</code>.</li>
                 <li>Or export all chats from <a href="${publicBase}/?tab=export" target="_blank">Dashboard → Export</a>.</li>
             </ol>
         </div>
@@ -706,7 +734,8 @@ function copyText(elementId) {
 }
 
 // Init
-addBotUI();
+updateSessionModeInfo('1');
+loadDefaultPersonas();
 </script>
 </body>
 </html>

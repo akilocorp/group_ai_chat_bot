@@ -270,6 +270,10 @@
             if (myDisplayName && name === myDisplayName) {
                 return `${name} (you)`;
             }
+            const bot = activeBots.find(b => b.name === name);
+            if (bot && bot.disclosed_ai_allowed) {
+                return `${name} (may use AI)`;
+            }
             return name;
         });
         document.getElementById('team-members').textContent = displayList.join(', ');
@@ -382,7 +386,7 @@
                 }
             });
 
-            // Also include bots as members (they are participants in deception studies)
+            // Include configured personas in the member list
             activeBots.forEach(b => {
                 if (b.name && !knownMembers.has(b.name)) {
                     knownMembers.add(b.name);

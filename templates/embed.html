@@ -20,6 +20,12 @@
             flex-shrink: 0;
         }
         .header h2 { font-size: 1.05rem; font-weight: 700; }
+        .team-roster {
+            font-size: 0.82rem; font-weight: 600; margin-top: 6px;
+            opacity: 0.95; line-height: 1.35;
+        }
+        .team-roster .you { text-decoration: underline; text-underline-offset: 2px; }
+        .team-roster .ai-label { font-weight: 500; opacity: 0.92; font-size: 0.78rem; }
         .info { font-size: 0.78rem; opacity: 0.9; margin-top: 4px; }
         .chat-container {
             flex: 1; overflow: hidden; display: flex; flex-direction: column;
@@ -130,6 +136,7 @@
 <div class="app-wrapper">
     <div class="header">
         <h2 id="room-title">Study Chat</h2>
+        <div id="team-roster" class="team-roster">Loading group…</div>
         <div class="info">
             <span id="status-dot" class="status-dot"></span>
             <span id="ws-status">Connecting...</span>
@@ -174,9 +181,44 @@
     const mentionBar = document.getElementById('mention-bar');
     const sendButton = document.getElementById('send-button');
     const inputArea = document.getElementById('input-area');
+    const teamRoster = document.getElementById('team-roster');
 
     let activeBots = [];
     let myDisplayName = null;
+
+    function formatTeammateLabel(bot) {
+        if (!bot || !bot.name) return '';
+        if (bot.disclosed_ai_allowed) {
+            return `${bot.name} <span class="ai-label">(may use AI)</span>`;
+        }
+        return bot.name;
+    }
+
+    function updateGroupRoster() {
+        const parts = [];
+        activeBots.forEach(bot => {
+            const label = formatTeammateLabel(bot);
+            if (label) parts.push(label);
+        });
+        if (myDisplayName) {
+            const botNames = activeBots.map(b => b.name);
+            if (botNames.includes(myDisplayName)) {
+                parts.push(`<span class="you" title="Your display name overlaps a teammate name — contact the researcher">${myDisplayName} (you)</span>`);
+            } else {
+                parts.push(`<span class="you">${myDisplayName} (you)</span>`);
+            }
+        } else if (sessionConfig.group_size) {
+            parts.push('<span style="opacity:0.85">you</span>');
+        }
+        const nHumans = sessionConfig.group_size || 1;
+        const total = activeBots.length + nHumans;
+        teamRoster.innerHTML = parts.length
+            ? `Your team (${total}): ${parts.join(', ')}`
+            : 'Your team: connecting…';
+        if (sessionConfig.session_mode === 3) {
+            teamRoster.innerHTML += '<br><span style="font-weight:500;font-size:0.72rem;opacity:0.9">Mention a name (e.g. @a) to address that teammate.</span>';
+        }
+    }
 
     function showError(msg) {
         chatBox.className = '';
@@ -201,7 +243,7 @@
     function renderMessage(sender, text) {
         const botMatch = activeBots.find(b => b.name === sender);
         const isBot = !!botMatch;
-        const isOwn = myDisplayName && sender === myDisplayName;
+        const isOwn = myDisplayName && sender === myDisplayName && !isBot;
         const showAsBot = isBot && (!botMatch.avatar_type || botMatch.avatar_type === 'bot');
 
         const group = document.createElement('div');
@@ -252,7 +294,13 @@
     }
 
     function notifyQualtricsParent(payload) {
-        if (!sessionConfig.qualtrics_handoff_enabled && !payload.qualtrics_handoff) return;
+        const qualtricsOn = !!(
+            sessionConfig.qualtrics_handoff_enabled
+            || sessionConfig.qualtrics_store_chat
+            || payload.qualtrics_handoff
+            || payload.qualtrics_store_chat
+        );
+        if (!qualtricsOn) return;
         const msg = {
             source: 'ACTR_CHAT',
             event: 'chat_ended',
@@ -260,9 +308,8 @@
             participant_id: participantId,
             group_id: groupId,
             reason: payload.reason || 'ended',
-            auto_advance: !!(sessionConfig.qualtrics_handoff_enabled || payload.qualtrics_handoff),
-            qualtrics_field_transcript: payload.qualtrics_field_transcript || sessionConfig.qualtrics_field_transcript || 'chat_transcript',
-            qualtrics_field_status: payload.qualtrics_field_status || sessionConfig.qualtrics_field_status || 'chat_status',
+            auto_advance: qualtricsOn,
+            qualtrics_field_transcript: payload.qualtrics_field_transcript || sessionConfig.qualtrics_field_transcript || 'transcript',
             transcript_text: payload.transcript_text || '',
             transcript_json: payload.transcript_json || '[]',
         };
@@ -291,7 +338,9 @@
 
     async function loadConfig() {
         try {
-            const res = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/config`);
+            let configUrl = `/api/sessions/${encodeURIComponent(sessionId)}/config?participant_id=${encodeURIComponent(participantId)}`;
+            if (condition) configUrl += `&condition=${encodeURIComponent(condition)}`;
+            const res = await fetch(configUrl);
             if (!res.ok) return;
             sessionConfig = await res.json();
             activeBots = (sessionConfig.bots || []).filter(b => b.name);
@@ -308,6 +357,7 @@
                 };
                 mentionBar.appendChild(btn);
             });
+            updateGroupRoster();
         } catch (e) {
             console.error('Config load error:', e);
         }
@@ -361,6 +411,7 @@
 
             if (payload.type === 'display_name') {
                 myDisplayName = payload.name;
+                updateGroupRoster();
                 setConnected(true);
                 showWelcomeBanner(myDisplayName);
                 return;
@@ -420,6 +471,8 @@
 
             await loadConfig();
             connectWebSocket(groupId);
+            // Refresh roster after match (applies embed condition assignment)
+            setTimeout(() => loadConfig().then(() => updateGroupRoster()), 800);
         } catch (err) {
             showError('Could not start chat: ' + err.message);
         }

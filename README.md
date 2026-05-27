@@ -31,9 +31,8 @@ The **parent survey page** must listen and then:
 ### Push (iframe → Qualtrics) — recommended
 
 1. In **Admin**, enable:
-   - **Qualtrics auto-advance** — moves participant to next question when chat ends
-   - **Store chat in Qualtrics** — includes full transcript in `postMessage`
-2. In Qualtrics, create Embedded Data fields (e.g. `chat_transcript`, `chat_status`).
+   - **Qualtrics integration** — saves transcript to Embedded Data and auto-advances when chat ends
+2. In Qualtrics, create Embedded Data field (e.g. `transcript`).
 3. Add the parent listener script from `static/qualtrics-parent-snippet.js` to your survey (HTML question or Survey Flow JavaScript).
 
 ### Pull (Qualtrics / researcher → server)
@@ -58,7 +57,7 @@ You do **not** need both push and pull for every study — push is enough for st
 |-------|-------------------|---------|
 | `session_id` | `${e://Field/session_id}` | Experiment config |
 | `participant_id` | `${e://Field/ResponseID}` | Unique participant key |
-| `condition` | `${e://Field/condition}` | Stratified matching (separate queues per value) |
+| `condition` | `${e://Field/condition}` | Optional per-participant roster labels and stratified queues |
 | `group_id` | fixed `GRP-XXXX` | Skip queue, join fixed room |
 
 ```html
@@ -73,11 +72,10 @@ You do **not** need both push and pull for every study — push is enough for st
 
 | Option | Values | Use |
 |--------|--------|-----|
-| **Assignment** | FIFO / Stratified | FIFO = first-come matching; Stratified = one queue per `condition` |
+| **Assignment** | FIFO / Stratified | FIFO = first-come matching; Stratified = separate waiting list per `condition` value |
 | **Speaking turns** | Off / Round-robin / Timed | Controls which human may send |
 | **AI starts conversation** | On / Off | First bot sends opening message when room is empty |
-| **Qualtrics auto-advance** | On / Off | `postMessage` + parent script advances survey |
-| **Store chat in Qualtrics** | On / Off | Transcript in `postMessage` for Embedded Data |
+| **Qualtrics integration** | On / Off | Transcript to Embedded Data + auto-advance via parent script |
 
 ---
 
