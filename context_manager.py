@@ -105,8 +105,18 @@ class ConversationContext:
             return f"## Conversation Context (Room: {self.room_id})\nNo messages yet."
 
         max_chars = max(10_000, min(10_000_000, int(max_chars)))
+        speakers = []
+        seen = set()
+        for msg in self.messages[-50:]:
+            s = msg.get("sender")
+            if s and s not in seen:
+                seen.add(s)
+                speakers.append(s)
+        participant_line = ", ".join(speakers) if speakers else (
+            ", ".join(self.user_profiles.keys()) if self.user_profiles else "System Only"
+        )
         header = f"""## Conversation Context (Room: {self.room_id})
-**Participants**: {', '.join(self.user_profiles.keys()) if self.user_profiles else 'System Only'}
+**Participants**: {participant_line}
 **Total Turns**: {len(self.messages)}
 **Last Activity**: {self.last_activity.strftime('%Y-%m-%d %H:%M:%S')}
 

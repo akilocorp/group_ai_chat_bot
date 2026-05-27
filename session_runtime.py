@@ -365,3 +365,4 @@ async def send_ai_opening_message(session_id: str, group_id: str, bot_cfg: Dict,
         ctx.add_message(bot.name, reply)
     activity_logger.log_bot_response(session_id, group_id, bot.name, reply, bot_cfg.get("mode", 1))
     await broadcast_fn(session_id, group_id, {"type": "message", "sender": bot.name, "text": reply})
+    return bot.name, reply

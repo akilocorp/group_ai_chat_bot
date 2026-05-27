@@ -39,6 +39,19 @@ from db.database import save_message, get_room_history
 # ============ Optimization Modules ============
 from cache_manager import cache_manager
 from bot_queue import bot_response_queue, BotResponse
+from bot_interaction import (
+    interaction_settings,
+    all_peer_names,
+    can_bot_send_now,
+    record_bot_send,
+    pick_mention_target,
+    apply_mention_prefix,
+    build_mention_system_note,
+    maybe_self_correction,
+    schedule_bot_chain,
+    bots_for_message,
+    filter_bots_for_trigger,
+)
 from error_handler import error_handler, ErrorSeverity
 from activity_logger import activity_logger, ActivityType
 from export_service import export_service
@@ -147,7 +160,19 @@ async def broadcast(session_id: str, group_id: str, payload):
 
 
 async def _ai_opening_wrapper(session_id: str, group_id: str, bot_cfg: Dict, bot_name: str):
-    await send_ai_opening_message(session_id, group_id, bot_cfg, bot_name, broadcast)
+    opener = await send_ai_opening_message(session_id, group_id, bot_cfg, bot_name, broadcast)
+    if not opener:
+        return
+    opener_name, opener_text = opener
+    session_cfg = match_manager.get_session(session_id)
+    if not session_cfg:
+        return
+    gi = match_manager.get_group_info(session_id, group_id) or {}
+    settings = interaction_settings(session_cfg)
+    record_bot_send(gi, opener_name)
+    schedule_bot_chain(
+        session_id, group_id, opener_name, opener_text, 0, settings, process_ai_logic
+    )
 
 
 def reset_idle_timer(session_id: str, group_id: str, idle_seconds: int = DEFAULT_IDLE_THRESHOLD):
@@ -209,6 +234,17 @@ def reset_idle_timer(session_id: str, group_id: str, idle_seconds: int = DEFAULT
             activity_logger.log_bot_response(session_id, group_id, initiator.name, reply, initiator_cfg.get("mode", 1))
             await broadcast(session_id, group_id, {"type": "message", "sender": initiator.name, "text": reply})
             touch_group_activity(session_id, group_id)
+            settings = interaction_settings(session_cfg)
+            record_bot_send(gi, initiator.name)
+            schedule_bot_chain(
+                session_id,
+                group_id,
+                initiator.name,
+                reply,
+                0,
+                settings,
+                process_ai_logic,
+            )
 
         reset_idle_timer(session_id, group_id, initiator_cfg.get("idle_threshold", DEFAULT_IDLE_THRESHOLD))
 
@@ -311,6 +347,21 @@ class SessionCreateRequest(BaseModel):
     condition_enabled: bool = True
     style_mimic_enabled: bool = False
     style_mimic_target: str = "c"
+    bot_reply_on_any_message: bool = False
+    max_chain_depth: int = 1
+    cooldown_per_bot_sec: int = 12
+    max_bot_msgs_per_minute_per_room: int = 12
+    use_mentions: bool = True
+    mention_prob: float = 0.15
+    self_correction_prob: float = 0.04
+
+@app.get("/api/admin/human-defaults")
+async def get_human_defaults():
+    """Recommended human-like preset (same as Admin ★ button and human_defaults.py)."""
+    from human_defaults import HUMAN_LIKE_BOT, HUMAN_LIKE_PROMPT, HUMAN_LIKE_SESSION
+
+    return {"session": HUMAN_LIKE_SESSION, "bot": HUMAN_LIKE_BOT, "prompt": HUMAN_LIKE_PROMPT}
+
 
 @app.get("/api/sessions")
 async def list_sessions():
@@ -349,6 +400,13 @@ async def create_session(data: SessionCreateRequest):
             condition_enabled=data.condition_enabled,
             style_mimic_enabled=data.style_mimic_enabled,
             style_mimic_target=data.style_mimic_target,
+            bot_reply_on_any_message=data.bot_reply_on_any_message,
+            max_chain_depth=data.max_chain_depth,
+            cooldown_per_bot_sec=data.cooldown_per_bot_sec,
+            max_bot_msgs_per_minute_per_room=data.max_bot_msgs_per_minute_per_room,
+            use_mentions=data.use_mentions,
+            mention_prob=data.mention_prob,
+            self_correction_prob=data.self_correction_prob,
         )
         activity_logger.log_session_started(session_id, data.session_name)
         return {"status": "success", "session_id": session_id}
@@ -444,6 +502,13 @@ class SessionUpdateRequest(BaseModel):
     condition_enabled: Optional[bool] = None
     style_mimic_enabled: Optional[bool] = None
     style_mimic_target: Optional[str] = None
+    bot_reply_on_any_message: Optional[bool] = None
+    max_chain_depth: Optional[int] = None
+    cooldown_per_bot_sec: Optional[int] = None
+    max_bot_msgs_per_minute_per_room: Optional[int] = None
+    use_mentions: Optional[bool] = None
+    mention_prob: Optional[float] = None
+    self_correction_prob: Optional[float] = None
 
 
 @app.get("/api/sessions/{session_id}/admin")
@@ -820,178 +885,160 @@ async def batch_save_messages(_msg_type: str, messages: list):
     for msg in messages:
         await save_message(msg["room_id"], msg["sender"], msg["text"])
 
-async def process_ai_logic(session_id: str, group_id: str, display_name: str, data: str):
-    """Background processing: Caching, DB, and AI generation."""
+async def _enqueue_single_bot(
+    session_id: str,
+    group_id: str,
+    display_name: str,
+    data: str,
+    bot_cfg: Dict,
+    session_cfg,
+    ctx,
+    group_info: Dict,
+    chain_depth: int,
+    settings: Dict,
+):
+    if not can_bot_send_now(group_info, bot_cfg["name"], settings):
+        print(f"[AI] ⏳ Rate limit — skip {bot_cfg['name']}")
+        return
+
+    bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
+    max_ctx = resolve_context_max_chars(bot_cfg)
+    full_summary = ctx.get_context_summary(max_chars=max_ctx)
+
+    async def handler(resp):
+        fresh_ctx = get_context(resp.room_id)
+        latest_summary = (
+            fresh_ctx.get_context_summary(max_chars=max_ctx) if fresh_ctx else full_summary
+        )
+        await handle_bot_reply(
+            session_id,
+            resp.room_id,
+            resp.user_id,
+            resp.user_text,
+            bot_instance,
+            latest_summary,
+            bot_cfg,
+            group_info,
+            chain_depth=chain_depth,
+            settings=settings,
+        )
+
+    await bot_response_queue.enqueue(
+        BotResponse(
+            room_id=group_id,
+            bot_name=bot_cfg["name"],
+            user_id=display_name,
+            user_text=data,
+            priority=1,
+            handler=handler,
+        )
+    )
+    activity_logger.log_bot_triggered(session_id, group_id, bot_cfg["name"])
+
+
+async def _orchestrate_bot_replies(
+    session_id: str,
+    group_id: str,
+    display_name: str,
+    data: str,
+    session_cfg,
+    ctx,
+    group_info: Dict,
+    chain_depth: int,
+    settings: Dict,
+):
+    if not (session_cfg.bot_enabled and session_cfg.bots):
+        return
+
+    mode = session_cfg.session_mode
+    print(f"[AI] 🤖 Orchestrate mode={mode} chain_depth={chain_depth}")
+
+    bot_list: List[Dict] = []
+    if mode == 2:
+        intent_ctx = resolve_context_max_chars(session_cfg.bots[0] if session_cfg.bots else {})
+        history_text = ctx.get_context_summary(max_chars=min(50_000, intent_ctx))
+        chosen_name = await analyze_intent(data, session_cfg.bots, history_text)
+        if not chosen_name:
+            chosen_name = random.choice(session_cfg.bots)["name"]
+        bot_cfg = next((b for b in session_cfg.bots if b["name"] == chosen_name), None)
+        if bot_cfg:
+            bot_list = [bot_cfg]
+    else:
+        bot_list = bots_for_message(session_cfg, data)
+
+    bot_list = filter_bots_for_trigger(bot_list, display_name)
+
+    if not bot_list:
+        return
+
+    for bot_cfg in bot_list:
+        print(f"[AI]    → Queueing bot: {bot_cfg['name']}")
+        await _enqueue_single_bot(
+            session_id,
+            group_id,
+            display_name,
+            data,
+            bot_cfg,
+            session_cfg,
+            ctx,
+            group_info,
+            chain_depth,
+            settings,
+        )
+    await bot_response_queue.ensure_queue_processor(group_id)
+
+
+async def process_ai_logic(
+    session_id: str,
+    group_id: str,
+    display_name: str,
+    data: str,
+    chain_depth: int = 0,
+    trigger_kind: str = "human",
+):
+    """Background processing: persist (human only), then bot orchestration with chain depth."""
     try:
         session_cfg = match_manager.get_session(session_id)
         if not session_cfg:
             print(f"[AI] ❌ No session config for {session_id}")
             return
 
-        print(f"[AI] 📨 process_ai_logic: session={session_id} group={group_id} user={display_name} msg={data[:60]!r}")
-        print(f"[AI]    bot_enabled={session_cfg.bot_enabled} bots={[b['name'] for b in session_cfg.bots]} mode={session_cfg.session_mode}")
+        settings = interaction_settings(session_cfg)
+        if chain_depth > 0 and not settings["bot_reply_on_any_message"]:
+            return
 
-        # Check if room is paused
+        print(
+            f"[AI] 📨 process_ai_logic: session={session_id} group={group_id} "
+            f"from={display_name} chain={chain_depth} kind={trigger_kind} msg={data[:60]!r}"
+        )
+
         group_info = match_manager.get_group_info(session_id, group_id) or {}
-
         if group_info.get("paused", False):
             print(f"[AI] ⏸ Room {group_id} is paused, skipping AI")
             return
 
-        # 1. Cache message
-        should_flush = cache_manager.cache_message(group_id, display_name, data)
-
-        # 2. Save to DB
-        await save_message(group_id, display_name, data)
-
-        # 3. Add to Context Manager
         ctx = get_or_create_context(group_id)
-        ctx.add_message(display_name, data)
 
-        # 4. Log activity
-        activity_logger.log_user_message(session_id, group_id, display_name, data)
+        if chain_depth == 0 and trigger_kind == "human":
+            should_flush = cache_manager.cache_message(group_id, display_name, data)
+            await save_message(group_id, display_name, data)
+            ctx.add_message(display_name, data)
+            activity_logger.log_user_message(session_id, group_id, display_name, data)
+            reset_idle_timer(session_id, group_id, DEFAULT_IDLE_THRESHOLD)
+            if should_flush:
+                await cache_manager.flush_messages(group_id)
 
-        # 5. Reset idle timer
-        reset_idle_timer(session_id, group_id, DEFAULT_IDLE_THRESHOLD)
-
-        # 6. Flush cache if threshold met
-        if should_flush:
-            await cache_manager.flush_messages(group_id)
-
-        # 7. Bot orchestration
-        if session_cfg.bot_enabled and session_cfg.bots:
-            print(f"[AI] 🤖 Triggering {len(session_cfg.bots)} bots in mode {session_cfg.session_mode}")
-            if session_cfg.session_mode == 1:
-                # Mode 1: all bots respond independently to the latest chat state
-                for bot_cfg in session_cfg.bots:
-                    print(f"[AI]    → Queueing bot: {bot_cfg['name']}")
-                    bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
-                    max_ctx = resolve_context_max_chars(bot_cfg)
-                    full_summary = ctx.get_context_summary(max_chars=max_ctx)
-
-                    async def make_handler(s_id, b_inst, b_cfg, ctx_chars, summary, gi):
-                        async def handler(resp):
-                            fresh_ctx = get_context(resp.room_id)
-                            latest_summary = (
-                                fresh_ctx.get_context_summary(max_chars=ctx_chars)
-                                if fresh_ctx else summary
-                            )
-                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg, gi)
-                        return handler
-
-                    bot_response = BotResponse(
-                        room_id=group_id,
-                        bot_name=bot_cfg['name'],
-                        user_id=display_name,
-                        user_text=data,
-                        priority=1,
-                        handler=await make_handler(session_id, bot_instance, bot_cfg, max_ctx, full_summary, group_info)
-                    )
-                    await bot_response_queue.enqueue(bot_response)
-                    activity_logger.log_bot_triggered(session_id, group_id, bot_cfg['name'])
-
-                await bot_response_queue.ensure_queue_processor(group_id)
-
-            elif session_cfg.session_mode == 2:
-                # Mode 2: Smart single bot — analyze_intent picks the most relevant bot
-                intent_ctx = resolve_context_max_chars(
-                    session_cfg.bots[0] if session_cfg.bots else {}
-                )
-                history_text = ctx.get_context_summary(max_chars=min(50_000, intent_ctx))
-                chosen_name = await analyze_intent(data, session_cfg.bots, history_text)
-                if not chosen_name:
-                    # Fallback: pick a random bot
-                    import random as _random
-                    chosen_name = _random.choice(session_cfg.bots)['name']
-                bot_cfg = next((b for b in session_cfg.bots if b['name'] == chosen_name), None)
-                if bot_cfg:
-                    bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
-                    max_ctx = resolve_context_max_chars(bot_cfg)
-                    full_summary = ctx.get_context_summary(max_chars=max_ctx)
-
-                    async def make_handler(s_id, b_inst, b_cfg, ctx_chars, summary, gi):
-                        async def handler(resp):
-                            fresh_ctx = get_context(resp.room_id)
-                            latest_summary = (
-                                fresh_ctx.get_context_summary(max_chars=ctx_chars)
-                                if fresh_ctx else summary
-                            )
-                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg, gi)
-                        return handler
-
-                    bot_response = BotResponse(
-                        room_id=group_id,
-                        bot_name=bot_cfg['name'],
-                        user_id=display_name,
-                        user_text=data,
-                        priority=1,
-                        handler=await make_handler(session_id, bot_instance, bot_cfg, max_ctx, full_summary, group_info)
-                    )
-                    await bot_response_queue.enqueue(bot_response)
-                    activity_logger.log_bot_triggered(session_id, group_id, bot_cfg['name'])
-                    await bot_response_queue.ensure_queue_processor(group_id)
-
-            elif session_cfg.session_mode == 3:
-                # Mode 3: @mention — only bots explicitly mentioned respond
-                mentioned_bots = [b for b in session_cfg.bots if f"@{b['name']}" in data or b['name'].lower() in data.lower()]
-                for bot_cfg in mentioned_bots:
-                    bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
-                    max_ctx = resolve_context_max_chars(bot_cfg)
-                    full_summary = ctx.get_context_summary(max_chars=max_ctx)
-
-                    async def make_handler(s_id, b_inst, b_cfg, ctx_chars, summary, gi):
-                        async def handler(resp):
-                            fresh_ctx = get_context(resp.room_id)
-                            latest_summary = (
-                                fresh_ctx.get_context_summary(max_chars=ctx_chars)
-                                if fresh_ctx else summary
-                            )
-                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg, gi)
-                        return handler
-
-                    bot_response = BotResponse(
-                        room_id=group_id,
-                        bot_name=bot_cfg['name'],
-                        user_id=display_name,
-                        user_text=data,
-                        priority=1,
-                        handler=await make_handler(session_id, bot_instance, bot_cfg, max_ctx, full_summary, group_info)
-                    )
-                    await bot_response_queue.enqueue(bot_response)
-                    activity_logger.log_bot_triggered(session_id, group_id, bot_cfg['name'])
-
-                if mentioned_bots:
-                    await bot_response_queue.ensure_queue_processor(group_id)
-
-            else:
-                # Fallback: all bots respond (same as mode 1)
-                for bot_cfg in session_cfg.bots:
-                    bot_instance = get_or_create_bot_from_cfg(group_id, bot_cfg, group_info)
-                    max_ctx = resolve_context_max_chars(bot_cfg)
-                    full_summary = ctx.get_context_summary(max_chars=max_ctx)
-
-                    async def make_handler(s_id, b_inst, b_cfg, ctx_chars, summary, gi):
-                        async def handler(resp):
-                            fresh_ctx = get_context(resp.room_id)
-                            latest_summary = (
-                                fresh_ctx.get_context_summary(max_chars=ctx_chars)
-                                if fresh_ctx else summary
-                            )
-                            await handle_bot_reply(s_id, resp.room_id, resp.user_id, resp.user_text, b_inst, latest_summary, b_cfg, gi)
-                        return handler
-
-                    bot_response = BotResponse(
-                        room_id=group_id,
-                        bot_name=bot_cfg['name'],
-                        user_id=display_name,
-                        user_text=data,
-                        priority=1,
-                        handler=await make_handler(session_id, bot_instance, bot_cfg, max_ctx, full_summary, group_info)
-                    )
-                    await bot_response_queue.enqueue(bot_response)
-                    activity_logger.log_bot_triggered(session_id, group_id, bot_cfg['name'])
-
-                await bot_response_queue.ensure_queue_processor(group_id)
+        await _orchestrate_bot_replies(
+            session_id,
+            group_id,
+            display_name,
+            data,
+            session_cfg,
+            ctx,
+            group_info,
+            chain_depth,
+            settings,
+        )
 
     except Exception as e:
         error_id = error_handler.handle_exception(e, "process_ai_logic")
@@ -1007,10 +1054,12 @@ async def handle_bot_reply(
     full_summary,
     bot_cfg,
     group_info=None,
+    chain_depth: int = 0,
+    settings: Optional[Dict] = None,
 ):
     """Handles persona-specific AI generation and broadcasting."""
     try:
-        print(f"[BOT] 🟡 handle_bot_reply started: bot={bot.name} group={group_id}")
+        print(f"[BOT] 🟡 handle_bot_reply started: bot={bot.name} group={group_id} chain={chain_depth}")
         async with get_group_lock(group_id):
             mode = bot_cfg.get('mode', 1)
             delay = bot_cfg.get('delay_seconds', 2)
@@ -1020,10 +1069,18 @@ async def handle_bot_reply(
             print(f"[BOT]    mode={mode} delay={delay}s max_tokens={bot_cfg.get('max_tokens',200)} temp={bot_cfg.get('temperature',0.7)}")
 
             session_cfg = match_manager.get_session(session_id)
-            peer_names = [
-                b["name"] for b in (session_cfg.bots if session_cfg else [])
-                if b.get("name") and b["name"] != bot.name
-            ]
+            group_info = group_info or match_manager.get_group_info(session_id, group_id) or {}
+            if settings is None:
+                settings = interaction_settings(session_cfg)
+
+            if not can_bot_send_now(group_info, bot.name, settings):
+                print(f"[BOT] ⏳ Rate limit — skip {bot.name}")
+                activity_logger.log_bot_skipped(session_id, group_id, bot.name)
+                return
+
+            peer_names = all_peer_names(session_cfg, group_info, exclude=bot.name)
+            mention_target = pick_mention_target(user_id, user_text, peer_names, settings)
+            mention_note = build_mention_system_note(settings)
 
             if mode == 3:
                 if random.random() < bot_cfg.get('skip_rate', 0.2):
@@ -1076,10 +1133,14 @@ async def handle_bot_reply(
                 length_variation=length_variation,
                 style_mimic_hint=style_hint or None,
                 max_tokens=bot_cfg.get("max_tokens"),
+                mention_note=mention_note or None,
+                mention_target=mention_target,
             )
             if not reply:
                 print(f"[BOT] ⚠️ {bot.name} returned empty reply")
                 return
+
+            reply = apply_mention_prefix(reply, mention_target, settings)
 
             typing_delay = compute_typing_delay_seconds(reply, typing_cps)
             print(f"[BOT] ✅ {bot.name} reply: {reply[:80]!r} (typing +{typing_delay:.1f}s)")
@@ -1100,6 +1161,36 @@ async def handle_bot_reply(
 
             activity_logger.log_bot_response(session_id, group_id, bot.name, reply, mode)
             reset_idle_timer(session_id, group_id, idle_threshold)
+
+            record_bot_send(group_info, bot.name)
+            schedule_bot_chain(
+                session_id,
+                group_id,
+                bot.name,
+                reply,
+                chain_depth,
+                settings,
+                process_ai_logic,
+            )
+
+            def _append_ctx(gid: str, sender: str, text: str):
+                c = get_context(gid)
+                if c:
+                    c.add_message(sender, text)
+
+            asyncio.create_task(
+                maybe_self_correction(
+                    session_id,
+                    group_id,
+                    bot.name,
+                    reply,
+                    settings,
+                    broadcast,
+                    save_message,
+                    cache_manager.cache_message,
+                    _append_ctx,
+                )
+            )
 
     except Exception as e:
         error_id = error_handler.handle_exception(e, "handle_bot_reply")

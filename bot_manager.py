@@ -13,12 +13,10 @@ load_dotenv()
 # Initialize OpenAI client
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+from human_defaults import HUMAN_LIKE_PROMPT
+
 # Default system prompt when no specific instructions are provided
-DEFAULT_SYSTEM_PROMPT = (
-    "You are a casual teammate in a small group chat. "
-    "Reply in 1–2 short sentences like texting. One idea or question at a time. "
-    "Never use numbered lists unless someone explicitly asked for a list."
-)
+DEFAULT_SYSTEM_PROMPT = HUMAN_LIKE_PROMPT
 
 HUMAN_OUTPUT_RULES = """
 STRICT CHAT FORMAT (always follow):
@@ -27,8 +25,11 @@ STRICT CHAT FORMAT (always follow):
 - Never prefix your message with "{bot_name}:" or roleplay a script (no "a: ... b: ...").
 - Maximum ~35 words unless the latest message clearly asks for a long answer.
 - No "Hello team", no speeches, no essays, no bullet/numbered lists unless explicitly requested.
-- Do not repeat or summarize what someone just said; add something new or ask one short question.
-- Other participants in the room: {peers}. You are not them.
+- Do not repeat or summarize what someone just said; add something new or react briefly.
+- Do not ask a question in every reply — often just agree, joke, or add one short point.
+- Avoid interview tone ("What do you think?", "Any thoughts on…") unless the room is stuck.
+- Avoid formal essay words (e.g. "individual lifestyle changes", "tackle", "contribute to fighting").
+- Other participants in the room: {peers}. You are not them. Treat every sender the same.
 """
 
 # Appended only when disclosed_ai_allowed is set on the persona (same base prompt otherwise).
@@ -178,6 +179,8 @@ class ChatBot:
         length_variation: bool = True,
         style_mimic_hint: Optional[str] = None,
         max_tokens: Optional[int] = None,
+        mention_note: Optional[str] = None,
+        mention_target: Optional[str] = None,
     ) -> Optional[str]:
         """
         Generates a response using the full room history provided by the ContextManager.
@@ -205,12 +208,19 @@ class ChatBot:
                     "role": "user",
                     "content": (
                         f"Latest message from {user_id}: {user_message}\n\n"
-                        f"Reply as {self.name} only. {length_hint}. Casual group chat."
+                        f"Reply as {self.name} only. Treat this sender like any other chat member. "
+                        f"{length_hint}. Casual group chat."
                     ),
                 },
             ]
             if style_mimic_hint:
                 messages.insert(2, {"role": "system", "content": style_mimic_hint})
+            if mention_note:
+                messages.insert(2, {"role": "system", "content": mention_note})
+            if mention_target:
+                messages[-1]["content"] += (
+                    f" If natural, you may address @{mention_target}."
+                )
 
             response = await client.chat.completions.create(
                 model="gpt-3.5-turbo",

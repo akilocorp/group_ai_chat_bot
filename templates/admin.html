@@ -204,9 +204,9 @@
                 <div class="form-group">
                     <label>Session mode</label>
                     <select id="sessionMode">
-                        <option value="1" selected>Mode 1 — all bots</option>
-                        <option value="2">Mode 2 — one bot</option>
-                        <option value="3">Mode 3 — @mention</option>
+                        <option value="1" selected>Mode 1 — all bots reply</option>
+                        <option value="2">Mode 2 — one bot per message</option>
+                        <option value="3">Mode 3 — @mention only</option>
                     </select>
                 </div>
             </div>
@@ -224,6 +224,44 @@
             <div class="form-group" style="margin-top:16px;">
                 <label>Participant names <span class="hint">(optional)</span></label>
                 <input type="text" id="participantNames" value="c" placeholder="c,d">
+            </div>
+
+            <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">Bot interaction</div>
+            <div class="grid-3" style="margin-bottom:16px;">
+                <div class="form-group">
+                    <label>Reply on any message</label>
+                    <select id="botReplyOnAny">
+                        <option value="true">On — human or bot messages</option>
+                        <option value="false" selected>Off — human messages only</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Max chain depth</label>
+                    <input type="number" id="maxChainDepth" value="1" min="1" max="10" title="Bot-to-bot follow-up rounds after each human message">
+                </div>
+                <div class="form-group">
+                    <label>Bot cooldown (sec)</label>
+                    <input type="number" id="cooldownPerBot" value="12" min="0" max="120">
+                </div>
+                <div class="form-group">
+                    <label>Max bot msgs / min / room</label>
+                    <input type="number" id="maxBotMsgsPerMin" value="12" min="1" max="120">
+                </div>
+                <div class="form-group">
+                    <label>@mentions</label>
+                    <select id="useMentions">
+                        <option value="true" selected>On</option>
+                        <option value="false">Off</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mention probability</label>
+                    <input type="number" id="mentionProb" value="0.15" min="0" max="1" step="0.05">
+                </div>
+                <div class="form-group">
+                    <label>Self-correction prob</label>
+                    <input type="number" id="selfCorrectionProb" value="0.04" min="0" max="1" step="0.05" title="Chance of a short *Let me rephrase... follow-up">
+                </div>
             </div>
 
             <div class="card-title" style="margin-top:20px; border:none; padding-bottom:0;">Experiment</div>
@@ -268,7 +306,7 @@
                 <div class="form-group">
                     <label>AI opens chat</label>
                     <select id="aiStartsConversation">
-                        <option value="false">No — wait for human</option>
+                        <option value="false" selected>No — wait for human</option>
                         <option value="true">Yes — bot sends first</option>
                     </select>
                 </div>
@@ -285,6 +323,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 24px 0 12px; flex-wrap:wrap; gap:8px;">
                 <div style="font-size:1rem; font-weight:700; color:var(--secondary);">AI Personas</div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="btn btn-primary" onclick="applyHumanLikePreset()" title="Reset form to recommended human-like defaults">★ Human-like preset</button>
                     <button type="button" class="btn" onclick="syncAllPrompts()">↻ Sync prompt to all</button>
                     <button type="button" class="btn btn-success" onclick="addBotUI()">+ Add Persona</button>
                 </div>
@@ -327,38 +366,84 @@ function toast(msg, color = '#2ecc71') {
    ============================================================ */
 let botPersonas = [];
 
-/** Default shared persona prompt (edit once, sync to all). */
+/** Keep in sync with human_defaults.py */
 const SHARED_PERSONA_PROMPT =
-    'You are a participant in a small group chat to discuss the best 3 ways to solve global warming. ' +
-    'Sound casual and natural, more like human. You can have abbreviations and typos. ' +
-    'You should pretend to be human. When questioned by others, deflect this question.';
+    'You are a real student in a casual group chat about climate and global warming. ' +
+    'Write like texting: short fragments, slang, occasional typos. ' +
+    'React more than interview — do not ask a question every time. ' +
+    'If others already said something, do not repeat it. ' +
+    'Never volunteer a numbered top 3 list unless someone asks. ' +
+    'If asked whether you are AI, brush it off in one short line.';
+
+const HUMAN_LIKE_PRESET = {
+    sessionMode: 1,
+    botReplyOnAny: false,
+    maxChainDepth: 1,
+    cooldownPerBot: 12,
+    maxBotMsgsPerMin: 12,
+    useMentions: true,
+    mentionProb: 0.15,
+    selfCorrectionProb: 0.04,
+    aiStartsConversation: false,
+    styleMimicEnabled: false,
+    turnMode: 'none',
+    bot: {
+        mode: 3,
+        delay_seconds: 5,
+        typing_cps: 3,
+        temperature: 0.82,
+        max_words: 12,
+        min_words: 1,
+        skip_rate: 0.45,
+        idle_threshold: 50,
+        length_variation: true,
+    }
+};
 
 function defaultBotTemplate(overrides = {}) {
     return {
         name: '',
         prompt: SHARED_PERSONA_PROMPT,
-        mode: 1,
+        mode: HUMAN_LIKE_PRESET.bot.mode,
         avatar_type: 'human',
         disclosed_ai_allowed: false,
-        delay_seconds: 3,
-        typing_cps: 4,
-        temperature: 0.75,
+        delay_seconds: HUMAN_LIKE_PRESET.bot.delay_seconds,
+        typing_cps: HUMAN_LIKE_PRESET.bot.typing_cps,
+        temperature: HUMAN_LIKE_PRESET.bot.temperature,
         context_max_chars: 100000,
-        idle_threshold: 35,
-        skip_rate: 0.1,
-        min_words: 1,
-        max_words: 20,
-        length_variation: true,
+        idle_threshold: HUMAN_LIKE_PRESET.bot.idle_threshold,
+        skip_rate: HUMAN_LIKE_PRESET.bot.skip_rate,
+        min_words: HUMAN_LIKE_PRESET.bot.min_words,
+        max_words: HUMAN_LIKE_PRESET.bot.max_words,
+        length_variation: HUMAN_LIKE_PRESET.bot.length_variation,
         ...overrides
     };
 }
 
-function loadDefaultPersonas() {
+function applyHumanLikePreset() {
+    const p = HUMAN_LIKE_PRESET;
+    document.getElementById('sessionMode').value = String(p.sessionMode);
+    document.getElementById('botReplyOnAny').value = p.botReplyOnAny ? 'true' : 'false';
+    document.getElementById('maxChainDepth').value = p.maxChainDepth;
+    document.getElementById('cooldownPerBot').value = p.cooldownPerBot;
+    document.getElementById('maxBotMsgsPerMin').value = p.maxBotMsgsPerMin;
+    document.getElementById('useMentions').value = p.useMentions ? 'true' : 'false';
+    document.getElementById('mentionProb').value = p.mentionProb;
+    document.getElementById('selfCorrectionProb').value = p.selfCorrectionProb;
+    document.getElementById('aiStartsConversation').value = p.aiStartsConversation ? 'true' : 'false';
+    document.getElementById('styleMimicEnabled').value = p.styleMimicEnabled ? 'true' : 'false';
+    document.getElementById('turnMode').value = p.turnMode;
+    syncTurnDurationUI();
     botPersonas = [
-        defaultBotTemplate({ name: 'a', disclosed_ai_allowed: false }),
-        defaultBotTemplate({ name: 'b', disclosed_ai_allowed: false }),
+        defaultBotTemplate({ name: 'a' }),
+        defaultBotTemplate({ name: 'b' }),
     ];
     renderBots();
+    toast('Human-like preset applied');
+}
+
+function loadDefaultPersonas() {
+    applyHumanLikePreset();
 }
 
 function syncAllPrompts() {
@@ -571,6 +656,13 @@ document.getElementById('newSessionForm').onsubmit = async (e) => {
         qualtrics_field_status: 'chat_status',
         style_mimic_enabled: document.getElementById('styleMimicEnabled').value === 'true',
         style_mimic_target: document.getElementById('styleMimicTarget').value.trim() || 'c',
+        bot_reply_on_any_message: document.getElementById('botReplyOnAny').value === 'true',
+        max_chain_depth: parseInt(document.getElementById('maxChainDepth').value, 10),
+        cooldown_per_bot_sec: parseInt(document.getElementById('cooldownPerBot').value, 10),
+        max_bot_msgs_per_minute_per_room: parseInt(document.getElementById('maxBotMsgsPerMin').value, 10),
+        use_mentions: document.getElementById('useMentions').value === 'true',
+        mention_prob: parseFloat(document.getElementById('mentionProb').value),
+        self_correction_prob: parseFloat(document.getElementById('selfCorrectionProb').value),
         participant_names: document.getElementById('participantNames').value
             ? document.getElementById('participantNames').value.split(',').map(s => s.trim()).filter(Boolean)
             : null,
@@ -637,6 +729,12 @@ function buildQualtricsFieldTable(sessionId, payload) {
     rows.push(['group_chat_duration_minutes', 'Server', 'Admin', '—', String(payload.group_chat_duration_minutes ?? 5) + ' min per group']);
     rows.push(['survey_open_days', 'Server', 'Admin', '—', String(payload.survey_open_days ?? 7) + ' days collection window']);
     rows.push(['session_mode', 'Server', 'Admin', '—', 'Mode ' + (payload.session_mode ?? 1) + ' (bot reply rules)']);
+    rows.push(['bot_reply_on_any_message', 'Server', 'Admin', '—', String(payload.bot_reply_on_any_message !== false)]);
+    rows.push(['max_chain_depth', 'Server', 'Admin', '—', String(payload.max_chain_depth ?? 1)]);
+    rows.push(['cooldown_per_bot_sec', 'Server', 'Admin', '—', String(payload.cooldown_per_bot_sec ?? 12)]);
+    rows.push(['max_bot_msgs_per_minute_per_room', 'Server', 'Admin', '—', String(payload.max_bot_msgs_per_minute_per_room ?? 12)]);
+    rows.push(['use_mentions', 'Server', 'Admin', '—', String(payload.use_mentions !== false) + ' (p=' + (payload.mention_prob ?? 0.15) + ')']);
+    rows.push(['self_correction_prob', 'Server', 'Admin', '—', String(payload.self_correction_prob ?? 0.04)]);
     rows.push(['bot_enabled', 'Server', 'Admin', '—', String(payload.bot_enabled)]);
     rows.push(['participant_names', 'Server', 'Admin', '—', (payload.participant_names || []).join(', ') || '(auto IDs)']);
     rows.push(['assignment_mode', 'Server', 'Admin', '—', conditionOn ? 'stratified (forced when Condition On)' : (payload.assignment_mode || 'fifo')]);

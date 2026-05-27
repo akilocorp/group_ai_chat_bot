@@ -132,7 +132,10 @@
         <a href="#quick-start">Quick start</a>
         <a href="#admin-fields">Admin fields</a>
         <a href="#session-modes">Session modes</a>
+        <a href="#bot-interaction">Bot interaction</a>
         <a href="#persona-modes">Persona modes</a>
+        <a href="#natural-chat">Natural-looking chat</a>
+        <a href="#recommended-defaults">Recommended defaults</a>
         <a href="#qualtrics">Qualtrics</a>
         <a href="#dashboard">Dashboard</a>
         <a href="#faq">FAQ</a>
@@ -146,11 +149,12 @@
 
             <h2>Quick start</h2>
             <ol>
-                <li>Open <a href="/admin">Admin</a>. Set group size, bots, and personas. Click <strong>Create Session</strong>.</li>
+                <li>Open <a href="/admin">Admin</a>. Click <strong>★ Human-like preset</strong> (fills recommended settings), adjust group size and persona names, then <strong>Create Session</strong>.</li>
                 <li>Copy the Qualtrics HTML (if Qualtrics is On) or share the session on the <a href="/">Dashboard</a>.</li>
                 <li>Participants chat. You watch in <strong>Monitor</strong> and export CSVs from <strong>Export</strong>.</li>
             </ol>
-            <p>Example: 2 humans + 1 bot → set <strong>Group size</strong> to 2, add <strong>one</strong> persona, set participant names (e.g. <code>c,d</code>) so they do not clash with the bot name.</p>
+            <p><strong>Typical study room:</strong> 1 human + 2 bots → <strong>Group size</strong> = 1, two personas (<code>a</code>, <code>b</code>), participant name <code>c</code>. Two humans + 2 bots → group size 2, names <code>c,d</code>. Persona names must not match human names.</p>
+            <div class="note">New sessions use the human-like preset automatically. Old sessions keep their saved settings until you edit them on the Dashboard.</div>
         </div>
 
         <div class="section" id="admin-fields">
@@ -175,14 +179,27 @@
             <table class="param-table">
                 <thead><tr><th>Field</th><th>What it does</th></tr></thead>
                 <tbody>
-                    <tr><td>Assignment</td><td><strong>FIFO</strong> = one queue. <strong>Stratified</strong> = separate queues per bucket. Used when Condition is Off.</td></tr>
-                    <tr><td>Condition</td><td><strong>On</strong> (default): match only people with the same Qualtrics <code>condition</code> value; assignment is always stratified. <strong>Off</strong>: ignore <code>condition</code>.</td></tr>
+                    <tr><td>Assignment</td><td><strong>FIFO</strong> = one shared waiting queue for everyone in the session. <strong>Stratified</strong> = separate waiting queue per bucket (e.g. per <code>condition</code> value). This control applies only when <strong>Condition is Off</strong>. When Condition is <strong>On</strong>, matching is always stratified by <code>condition</code> and the Assignment dropdown is ignored.</td></tr>
+                    <tr><td>Condition</td><td><strong>On</strong> (default): match only people with the same Qualtrics <code>condition</code> value; assignment is always stratified. <strong>Off</strong>: ignore <code>condition</code>; use FIFO or Stratified from Assignment.</td></tr>
                     <tr><td>Turns</td><td>Off = free chat. Round-robin or timed = structured human turns.</td></tr>
                     <tr><td>Turn duration</td><td>Seconds per turn when Turns = timed.</td></tr>
                     <tr><td>Style mimic</td><td>When On, other personas copy one teammate’s length and tone.</td></tr>
                     <tr><td>Style target</td><td>Display name to mimic (often a human, e.g. <code>c</code>).</td></tr>
                     <tr><td>AI opens chat</td><td>Yes = a bot sends the first message. No = wait for a human.</td></tr>
                     <tr><td>Qualtrics</td><td>On = save <code>transcript</code> and <code>chat_status</code> to Qualtrics when the chat ends.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Bot interaction</h3>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>What it does</th></tr></thead>
+                <tbody>
+                    <tr><td>Reply on any message</td><td><strong>On</strong> = bots can react to other bots’ messages (with chain limits). <strong>Off</strong> = only human messages start bot replies.</td></tr>
+                    <tr><td>Max chain depth</td><td>How many bot-to-bot follow-up rounds after one human message (preset default <strong>1</strong>). Lower = quieter room.</td></tr>
+                    <tr><td>Bot cooldown (sec)</td><td>Minimum seconds before the same persona can send again.</td></tr>
+                    <tr><td>Max bot msgs / min / room</td><td>Cap on total bot messages per minute in one group.</td></tr>
+                    <tr><td>@mentions</td><td>Whether replies may use <code>@name</code>; mention probability controls how often.</td></tr>
+                    <tr><td>Self-correction prob</td><td>Chance of a short “*let me rephrase…” follow-up (keep low for natural chat).</td></tr>
                 </tbody>
             </table>
 
@@ -208,12 +225,19 @@
 
         <div class="section" id="session-modes">
             <h2>Session modes</h2>
-            <p>Controls which <em>personas</em> react to each human message.</p>
+            <p>Controls which <em>personas</em> may react to each incoming message (human or bot, if <a href="#bot-interaction">Reply on any message</a> is On). The human-like preset uses <strong>Session mode 1</strong> (每条消息所有 bot 都可回) and <strong>Reply on any message Off</strong>.</p>
+            <div class="note"><strong>编号说明（Session vs Persona）：</strong> Session <strong>Mode 2</strong> = 每条消息只选一个 bot；Session <strong>Mode 3</strong> = 仅 @ 时回复。Persona <strong>Mode 3</strong> = 随机跳过（与 Session Mode 3 不同）。</div>
             <ul>
-                <li><strong>Mode 1 — all bots:</strong> Every persona replies to every message.</li>
-                <li><strong>Mode 2 — one bot:</strong> The system picks one persona per message.</li>
-                <li><strong>Mode 3 — @mention:</strong> A persona replies only when its name is in the message.</li>
+                <li><strong>Mode 1 — all bots:</strong> Every persona may reply (human-like preset default). / 每个 bot 都可回复。</li>
+                <li><strong>Mode 2 — one bot per message:</strong> The system picks <em>one</em> persona per message. / 每条消息只一个 bot。</li>
+                <li><strong>Mode 3 — @mention only:</strong> A persona replies only when its name or <code>@name</code> appears. / 仅 @ 或点名时回复。</li>
             </ul>
+            <p>A bot never replies to its own message (reduces spam when chains are On).</p>
+        </div>
+
+        <div class="section" id="bot-interaction">
+            <h2>Bot interaction</h2>
+            <p>Burst protection keeps groups from runaway bot traffic. If the room still feels too “bot-heavy”, lower <strong>Max chain depth</strong>, raise <strong>Bot cooldown</strong>, use <strong>Session mode 2</strong>, or raise persona <strong>Mode 3</strong> skip rate. See <a href="#natural-chat">Natural-looking chat</a>.</p>
         </div>
 
         <div class="section" id="persona-modes">
@@ -223,8 +247,54 @@
                 <li><strong>Mode 1 — fixed delay:</strong> Always replies after your delay setting.</li>
                 <li><strong>Mode 2 — random delay:</strong> Always replies; adds 0.5–2.5 s jitter.</li>
                 <li><strong>Mode 3 — random skip:</strong> May skip each message (skip rate). If not skipped, delay + jitter + typing.</li>
-                <li><strong>Mode 4 — context chance:</strong> AI estimates reply probability from context, then one random draw.</li>
+                <li><strong>Mode 4 — context chance:</strong> AI estimates reply probability from context, then one random draw (good default for human-like pacing).</li>
             </ul>
+        </div>
+
+        <div class="section" id="natural-chat">
+            <h2>Natural-looking chat</h2>
+            <p>If personas talk too much, sound formal, or keep asking questions (e.g. several lines from the same name), click <strong>★ Human-like preset</strong> in Admin or match the table in <a href="#recommended-defaults">Recommended defaults</a>.</p>
+            <ul>
+                <li><strong>Session mode 1</strong> (all bots reply) + <strong>Reply on any message On</strong> → busiest; avoid for “invisible AI” studies.</li>
+                <li><strong>Persona mode 1</strong> (always reply) → robotic pacing; preset uses <strong>Mode 3</strong> (skip) instead.</li>
+                <li>Prompts that say “top 3 ways” → lists and interview questions; use the preset prompt instead.</li>
+                <li>A bot never replies to its own message; that alone does not stop one persona from dominating if others are more eager.</li>
+            </ul>
+        </div>
+
+        <div class="section" id="recommended-defaults">
+            <h2>Recommended defaults (human-like preset)</h2>
+            <p>These are the values applied when you click <strong>★ Human-like preset</strong> in Admin and when you create a new session without changing fields. Source of truth: <code>human_defaults.py</code> (API: <code>GET /api/admin/human-defaults</code>).</p>
+            <h3>Session &amp; bot interaction</h3>
+            <table class="param-table">
+                <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+                <tbody>
+                    <tr><td>Session mode</td><td><strong>1</strong> (all bots may reply)</td><td>Each persona uses its own persona mode (default 3 = random skip).</td></tr>
+                    <tr><td>Reply on any message</td><td><strong>Off</strong></td><td>Only humans trigger replies; bots do not interview each other.</td></tr>
+                    <tr><td>Max chain depth</td><td><strong>1</strong></td><td>At most one bot-to-bot wave after a human line.</td></tr>
+                    <tr><td>Bot cooldown</td><td><strong>12 s</strong></td><td>Same persona cannot fire twice in a burst.</td></tr>
+                    <tr><td>Max bot msgs / min</td><td><strong>12</strong></td><td>Room-wide cap.</td></tr>
+                    <tr><td>Mention probability</td><td><strong>0.15</strong></td><td>Occasional <code>@name</code>, not every line.</td></tr>
+                    <tr><td>Self-correction</td><td><strong>0.04</strong></td><td>Rare “*let me rephrase…” — high values look robotic.</td></tr>
+                    <tr><td>AI opens chat</td><td><strong>No</strong></td><td>Human sets tone first.</td></tr>
+                    <tr><td>Style mimic</td><td><strong>Off</strong></td><td>Avoid copied interview cadence.</td></tr>
+                    <tr><td>Turns</td><td><strong>Off</strong></td><td>Free chat unless your design needs structure.</td></tr>
+                </tbody>
+            </table>
+            <h3>Each persona</h3>
+            <table class="param-table">
+                <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+                <tbody>
+                    <tr><td>Persona mode</td><td><strong>3</strong> (random skip)</td><td>Skip rate ~45% so not every bot speaks every time.</td></tr>
+                    <tr><td>Max words</td><td><strong>12</strong></td><td>Short texts, not paragraphs.</td></tr>
+                    <tr><td>Delay</td><td><strong>5 s</strong> + typing</td><td>Less instant-bot feel.</td></tr>
+                    <tr><td>Typing speed</td><td><strong>3</strong> chars/s</td><td>Slightly slower appearance.</td></tr>
+                    <tr><td>Temperature</td><td><strong>0.82</strong></td><td>More varied wording.</td></tr>
+                    <tr><td>Silence timeout</td><td><strong>50 s</strong></td><td>Less idle nudging.</td></tr>
+                    <tr><td>Avatar</td><td><strong>Human</strong> 👤</td><td>Display only; does not hide AI from researchers.</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Quieter room?</strong> Use Session mode <strong>2</strong> (one bot per message) or persona mode <strong>4</strong> (context chance). <strong>Busier / only when @?</strong> Session mode 3.</p>
         </div>
 
         <div class="section" id="qualtrics">
@@ -254,6 +324,8 @@
             </ul>
             <p>The top metric <strong>AI bots</strong> is On if any session has bots enabled.</p>
             <p>Chat UI shows plain text with a small avatar (👤 or 🤖). There are no chat bubbles.</p>
+            <h3>Modify a published session</h3>
+            <p>Select a session → <strong>Edit</strong> → change name, timing, session mode, bot interaction caps, or paste updated persona JSON → <strong>Save</strong>. Bot interaction fields (chain depth, cooldown, etc.) are editable here as well as in Admin at create time. Click <strong>★ Human-like preset</strong> in Admin when creating a <em>new</em> session; for an existing one, copy values from <a href="#recommended-defaults">Recommended defaults</a>.</p>
         </div>
 
         <div class="section" id="faq">
@@ -266,6 +338,12 @@
             <p>Local JSON under <code>db/</code> and <code>activity_logs/</code>, or MongoDB if <code>MONGO_URL</code> is set.</p>
             <h3>How do I start over?</h3>
             <p>Create a new session. Old data stays on disk.</p>
+            <h3>Why do bots feel robotic or talk too much?</h3>
+            <p>Usually <strong>Session mode 1</strong> plus <strong>Persona mode 1</strong> (always reply) and a prompt that asks for “top 3” lists or questions. Apply <a href="#recommended-defaults">Recommended defaults</a> or create a new session with <strong>★ Human-like preset</strong>.</p>
+            <h3>Do bots know they are talking to other bots?</h3>
+            <p>No special label in the model — everyone appears as a display name in the transcript. Settings treat all senders the same. For a human-led feel, keep <strong>Reply on any message Off</strong> so only human lines trigger replies.</p>
+            <h3>What do participant_names do?</h3>
+            <p>Optional labels assigned to humans in join order (<code>c</code>, then <code>d</code>, …). Bots use the names you give in personas. Avoid duplicates between human and bot names.</p>
         </div>
 
     </div>

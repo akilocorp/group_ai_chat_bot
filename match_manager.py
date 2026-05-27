@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 from study_conditions import assign_group_disclosure
+from human_defaults import HUMAN_LIKE_SESSION, apply_human_session_defaults
 
 PARTICIPANT_INDEX_FILE = "config/participant_index.json"
 
@@ -23,7 +24,6 @@ class SessionConfig:
         self.created_at = datetime.now()
         self.participant_names = []
         self.spy_mode_enabled = False
-        self.session_mode = 1
         # Survey open for N days; each group chat lasts M minutes (from group formation)
         self.survey_open_days = 7
         self.group_chat_duration_minutes = 5
@@ -32,17 +32,12 @@ class SessionConfig:
         self.qualtrics_store_chat = True
         self.qualtrics_field_transcript = "transcript"
         self.qualtrics_field_status = "chat_status"  # legacy; unused by Qualtrics snippet
-        # Conversation control
-        self.ai_starts_conversation = False
-        self.turn_mode = "none"  # none | round_robin | timed
         self.turn_duration_seconds = 60
         # Matching
         self.assignment_mode = "fifo"  # fifo | stratified
-        # Qualtrics embed `condition` param: disclosure labels + stratified queues
         self.condition_enabled = True
-        # Optional: other personas mimic one teammate's length/tone
-        self.style_mimic_enabled = False
         self.style_mimic_target = "c"
+        apply_human_session_defaults(self)
 
     def to_dict(self) -> Dict:
         return {
@@ -69,6 +64,13 @@ class SessionConfig:
             "condition_enabled": self.condition_enabled,
             "style_mimic_enabled": self.style_mimic_enabled,
             "style_mimic_target": self.style_mimic_target,
+            "bot_reply_on_any_message": self.bot_reply_on_any_message,
+            "max_chain_depth": self.max_chain_depth,
+            "cooldown_per_bot_sec": self.cooldown_per_bot_sec,
+            "max_bot_msgs_per_minute_per_room": self.max_bot_msgs_per_minute_per_room,
+            "use_mentions": self.use_mentions,
+            "mention_prob": self.mention_prob,
+            "self_correction_prob": self.self_correction_prob,
         }
 
     @classmethod
@@ -83,7 +85,7 @@ class SessionConfig:
         obj.history_limit = data.get("history_limit", 10000)
         obj.participant_names = data.get("participant_names", [])
         obj.spy_mode_enabled = data.get("spy_mode_enabled", False)
-        obj.session_mode = data.get("session_mode", 1)
+        obj.session_mode = data.get("session_mode", HUMAN_LIKE_SESSION["session_mode"])
         obj.survey_open_days = max(1, min(int(data.get("survey_open_days", 7)), 90))
         gcm = data.get("group_chat_duration_minutes")
         if gcm is not None:
@@ -102,6 +104,31 @@ class SessionConfig:
         obj.condition_enabled = bool(data.get("condition_enabled", True))
         obj.style_mimic_enabled = bool(data.get("style_mimic_enabled", False))
         obj.style_mimic_target = str(data.get("style_mimic_target") or "c").strip() or "c"
+        obj.bot_reply_on_any_message = bool(
+            data.get("bot_reply_on_any_message", HUMAN_LIKE_SESSION["bot_reply_on_any_message"])
+        )
+        obj.max_chain_depth = max(
+            1, min(int(data.get("max_chain_depth", HUMAN_LIKE_SESSION["max_chain_depth"])), 10)
+        )
+        obj.cooldown_per_bot_sec = max(
+            0,
+            min(int(data.get("cooldown_per_bot_sec", HUMAN_LIKE_SESSION["cooldown_per_bot_sec"])), 120),
+        )
+        obj.max_bot_msgs_per_minute_per_room = max(
+            1,
+            min(
+                int(data.get("max_bot_msgs_per_minute_per_room", HUMAN_LIKE_SESSION["max_bot_msgs_per_minute_per_room"])),
+                120,
+            ),
+        )
+        obj.use_mentions = bool(data.get("use_mentions", HUMAN_LIKE_SESSION["use_mentions"]))
+        obj.mention_prob = max(
+            0.0, min(1.0, float(data.get("mention_prob", HUMAN_LIKE_SESSION["mention_prob"])))
+        )
+        obj.self_correction_prob = max(
+            0.0,
+            min(1.0, float(data.get("self_correction_prob", HUMAN_LIKE_SESSION["self_correction_prob"]))),
+        )
         if "created_at" in data:
             try:
                 obj.created_at = datetime.fromisoformat(data["created_at"])
@@ -187,18 +214,25 @@ class MatchManager:
         group_chat_duration_minutes: int = 5,
         participant_names: List = None,
         spy_mode_enabled: bool = False,
-        session_mode: int = 1,
+        session_mode: int = None,
         qualtrics_handoff_enabled: bool = False,
         qualtrics_store_chat: bool = False,
         qualtrics_field_transcript: str = "chat_transcript",
         qualtrics_field_status: str = "chat_status",
-        ai_starts_conversation: bool = False,
-        turn_mode: str = "none",
+        ai_starts_conversation: bool = None,
+        turn_mode: str = None,
         turn_duration_seconds: int = 60,
         assignment_mode: str = "fifo",
         condition_enabled: bool = True,
-        style_mimic_enabled: bool = False,
+        style_mimic_enabled: bool = None,
         style_mimic_target: str = "c",
+        bot_reply_on_any_message: bool = None,
+        max_chain_depth: int = None,
+        cooldown_per_bot_sec: int = None,
+        max_bot_msgs_per_minute_per_room: int = None,
+        use_mentions: bool = None,
+        mention_prob: float = None,
+        self_correction_prob: float = None,
     ) -> str:
         session_id = f"SES-{uuid.uuid4().hex[:5].upper()}"
         config = SessionConfig(session_id, name, group_size, bot_enabled)
@@ -207,21 +241,69 @@ class MatchManager:
         config.group_chat_duration_minutes = max(1, min(group_chat_duration_minutes, 180))
         config.participant_names = participant_names or []
         config.spy_mode_enabled = spy_mode_enabled
-        config.session_mode = session_mode
+        hs = HUMAN_LIKE_SESSION
+        config.session_mode = session_mode if session_mode is not None else hs["session_mode"]
         config.qualtrics_handoff_enabled = qualtrics_handoff_enabled
         config.qualtrics_store_chat = qualtrics_store_chat
         config.qualtrics_field_transcript = qualtrics_field_transcript
         config.qualtrics_field_status = qualtrics_field_status
-        config.ai_starts_conversation = ai_starts_conversation
-        config.turn_mode = turn_mode if turn_mode in ("none", "round_robin", "timed") else "none"
+        config.ai_starts_conversation = (
+            ai_starts_conversation if ai_starts_conversation is not None else hs["ai_starts_conversation"]
+        )
+        tm = turn_mode if turn_mode is not None else hs["turn_mode"]
+        config.turn_mode = tm if tm in ("none", "round_robin", "timed") else "none"
         config.turn_duration_seconds = max(10, turn_duration_seconds)
         config.condition_enabled = bool(condition_enabled)
         if config.condition_enabled:
             config.assignment_mode = "stratified"
         else:
             config.assignment_mode = assignment_mode if assignment_mode in ("fifo", "stratified") else "fifo"
-        config.style_mimic_enabled = bool(style_mimic_enabled)
+        config.style_mimic_enabled = (
+            bool(style_mimic_enabled) if style_mimic_enabled is not None else hs["style_mimic_enabled"]
+        )
         config.style_mimic_target = (style_mimic_target or "c").strip() or "c"
+        config.bot_reply_on_any_message = (
+            bool(bot_reply_on_any_message)
+            if bot_reply_on_any_message is not None
+            else hs["bot_reply_on_any_message"]
+        )
+        config.max_chain_depth = max(
+            1,
+            min(int(max_chain_depth if max_chain_depth is not None else hs["max_chain_depth"]), 10),
+        )
+        config.cooldown_per_bot_sec = max(
+            0,
+            min(
+                int(cooldown_per_bot_sec if cooldown_per_bot_sec is not None else hs["cooldown_per_bot_sec"]),
+                120,
+            ),
+        )
+        config.max_bot_msgs_per_minute_per_room = max(
+            1,
+            min(
+                int(
+                    max_bot_msgs_per_minute_per_room
+                    if max_bot_msgs_per_minute_per_room is not None
+                    else hs["max_bot_msgs_per_minute_per_room"]
+                ),
+                120,
+            ),
+        )
+        config.use_mentions = bool(use_mentions if use_mentions is not None else hs["use_mentions"])
+        config.mention_prob = max(
+            0.0, min(1.0, float(mention_prob if mention_prob is not None else hs["mention_prob"]))
+        )
+        config.self_correction_prob = max(
+            0.0,
+            min(
+                1.0,
+                float(
+                    self_correction_prob
+                    if self_correction_prob is not None
+                    else hs["self_correction_prob"]
+                ),
+            ),
+        )
 
         self.sessions[session_id] = config
         self.active_rooms[session_id] = {}
@@ -300,6 +382,24 @@ class MatchManager:
             t = str(data["style_mimic_target"] or "").strip()
             if t:
                 session.style_mimic_target = t
+        if "bot_reply_on_any_message" in data:
+            session.bot_reply_on_any_message = bool(data["bot_reply_on_any_message"])
+        if "max_chain_depth" in data:
+            session.max_chain_depth = max(1, min(int(data["max_chain_depth"]), 10))
+        if "cooldown_per_bot_sec" in data:
+            session.cooldown_per_bot_sec = max(0, min(int(data["cooldown_per_bot_sec"]), 120))
+        if "max_bot_msgs_per_minute_per_room" in data:
+            session.max_bot_msgs_per_minute_per_room = max(
+                1, min(int(data["max_bot_msgs_per_minute_per_room"]), 120)
+            )
+        if "use_mentions" in data:
+            session.use_mentions = bool(data["use_mentions"])
+        if "mention_prob" in data:
+            session.mention_prob = max(0.0, min(1.0, float(data["mention_prob"])))
+        if "self_correction_prob" in data:
+            session.self_correction_prob = max(
+                0.0, min(1.0, float(data["self_correction_prob"]))
+            )
         self.save_all_sessions()
         return True
 
