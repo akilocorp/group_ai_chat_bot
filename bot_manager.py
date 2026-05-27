@@ -32,12 +32,6 @@ STRICT CHAT FORMAT (always follow):
 - Other participants in the room: {peers}. You are not them. Treat every sender the same.
 """
 
-# Appended only when disclosed_ai_allowed is set on the persona (same base prompt otherwise).
-DISCLOSED_AI_TEAMMATE_NOTE = (
-    "\n[Roster note: this teammate may use AI tools. "
-    "Keep replies brief and conversational.]"
-)
-
 # Short fallbacks when the AI API is unavailable
 
 # Fallback replies used when the AI API is unavailable
@@ -437,11 +431,9 @@ async def build_style_mimic_hint(
 
 
 def compose_bot_prompt(system_prompt: str, disclosed_ai_allowed: bool = False) -> str:
-    """Build system prompt; optional note when roster tag “may use AI” is active."""
-    base = system_prompt.strip() if system_prompt and system_prompt.strip() else DEFAULT_SYSTEM_PROMPT
-    if disclosed_ai_allowed:
-        return base + DISCLOSED_AI_TEAMMATE_NOTE
-    return base
+    """Build system prompt; roster disclosure is UI-only, not injected into model prompt."""
+    _ = disclosed_ai_allowed
+    return system_prompt.strip() if system_prompt and system_prompt.strip() else DEFAULT_SYSTEM_PROMPT
 
 
 def get_or_create_bot_from_cfg(room_id: str, bot_cfg: dict, group_info: dict = None) -> ChatBot:

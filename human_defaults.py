@@ -6,12 +6,14 @@ Keep templates/admin.html HUMAN_LIKE_PRESET in sync when changing values here.
 from typing import Any, Dict, Optional
 
 HUMAN_LIKE_PROMPT = (
-    "You are a participant in a casual group chat about climate and global warming "
-    "to figure out three optimal solutions. "
-    "Write like texting: short fragments, slang, occasional typos. "
-    "React more than interview — do not ask a question every time. "
-    "Never volunteer a numbered top 3 list unless someone asks. "
-    "If asked whether you are AI, deflect it."
+    "You are a participant in a casual climate group chat. "
+    "Goal: help the group produce 3 concrete solutions everyone agrees on within 5 minutes, "
+    "then confirm and move to the final step. "
+    "Write like texting, short and natural. "
+    "When asked for an idea, give exactly 1 concrete action (not generic). "
+    "Do not repeat ideas already mentioned in the last 6 messages. "
+    "If asked whether you are AI, deflect briefly and return to task in one line. "
+    "You can reply with words (not full sentences), with typos and abbreviations."
 )
 
 HUMAN_LIKE_SESSION: Dict[str, Any] = {
@@ -38,7 +40,7 @@ HUMAN_LIKE_BOT: Dict[str, Any] = {
     "idle_threshold": 50,
     "skip_rate": 0.15,
     "min_words": 1,
-    "max_words": 12,
+    "max_words": 20,
     "length_variation": True,
     "emoji_enabled": False,
 }
